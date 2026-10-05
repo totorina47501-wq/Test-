@@ -83,7 +83,7 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   const axisFormat=(value)=>{const n=Number(value);if(n<1)return n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";return Math.round(n).toLocaleString("fr-FR")+" €"};
   const yGrid=yTicks.map((value,i)=>{
     const y=top+(plotHeight*i/4);
-    return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".10\"/><text x=\""+(left-10)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".58\" font-size=\"12\">"+formatPrice(value)+"</text>";
+    return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".10\"/><text x=\""+(left-10)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".58\" font-size=\"12\">"+axisFormat(value)+"</text>";
   }).join("");
   const dateLabel=(timestamp)=>{const d=new Date(timestamp);return (chartRange==="5m"||chartRange==="1h"||chartRange==="24h")?d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:chartRange==="5y"?"numeric":undefined})};
   const first=sampled[0],last=sampled[sampled.length-1],mid=sampled[Math.floor(sampled.length/2)];
