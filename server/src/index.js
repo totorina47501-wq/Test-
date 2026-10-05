@@ -142,7 +142,31 @@ app.post("/api/auth/login", async (req,res) => {
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
 const newsCache={items:[],updatedAt:0};
 function decodeXml(value){return String(value||"").replace(/<!\[CDATA\[(.*?)\]\]>/gs,"$1").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'");}
-async function fetchNews(){if(newsCache.items.length&&Date.now()-newsCache.updatedAt<300000)return newsCache.items;const feed="https://news.google.com/rss/search?q=crypto%20OR%20bitcoin%20OR%20ethereum&hl=fr&gl=FR&ceid=FR:fr";const response=await fetch(feed,{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});if(!response.ok)throw Error(`News HTTP ${response.status}`);const xml=await response.text();const items=[...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0,12).map(match=>{const block=match[1];const pick=tag=>{const found=block.match(new RegExp("<"+tag+"[^>]*>([\\s\\S]*?)</"+tag+">","i"));return found?decodeXml(found[1]).trim():""};const pickAttr=(tag,attr)=>{const found=block.match(new RegExp("<"+tag+"[^>]*\\s"+attr+"=[\\"']([^\\"']+)[\\"'][^>]*>","i"));return found?decodeXml(found[1]).trim():""};const description=pick("description");const descriptionImage=(description.match(/<img[^>]+src=[\\"']([^\\"']+)[\\"']/i)||[])[1]||"";const imageUrl=pickAttr("media:content","url")||pickAttr("media:thumbnail","url")||pickAttr("enclosure","url")||descriptionImage;return{title:pick("title"),url:pick("link"),publishedAt:pick("pubDate"),source:pick("source"),category:"Crypto",imageUrl}}).filter(item=>item.title&&item.url);newsCache.items=items;newsCache.updatedAt=Date.now();return items;}
+async function fetchNews(){
+  if(newsCache.items.length&&Date.now()-newsCache.updatedAt<300000)return newsCache.items;
+  const feed="https://news.google.com/rss/search?q=crypto%20OR%20bitcoin%20OR%20ethereum&hl=fr&gl=FR&ceid=FR:fr";
+  const response=await fetch(feed,{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});
+  if(!response.ok)throw Error(`News HTTP ${response.status}`);
+  const xml=await response.text();
+  const items=[...xml.matchAll(/<item>([\\s\\S]*?)<\\/item>/gi)].slice(0,12).map(match=>{
+    const block=match[1];
+    const pick=tag=>{
+      const found=block.match(new RegExp("<"+tag+"[^>]*>([\\s\\S]*?)</"+tag+">","i"));
+      return found?decodeXml(found[1]).trim():"";
+    };
+    const pickAttr=(tag,attr)=>{
+      const found=block.match(new RegExp("<"+tag+"[^>]*\\s"+attr+"=[\"']([^\"']+)[\"'][^>]*>","i"));
+      return found?decodeXml(found[1]).trim():"";
+    };
+    const description=pick("description");
+    const descriptionImage=(description.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i)||[])[1]||"";
+    const imageUrl=pickAttr("media:content","url")||pickAttr("media:thumbnail","url")||pickAttr("enclosure","url")||descriptionImage;
+    return{title:pick("title"),url:pick("link"),publishedAt:pick("pubDate"),source:pick("source"),category:"Crypto",imageUrl};
+  }).filter(item=>item.title&&item.url);
+  newsCache.items=items;
+  newsCache.updatedAt=Date.now();
+  return items;
+}
 async function fetchCoinDeskFallback(){
   const response=await fetch("https://www.coindesk.com/fr/latest-crypto-news",{headers:{"accept":"text/html","user-agent":"BitGold/1.0"}});
   if(!response.ok) throw Error(`CoinDesk HTTP ${response.status}`);
