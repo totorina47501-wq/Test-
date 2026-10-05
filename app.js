@@ -1,3 +1,9 @@
+const DEFAULT_API=window.location.hostname.endsWith("github.io")?"https://p01--service-bitgold--dvn9t2gvmtgx.code.run":window.location.origin;
+const API=window.location.hostname.endsWith("github.io")?(localStorage.getItem("bitgold-api")||DEFAULT_API):window.location.origin;
+let apiToken=localStorage.getItem("bitgold-token")||"";
+let authMode="login";
+let tradeSide="buy";
+let state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0}};
 const marketNames={BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"};
 let marketPrices={BTC:67420.10,ETH:3248.70,SOL:154.20,USDC:0.92,LINK:17.84,AVAX:28.16};
 const fallbackMarkets=[["Bitcoin","BTC",67420.10,0],["Ethereum","ETH",3248.70,0],["Solana","SOL",154.20,0],["USD Coin","USDC",0.92,0],["Chainlink","LINK",17.84,0],["Avalanche","AVAX",28.16,0]];
