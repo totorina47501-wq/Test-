@@ -49,3 +49,12 @@ test("bot execution applies configured trade and position limits",()=>{
   assert.match(server,/const maxPosition=Number\(subscription\.max_position_eur\|\|1000\)/);
   assert.match(server,/min_cash_pct/);
 });
+
+
+test("bot subscription controls are authenticated-only while detail remains public",()=>{
+  assert.match(html,/class="bot-config-card auth-only"[^>]*hidden/);
+  assert.match(app,/const connected=!!apiToken/);
+  assert.match(app,/if\(!apiToken\)\{openModal\("connexion"\);return\}/);
+  assert.match(html,/id="botDetailDescription"/);
+  assert.match(html,/id="botDetailStrategy"/);
+});
