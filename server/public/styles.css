@@ -34,7 +34,7 @@ body.modal-open{overflow:hidden}
 .market-identity{display:flex;align-items:center;gap:11px;min-width:0}
 .market-identity>div{display:flex;flex-direction:column;min-width:0}
 .market-identity strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.coin-mark{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#162a20;border:1px solid #29483a;color:#c8ff45;font-weight:900;font-size:13px}
+.coin-mark{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:#162a20;border:1px solid #29483a;color:#c8ff45;font-weight:900;font-size:13px;overflow:hidden;flex:none}.coin-mark .coin-icon{width:100%;height:100%;border:0;box-shadow:none;border-radius:inherit}
 .market-live{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8da098;display:flex;align-items:center;gap:5px}
 .market-price-row{margin-top:17px;align-items:baseline}
 .market .price{margin:0;font-size:28px;letter-spacing:-.03em}
@@ -218,11 +218,11 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .portfolio-asset-identity>div{display:flex;flex-direction:column;min-width:0}
 .portfolio-asset-identity strong{font-size:14px}
 .portfolio-asset-identity span,.portfolio-asset-quantity span,.portfolio-asset-value span{font-size:10px;color:#71857c;margin-top:3px}
-.coin-icon{width:42px;height:42px;display:grid;place-items:center;flex:none;border-radius:50%;font-size:19px;font-weight:950;background:#12251b;border:1px solid #31503f;box-shadow:0 8px 22px #0004}
+.coin-icon{width:58px;height:58px;display:grid;place-items:center;flex:none;border-radius:50%;font-size:22px;font-weight:950;background:#12251b;border:1px solid #31503f;box-shadow:0 10px 26px #0005;overflow:hidden;position:relative}.coin-icon img{width:100%;height:100%;display:block;object-fit:cover}.coin-fallback{display:grid;place-items:center;width:100%;height:100%}.coin-icon img+.coin-fallback{display:none}.coin-icon img[hidden]+.coin-fallback{display:grid}
 .coin-icon.coin-btc{color:#f7931a;background:#2a1d0e;border-color:#81511d}.coin-icon.coin-eth{color:#9da8ff;background:#151a35;border-color:#4a528d}.coin-icon.coin-sol{color:#c8ff45;background:#142519;border-color:#496b3e}.coin-icon.coin-usdc{color:#2775ca;background:#102238;border-color:#285b8f}.coin-icon.coin-link{color:#2a5ada;background:#111d38;border-color:#2b4b91}.coin-icon.coin-avax{color:#ff5b61;background:#321417;border-color:#81383d}
 .portfolio-asset-quantity,.portfolio-asset-value{display:flex;flex-direction:column}
 .portfolio-asset-quantity strong,.portfolio-asset-value strong{font-size:13px}
 .portfolio-asset-value{align-items:flex-end;text-align:right}
 .portfolio-asset-value strong{font-size:15px;color:#eaf2ed}
 @media(max-width:800px){.portfolio-heading{align-items:flex-start;flex-direction:column}.portfolio-heading h2{font-size:36px}.portfolio-overview{grid-template-columns:1fr}.portfolio-asset{grid-template-columns:1fr auto;gap:10px}.portfolio-asset-quantity{align-items:flex-end}.portfolio-asset-value{grid-column:2;grid-row:1;align-self:end}.portfolio-asset-value span{display:none}}
-@media(max-width:500px){.portfolio-total>strong{font-size:36px}.portfolio-holdings{padding:16px}.portfolio-asset-identity strong{font-size:13px}.portfolio-asset-identity span{font-size:9px}.coin-icon{width:38px;height:38px;font-size:17px}}
+@media(max-width:500px){.portfolio-total>strong{font-size:36px}.portfolio-holdings{padding:16px}.portfolio-asset-identity strong{font-size:13px}.portfolio-asset-identity span{font-size:9px}.coin-icon{width:48px;height:48px;font-size:18px}.coin-mark{width:44px;height:44px}}
