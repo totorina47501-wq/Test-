@@ -128,7 +128,7 @@ app.post("/api/auth/login", async (req,res) => {
 
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
-app.get("/api/market/:symbol",async(req,res)=>{
+app.get("/api/market/details/:symbol",async(req,res)=>{
   const symbol=String(req.params.symbol||"").toUpperCase();
   if(!marketIds[symbol]) return res.status(404).json({error:"Crypto inconnue."});
   const market=await refreshMarket();
