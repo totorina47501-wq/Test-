@@ -45,7 +45,7 @@ test("bot detail pages expose explanations, limits and pricing",()=>{
 });
 
 test("bot execution applies configured trade and position limits",()=>{
-  assert.match(server,/const maxTrade=Number\\(subscription\.max_trade_eur\\|\\|250\\)/);
-  assert.match(server,/const maxPosition=Number\\(subscription\.max_position_eur\\|\\|1000\\)/);
+  assert.match(server,/const maxTrade=Number\(subscription\.max_trade_eur\|\|250\)/);
+  assert.match(server,/const maxPosition=Number\(subscription\.max_position_eur\|\|1000\)/);
   assert.match(server,/min_cash_pct/);
 });
