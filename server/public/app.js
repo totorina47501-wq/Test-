@@ -17,7 +17,7 @@ function renderMarket(markets){
     marketPrices[symbol]=Number(price)||marketPrices[symbol];
     const priceText=Number(marketPrices[symbol]).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
     const changeText=(change>0?"+":"")+change.toFixed(2).replace(".",",")+"%";
-    const canTrade=["BTC","ETH","SOL"].includes(symbol);
+    const canTrade=["BTC","ETH","SOL","USDC","LINK","AVAX"].includes(symbol);
     return `<article class="market market-clickable" data-crypto="${symbol}">
       <div class="market-top"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><span class="market-dot">●</span></div>
       <div class="price">${priceText}</div>
