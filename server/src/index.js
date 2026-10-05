@@ -240,12 +240,19 @@ async function fetchNewsFeed(feed){
 function dedupeNews(items){
   const map=new Map();
   for(const item of items){
-    const key=item.url.replace(/[?#].*$/," ").trim().toLowerCase()||item.title.toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+    const normalizedTitle=item.title.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+    const urlKey=item.url.replace(/[?#].*$/,"").trim().toLowerCase();
+    const titleKey=normalizedTitle.split(" ").slice(0,18).join(" ");
+    const key=urlKey||titleKey;
     const previous=map.get(key);
     if(!previous||Date.parse(item.publishedAt)>Date.parse(previous.publishedAt)) map.set(key,item);
   }
   return [...map.values()]
-    .sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt))
+    .sort((a,b)=>{
+      const freshness=Date.parse(b.publishedAt)-Date.parse(a.publishedAt);
+      const sourceBoost=(Number(b._weight||0)-Number(a._weight||0))*3600000;
+      return freshness+sourceBoost;
+    })
     .slice(0,12)
     .map(({_weight,...item})=>item);
 }
