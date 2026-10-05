@@ -283,25 +283,38 @@ app.get("/api/news",async(req,res)=>{
   }
 });
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
+const HISTORY_RANGES={
+  "5m":{label:"5 min",days:1,maxAgeMs:5*60*1000},
+  "1h":{label:"1 h",days:1,maxAgeMs:60*60*1000},
+  "24h":{label:"24 h",days:1},
+  "7d":{label:"7 jours",days:7},
+  "30d":{label:"30 jours",days:30},
+  "1y":{label:"1 an",days:365},
+  "5y":{label:"5 ans",days:1825},
+  "max":{label:"Depuis création",days:"max"}
+};
+
 app.get("/api/market/details/:symbol",async(req,res)=>{
   const symbol=String(req.params.symbol||"").toUpperCase();
+  const range=HISTORY_RANGES[String(req.query.range||"24h")]?String(req.query.range):"24h";
   if(!marketIds[symbol]) return res.status(404).json({error:"Crypto inconnue."});
   const market=await refreshMarket();
   const item=market.find(row=>row.symbol===symbol);
   try {
-    const pricesHistory=await fetchHistory(symbol,7);
-    const values=pricesHistory.map(point=>Number(point.price));
+    const pricesHistory=await fetchHistoryRange(symbol,range);
+    const values=pricesHistory.map(point=>Number(point.price)).filter(Number.isFinite);
     res.json({
       ...item,
       name:{BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"}[symbol],
-      days7:{min:Math.min(...values),max:Math.max(...values),points:pricesHistory},
+      history:{range,label:HISTORY_RANGES[range].label,min:values.length?Math.min(...values):item.price,max:values.length?Math.max(...values):item.price,points:pricesHistory},
       source:"CoinGecko"
     });
   } catch(e) {
-    console.error("[MARKET] detail error",symbol,e.message);
-    res.json({...item,name:symbol,days7:{min:item.price,max:item.price,points:[]},source:"CoinGecko"});
+    console.error("[MARKET] detail error",symbol,range,e.message);
+    res.json({...item,name:symbol,history:{range,label:HISTORY_RANGES[range].label,min:item.price,max:item.price,points:[]},source:"CoinGecko"});
   }
 });
+
 
 function fallbackNoise(seed,index) {
   let x=(Math.imul((seed+index*374761393)|0,668265263)>>>0);
@@ -311,9 +324,10 @@ function fallbackNoise(seed,index) {
 }
 function buildFallbackHistory(symbol, days) {
   const base=Number(prices[symbol])||1;
-  const points=Math.max(days===1?24:days===7?56:days===30?90:120,12);
+  const numericDays=days==="max"?3650:Math.max(Number(days)||7,1);
+  const points=Math.min(1000,Math.max(numericDays===1?288:numericDays===7?56:numericDays===30?90:numericDays>=365?365:120,12));
   const now=Date.now();
-  const span=Math.max(days,1)*86400000;
+  const span=numericDays*86400000;
   const seed=symbol.split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
   let level=1+((seed%9)-4)*0.001;
   return Array.from({length:points},(_,index)=>{
@@ -352,6 +366,23 @@ async function fetchHistory(symbol, days) {
   historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
   return pricesHistory;
 }
+async function fetchHistoryRange(symbol,range){
+  const config=HISTORY_RANGES[range]||HISTORY_RANGES["24h"];
+  const cacheKey=`${symbol}:range:${range}`;
+  const cached=historyCache.get(cacheKey);
+  if(cached && Date.now()-cached.updatedAt<60000)return cached.prices;
+  const source=await fetchHistory(symbol,config.days);
+  let pricesHistory=source;
+  if(config.maxAgeMs){
+    const cutoff=Date.now()-config.maxAgeMs;
+    pricesHistory=source.filter(point=>Number(point.timestamp)>=cutoff);
+    if(pricesHistory.length<2)pricesHistory=buildFallbackHistory(symbol,1).filter(point=>Number(point.timestamp)>=cutoff);
+  }
+  if(!pricesHistory.length)pricesHistory=buildFallbackHistory(symbol,config.days);
+  historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
+  return pricesHistory;
+}
+
 app.get("/api/market/history",async(req,res)=>{
   const days=Math.min(Math.max(Number(req.query.days||7),1),90);
   try {
