@@ -79,3 +79,5 @@ body.modal-open{overflow:hidden}
 .news-disclaimer{margin:12px 0 0;color:#62766d;font-size:11px}
 @media(max-width:900px){.news-grid{grid-template-columns:repeat(2,1fr)}.news-card.featured{grid-column:span 2}}
 @media(max-width:600px){.news-grid{grid-template-columns:1fr}.news-card.featured{grid-column:auto}.news-section-head{align-items:flex-start;gap:12px}}
+
+body.is-visitor #authState{color:#a9b8b1}body.is-authenticated #authState{color:#c8ff45}body.is-visitor #actualites{display:block}body.is-authenticated #actualites{display:none!important}
