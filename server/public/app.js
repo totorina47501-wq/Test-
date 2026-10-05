@@ -93,16 +93,16 @@ function buildSparkline(points){
     const y=height-pad-((value-min)/range)*(height-pad*2);
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
-  return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Courbe sur 7 jours"><polyline points="${line}" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Courbe sur 24 heures"><polyline points="${line}" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 function fallbackSparkline(symbol){
   const base=Number(marketPrices[symbol])||1;
-  const factors=[0.96,0.985,0.975,1.01,0.995,1.02,1];
-  return buildSparkline(factors.map((factor,i)=>({timestamp:Date.now()-(factors.length-1-i)*86400000,price:base*factor})));
+  const factors=[0.985,0.992,1.004,0.997,1.012,1.006,1.018,1.01,0.998,1.008,1.015,1];
+  return buildSparkline(factors.map((factor,i)=>({timestamp:Date.now()-(factors.length-1-i)*3600000,price:base*factor})));
 }
 async function loadMarketHistoryPreviews(){
   try{
-    const data=await apiFetch("/api/market/history?days=7");
+    const data=await apiFetch("/api/market/history?days=1");
     marketHistoryPreview=data.markets||{};
   }catch(e){
     console.warn("Historique marché groupé:",e.message);
