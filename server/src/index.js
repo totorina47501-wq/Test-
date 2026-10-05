@@ -128,6 +128,25 @@ app.post("/api/auth/login", async (req,res) => {
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
 
+app.get("/api/market/history/:symbol",async(req,res)=>{
+  const symbol=String(req.params.symbol||"").toUpperCase();
+  const days=Math.min(Math.max(Number(req.query.days||7),1),365);
+  const id=marketIds[symbol];
+  if(!id) return res.status(404).json({error:"Crypto inconnue."});
+  try {
+    const response=await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=eur&days=${days}&interval=${days<=1?"hourly":"daily"}`,{
+      headers:{accept:"application/json","user-agent":"BitGold/1.0"}
+    });
+    if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
+    const data=await response.json();
+    const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price));
+    res.json({symbol,days,source:"CoinGecko",prices:pricesHistory});
+  } catch(e) {
+    console.error("[MARKET] history error",symbol,e.message);
+    res.status(502).json({error:"Historique temporairement indisponible."});
+  }
+});
+
 app.get("/api/portfolio",auth,async(req,res)=>{
   try {
     const [w,h,t]=await Promise.all([

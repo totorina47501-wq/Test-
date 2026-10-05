@@ -15,7 +15,12 @@ function renderMarket(markets){
     const priceText=Number(marketPrices[symbol]).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
     const changeText=(change>0?"+":"")+change.toFixed(2).replace(".",",")+"%";
     const canTrade=["BTC","ETH","SOL"].includes(symbol);
-    return `<article class="market"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><div class="price">${priceText}</div><div class="${change<0?"symbol":"positive"}">${changeText}</div>${canTrade?`<button class="btn btn-ghost market-btn" onclick="openTrade('buy','${symbol}')">Acheter</button>`:"<span class=\"symbol\">Cours actuel</span>"}</article>`;
+    return `<article class="market">
+      <div class="market-top"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><span class="market-dot">●</span></div>
+      <div class="price">${priceText}</div>
+      <div class="${change<0?"symbol":"positive"}">${changeText} <span class="change-label">24h</span></div>
+      <div class="market-actions"><button class="btn btn-ghost market-btn" onclick="openHistory('${symbol}',7)">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" onclick="openTrade('buy','${symbol}')">Acheter</button>`:""}</div>
+    </article>`;
   }).join("");
 }
 async function loadMarket(){
@@ -28,6 +33,64 @@ async function loadMarket(){
     renderMarket(fallbackMarkets.map(([name,symbol,price,change24h])=>({symbol,price,change24h})));
   }
 }
+let historyState={symbol:"BTC",days:7,prices:[]};
+
+function formatPrice(value){
+  return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:value<10?4:2})+" €";
+}
+function buildHistoryChart(points){
+  if(!points.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
+  const values=points.map(p=>Number(p.price));
+  const min=Math.min(...values),max=Math.max(...values),range=max-min||1;
+  const width=900,height=300,pad=18;
+  const coords=values.map((value,i)=>{
+    const x=pad+(i/(Math.max(values.length-1,1)))*(width-pad*2);
+    const y=height-pad-((value-min)/range)*(height-pad*2);
+    return [x,y];
+  });
+  const line=coords.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const first=points[0],last=points[points.length-1];
+  const delta=Number(last.price)-Number(first.price);
+  const pct=first.price?delta/first.price*100:0;
+  const cls=pct>=0?"positive":"negative";
+  return `<div class="history-chart-wrap">
+    <svg class="history-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Évolution du cours de ${historyState.symbol}">
+      <polyline points="${line}" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="history-axis"><span>${new Date(first.timestamp).toLocaleDateString("fr-FR")}</span><span>${new Date(last.timestamp).toLocaleDateString("fr-FR")}</span></div>
+  </div>
+  <div class="history-stats">
+    <div><span>Début</span><strong>${formatPrice(first.price)}</strong></div>
+    <div><span>Fin</span><strong>${formatPrice(last.price)}</strong></div>
+    <div><span>Variation</span><strong class="${cls}">${pct>=0?"+":""}${pct.toFixed(2).replace(".",",")}%</strong></div>
+    <div><span>Min / Max</span><strong>${formatPrice(min)} / ${formatPrice(max)}</strong></div>
+  </div>`;
+}
+async function openHistory(symbol,days=7){
+  historyState={symbol,days,prices:[]};
+  const modal=document.getElementById("historyModal");
+  document.getElementById("historyTitle").textContent=`${marketNames[symbol]||symbol} (${symbol})`;
+  document.getElementById("historySource").textContent="Chargement de l'historique…";
+  document.getElementById("historyChart").innerHTML="<div class=\"history-loading\">Chargement des cours…</div>";
+  modal.hidden=false;
+  document.querySelectorAll(".history-range button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===days));
+  try{
+    const data=await apiFetch(`/api/market/history/${encodeURIComponent(symbol)}?days=${days}`);
+    historyState.prices=data.prices||[];
+    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices);
+    document.getElementById("historySource").textContent=`Source : CoinGecko · ${historyState.prices.length} points`;
+  }catch(e){
+    document.getElementById("historyChart").innerHTML=`<div class="history-empty">${e.message}</div>`;
+    document.getElementById("historySource").textContent="Historique indisponible";
+  }
+}
+function setHistoryRange(days){
+  historyState.days=days;
+  document.querySelectorAll(".history-range button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===days));
+  if(historyState.symbol) openHistory(historyState.symbol,days);
+}
+function closeHistory(){document.getElementById("historyModal").hidden=true}
+
 function setConnected(connected){document.getElementById("authState").textContent=connected?"Connecté":"Mode démo";document.getElementById("accountStatus").textContent=connected?"Compte connecté":"Compte démo"}
 function renderWallet(){document.getElementById("cashBalance").textContent=Number(state.cash).toLocaleString("fr-FR",{minimumFractionDigits:2})+" €";document.getElementById("holdings").innerHTML=["BTC","ETH","SOL"].map(s=>`<div class="holding"><span>${s}</span><strong>${Number(state.holdings[s]||0).toFixed(6)}</strong></div>`).join("")}
 async function apiFetch(path,options={}){const headers={...(options.headers||{})};if(!headers["Content-Type"]&&options.body)headers["Content-Type"]="application/json";if(apiToken)headers.Authorization=`Bearer ${apiToken}`;let r;try{r=await fetch(API+path,{...options,headers})}catch(e){throw Error("Impossible de joindre l'API. Vérifiez que le service Northflank est démarré et que /api/health répond.")}let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||`Erreur API (${r.status})`);return data}
@@ -42,7 +105,7 @@ async function submitAuth(){const email=document.getElementById("authEmail").val
 function closeModal(){document.getElementById("modal").hidden=true}
 loadMarket();setInterval(loadMarket,60000);
 setConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
-window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;
+window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);
