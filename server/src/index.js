@@ -185,57 +185,43 @@ const NEWS_KEYWORDS={
 
 function normalizeNewsItem(item){
   const title=String(item?.title||"").trim();
-  const description=String(item?.description||item?.summary||"").replace(/<[^>]+>/g," ").replace(/\\s+/g," ").trim();
+  const description=String(item?.description||item?.summary||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
   const published=Date.parse(item?.posted_at||item?.published_at||item?.pubDate||item?.published||item?.updated||"");
   const text=(title+" "+description).toLowerCase();
   const categories=Object.entries(NEWS_KEYWORDS).filter(([,words])=>words.some(word=>text.includes(word))).map(([name])=>name);
-  return {
-    title,url:String(item?.url||item?.link||"").trim(),
-    publishedAt:Number.isFinite(published)?new Date(published).toISOString():new Date().toISOString(),
-    source:String(item?.source_name||item?.source||"Crypto").trim(),
-    category:categories[0]||"Crypto",
-    categories:categories.length?categories:["Crypto"],
-    imageUrl:String(item?.image||item?.image_url||"").trim(),
-    author:String(item?.author||"").trim(),
-    summary:description.slice(0,220)
-  };
+  return {title,url:String(item?.url||item?.link||"").trim(),publishedAt:Number.isFinite(published)?new Date(published).toISOString():new Date().toISOString(),source:String(item?.source_name||item?.source||"Crypto").trim(),category:categories[0]||"Crypto",categories:categories.length?categories:["Crypto"],imageUrl:String(item?.image||item?.image_url||"").trim(),author:String(item?.author||"").trim(),summary:description.slice(0,220)};
 }
 
 function decodeXml(value){
-  return String(value||"")
-    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/gi,"$1")
-    .replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">")
-    .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&#x27;/gi,"'");
+  return String(value||"").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi,"$1").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&#x27;/gi,"'");
 }
 
 function parseRssItems(xml,defaultSource="Crypto"){
   const source=String(xml||"");
-  const blocks=[...source.matchAll(/<(?:item|entry)\\b[^>]*>([\\s\\S]*?)<\\/(?:item|entry)>/gi)].map(match=>match[1]).slice(0,20);
-  const stripCdata=value=>String(value||"").replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/gi,"$1");
-  const decode=value=>decodeXml(stripCdata(value));
+  const blocks=[...source.matchAll(/<(?:item|entry)(?:\s[^>]*)?>([\s\S]*?)<\/(?:item|entry)>/gi)].map(match=>match[1]).slice(0,20);
   const pickRaw=(block,tags)=>{
     for(const tag of tags){
-      const found=block.match(new RegExp("<"+tag+"\\\\b[^>]*>([\\s\\S]*?)</"+tag+">","i"));
+      const found=block.match(new RegExp("<"+tag+"(?:\\s[^>]*)?>([\\s\\S]*?)</"+tag+">","i"));
       if(found)return found[1];
     }
     return "";
   };
-  const pick=(block,tags)=>decode(pickRaw(block,tags)).replace(/<[^>]+>/g," ").replace(/\\s+/g," ").trim();
+  const pick=(block,tags)=>decodeXml(pickRaw(block,tags)).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
   const pickAttr=(block,tags,attr)=>{
     for(const tag of tags){
-      const found=block.match(new RegExp("<"+tag+"\\\\b[^>]*\\\\s"+attr+"=[\\\"']([^\\\"']+)[\\\"'][^>]*>","i"));
-      if(found)return decode(found[1]).trim();
+      const found=block.match(new RegExp("<"+tag+"(?:\\s[^>]*)?[^>]*\\s"+attr+"=[\"']([^\"']+)[\"'][^>]*>","i"));
+      if(found)return decodeXml(found[1]).trim();
     }
     return "";
   };
   return blocks.map(block=>{
     const rawDescription=pickRaw(block,["description","content:encoded","summary"]);
-    const description=decode(rawDescription).replace(/<[^>]+>/g," ").replace(/\\s+/g," ").trim();
-    const descriptionImage=(decode(rawDescription).match(/<img[^>]+(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i)||[])[1]||"";
+    const description=decodeXml(rawDescription).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+    const descriptionImage=(decodeXml(rawDescription).match(/<img[^>]+(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i)||[])[1]||"";
     const url=pick(block,["link","guid"])||pickAttr(block,["link"],"href");
     const imageUrl=pickAttr(block,["media:content","media:thumbnail","enclosure","image"],"url")||descriptionImage;
     return normalizeNewsItem({title:pick(block,["title"]),url,published_at:pick(block,["pubDate","published","updated","dc:date"]),source_name:pick(block,["source"])||defaultSource,image:imageUrl,description});
-  }).filter(item=>item.title&&/^https?:\\/\\//i.test(item.url));
+  }).filter(item=>item.title&&/^https?:\/\//i.test(item.url));
 }
 
 async function fetchNewsFeed(feed){
