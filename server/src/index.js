@@ -50,6 +50,28 @@ const marketIds = {
 let marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
 let marketUpdatedAt = 0;
 const historyCache = new Map();
+const coingeckoBaseUrl=String(process.env.COINGECKO_API_BASE_URL||"https://api.coingecko.com/api/v3").replace(/\\/$/,"");
+const coingeckoApiKey=String(process.env.COINGECKO_API_KEY||"").trim();
+
+function coingeckoHeaders(){
+  const headers={accept:"application/json","user-agent":"BitGold/1.0"};
+  if(coingeckoApiKey){
+    headers["x-cg-demo-api-key"]=coingeckoApiKey;
+    headers["x-cg-pro-api-key"]=coingeckoApiKey;
+  }
+  return headers;
+}
+
+async function coingeckoFetch(path, options={}){
+  const response=await fetch(coingeckoBaseUrl+path,{...options,headers:{...coingeckoHeaders(),...(options.headers||{})}});
+  if(response.status===429){
+    const retryAfter=Number(response.headers.get("retry-after"));
+    const waitMs=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,10000):2000;
+    await new Promise(resolve=>setTimeout(resolve,waitMs));
+    return fetch(coingeckoBaseUrl+path,{...options,headers:{...coingeckoHeaders(),...(options.headers||{})}});
+  }
+  return response;
+}
 
 async function refreshMarket(force=false) {
   if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
@@ -294,7 +316,7 @@ async function fetchHistory(symbol, days) {
   let lastError;
   for(let attempt=0;attempt<3;attempt++){
     try{
-      response=await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=eur&days=${days}`,{headers:{accept:"application/json","user-agent":"BitGold/1.0"}});
+      response=await coingeckoFetch(`/coins/${id}/market_chart?vs_currency=eur&days=${days}`);
       if(response.ok) break;
       lastError=Error(`CoinGecko HTTP ${response.status}`);
     }catch(e){ lastError=e; }
