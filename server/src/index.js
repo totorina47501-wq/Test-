@@ -191,7 +191,7 @@ async function fetchNews(){
   if(newsCache.items.length&&Date.now()-newsCache.updatedAt<300000)return newsCache.items;
   const feed="https://news.google.com/rss/search?q=crypto%20OR%20bitcoin%20OR%20ethereum&hl=fr&gl=FR&ceid=FR:fr";
   const response=await fetch(feed,{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});
-  if(!response.ok)throw Error(\`News HTTP \${response.status}\`);
+  if(!response.ok)throw Error(`News HTTP ${response.status}`);
   const xml=await response.text();
   const items=parseRssItems(xml,"Google News");
   if(!items.length)throw Error("Aucun article Google News détecté");
@@ -202,7 +202,7 @@ async function fetchNews(){
 
 async function fetchCoinDeskFallback(){
   const response=await fetch("https://www.coindesk.com/arc/outboundfeeds/rss/",{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});
-  if(!response.ok)throw Error(\`CoinDesk RSS HTTP \${response.status}\`);
+  if(!response.ok)throw Error(`CoinDesk RSS HTTP ${response.status}`);
   const xml=await response.text();
   const items=parseRssItems(xml,"CoinDesk");
   if(!items.length)throw Error("Aucun article CoinDesk RSS détecté");
