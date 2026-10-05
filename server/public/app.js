@@ -66,10 +66,11 @@ async function submitAuth(){
   try{
     const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify({email,password})});
     apiToken=d.token;localStorage.setItem("bitgold-token",apiToken);
-    await loadPortfolio();
-    result.textContent="Compte connecté.";
+    setConnected(true);
     closeModal();
     document.getElementById("compte")?.scrollIntoView({behavior:"smooth",block:"start"});
+    try{ await loadPortfolio(); }
+    catch(e){ console.warn("Portfolio après authentification:",e.message); }
   }catch(e){result.textContent=e.message}
 }
 function closeModal(){document.getElementById("modal").hidden=true}
