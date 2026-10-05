@@ -76,3 +76,5 @@ function closeModal(){document.getElementById("modal").hidden=true}
 setConnected(!!apiToken);
 renderWallet();
 if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
+window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;
+window.addEventListener("error",e=>{const el=document.getElementById("authResult");if(el)el.textContent="Erreur JavaScript : "+e.message;});
