@@ -124,3 +124,36 @@ main{padding-right:365px}
 .market-indicator.cold{color:#7dd3fc;background:#7dd3fc0d}.market-indicator.cold b{color:#6e9db4}
 .market-indicator.neutral{color:#b6c5be}.market-indicator.muted{grid-column:1/-1;color:#687b72;padding:8px}
 @media(max-width:600px){.market-indicators{grid-template-columns:repeat(2,1fr)}}
+
+
+/* Bots d'investissement */
+.bots-section{background:linear-gradient(180deg,#09150f,#07110d)}
+.bot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.bot-card{position:relative;padding:22px;background:linear-gradient(145deg,#0e1d16,#09150f);border:1px solid #29483a;border-radius:20px;box-shadow:0 18px 45px #0003}
+.bot-card.bot-gold{border-color:#806b31;background:linear-gradient(145deg,#211b0d,#0c160f)}
+.bot-card.bot-silver{border-color:#46605a}
+.bot-card.bot-shield{border-color:#31506a}
+.bot-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.bot-tier{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#c8ff45;font-weight:900}
+.bot-card h3{margin:6px 0 0;font-size:24px}
+.bot-card p{color:#91a39b;font-size:13px;line-height:1.55;min-height:62px}
+.bot-status{font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:6px 8px;border-radius:8px;background:#14241c;color:#7d9188}
+.bot-status.active{background:#c8ff4514;color:#c8ff45}
+.bot-tags{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+.bot-tags span{font-size:9px;color:#a5b4ad;background:#12221b;border:1px solid #233b31;border-radius:7px;padding:5px 7px}
+.bot-strategy{min-height:42px;margin:14px 0;padding:11px;border-left:2px solid #c8ff45;background:#0a1711;color:#7f9189;font-size:11px;line-height:1.45}
+.bot-activity{margin-top:24px;padding:20px;background:#0b1913;border:1px solid #20382e;border-radius:18px}
+.bot-activity-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.bot-activity-head h3{margin:4px 0 0}
+.bot-activity-item{display:grid;grid-template-columns:9px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #193027}
+.bot-activity-item:last-child{border-bottom:0}
+.bot-activity-item>div{display:flex;flex-direction:column;gap:2px}
+.bot-activity-item strong{font-size:12px}
+.bot-activity-item span{font-size:11px;color:#7f9189}
+.bot-activity-item time{font-size:9px;color:#60746b}
+.bot-activity-dot{width:7px;height:7px;border-radius:50%;background:#64776e}
+.bot-activity-dot.buy{background:#c8ff45;box-shadow:0 0 8px #c8ff45}
+.bot-activity-dot.sell{background:#ff8585}
+.bot-empty{padding:22px;text-align:center;color:#708179;border:1px dashed #29483a;border-radius:12px;font-size:12px}
+@media(max-width:900px){.bot-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.bot-grid{grid-template-columns:1fr}.bot-card p{min-height:0}.bot-activity-item{grid-template-columns:9px 1fr}.bot-activity-item time{grid-column:2}}
