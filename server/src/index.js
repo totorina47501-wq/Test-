@@ -54,21 +54,27 @@ async function refreshMarket(force=false) {
     if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
     const data = await response.json();
     marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
-      const item = data[id];
-      const price = Number(item?.eur);
-      const change24h = Number(item?.eur_24h_change);\n      const marketCap = Number(item?.eur_market_cap);\n      const volume24h = Number(item?.eur_24h_vol);\n      const marketCapRank = Number(item?.eur_market_cap_rank);
+      const item = data[id] || {};
+      const price = Number(item.eur);
+      const change24h = Number(item.eur_24h_change);
+      const marketCap = Number(item.eur_market_cap);
+      const volume24h = Number(item.eur_24h_vol);
+      const marketCapRank = Number(item.eur_market_cap_rank);
       if(Number.isFinite(price) && price > 0) prices[symbol] = price;
       return {
         symbol,
         price: Number.isFinite(price) && price > 0 ? price : prices[symbol],
-        change24h: Number.isFinite(change24h) ? change24h : 0
+        change24h: Number.isFinite(change24h) ? change24h : 0,
+        marketCap: Number.isFinite(marketCap) ? marketCap : null,
+        volume24h: Number.isFinite(volume24h) ? volume24h : null,
+        marketCapRank: Number.isFinite(marketCapRank) ? marketCapRank : null
       };
     });
     marketUpdatedAt = Date.now();
   } catch(e) {
     console.error("[MARKET] refresh error", e.message);
     if(!marketSnapshot.length) {
-      marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
+      marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0,marketCap:null,volume24h:null,marketCapRank:null}));
     }
   }
   return marketSnapshot;
