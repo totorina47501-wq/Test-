@@ -85,7 +85,7 @@ app.post("/api/auth/login", async (req,res) => {
 });
 
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
-app.get("/api/market",(req,res)=>res.json(Object.entries(prices).map(([symbol,price])=>({symbol,price})));
+app.get("/api/market",(req,res)=>res.json(Object.entries(prices).map(([symbol,price])=>({symbol,price}))));
 
 app.get("/api/portfolio",auth,async(req,res)=>{
   try {
