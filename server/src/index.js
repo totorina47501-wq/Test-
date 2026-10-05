@@ -136,7 +136,40 @@ app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email
 const newsCache={items:[],updatedAt:0};
 function decodeXml(value){return String(value||"").replace(/<!\[CDATA\[(.*?)\]\]>/gs,"$1").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'");}
 async function fetchNews(){if(newsCache.items.length&&Date.now()-newsCache.updatedAt<300000)return newsCache.items;const feed="https://news.google.com/rss/search?q=crypto%20OR%20bitcoin%20OR%20ethereum&hl=fr&gl=FR&ceid=FR:fr";const response=await fetch(feed,{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});if(!response.ok)throw Error(`News HTTP ${response.status}`);const xml=await response.text();const items=[...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0,9).map(match=>{const block=match[1];const pick=tag=>{const found=block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`,"i"));return found?decodeXml(found[1]).trim():""};return{title:pick("title"),url:pick("link"),publishedAt:pick("pubDate"),source:pick("source"),category:"Crypto"}}).filter(item=>item.title&&item.url);newsCache.items=items;newsCache.updatedAt=Date.now();return items;}
-app.get("/api/news",async(req,res)=>{try{const items=await fetchNews();res.json({source:"Google News",updatedAt:newsCache.updatedAt,items})}catch(e){console.error("[NEWS] fetch error",e.message);res.status(502).json({error:"Actualités temporairement indisponibles.",items:[]})}});
+async function fetchCoinDeskFallback(){
+  const response=await fetch("https://www.coindesk.com/fr/latest-crypto-news",{headers:{"accept":"text/html","user-agent":"BitGold/1.0"}});
+  if(!response.ok) throw Error(`CoinDesk HTTP ${response.status}`);
+  const html=await response.text();
+  const items=[];
+  const seen=new Set();
+  const re=/<a[^>]+href="([^"]+)"[^>]*>([^<]{30,180})<\/a>/gi;
+  for(const match of html.matchAll(re)){
+    const title=decodeXml(match[2]).replace(/\\s+/g," ").trim();
+    let url=match[1];
+    if(url.startsWith("/")) url="https://www.coindesk.com"+url;
+    if(!/^https:\/\/www\.coindesk\.com\//.test(url)||seen.has(title)) continue;
+    if(/^(Dernières actualités|Explorer|En savoir|Lire|Accueil|Marchés|Actualités)$/i.test(title)) continue;
+    seen.add(title);items.push({title,url,publishedAt:new Date().toISOString(),source:"CoinDesk",category:"Crypto"});
+    if(items.length>=9) break;
+  }
+  if(!items.length) throw Error("Aucun article CoinDesk détecté");
+  return items;
+}
+app.get("/api/news",async(req,res)=>{
+  try{
+    const items=await fetchNews();
+    res.json({source:"Google News",updatedAt:newsCache.updatedAt,items});
+  }catch(e){
+    console.error("[NEWS] Google News error",e.message);
+    try{
+      const items=await fetchCoinDeskFallback();
+      res.json({source:"CoinDesk",updatedAt:Date.now(),items});
+    }catch(fallbackError){
+      console.error("[NEWS] CoinDesk fallback error",fallbackError.message);
+      res.status(502).json({error:"Actualités temporairement indisponibles.",items:[]});
+    }
+  }
+});
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
 app.get("/api/market/details/:symbol",async(req,res)=>{
   const symbol=String(req.params.symbol||"").toUpperCase();
