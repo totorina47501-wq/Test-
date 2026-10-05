@@ -184,7 +184,21 @@ function normalizeNewsItem(item){
 }
 
 async function fetchCoinGeckoNews(){
-  throw Error("CoinGecko News API indisponible avec une clé Demo : endpoint réservé aux plans payants.");
+  if(!coingeckoApiKey||!coingeckoBaseUrl.includes("pro-api.coingecko.com")){
+    throw Error("CoinGecko News API ignorée : l’endpoint /news nécessite un plan payant.");
+  }
+  const url=new URL(coingeckoBaseUrl+"/news");
+  url.searchParams.set("per_page","12");
+  url.searchParams.set("page","1");
+  url.searchParams.set("language","fr");
+  url.searchParams.set("type","news");
+  const response=await coingeckoFetch(url.pathname+url.search);
+  if(!response.ok) throw await coingeckoError(response,"CoinGecko News");
+  const payload=await response.json();
+  const raw=Array.isArray(payload)?payload:(Array.isArray(payload.data)?payload.data:[]);
+  const items=raw.map(normalizeNewsItem).filter(item=>item.title&&/^https?:\/\//i.test(item.url));
+  if(!items.length) throw Error("Aucun article CoinGecko");
+  return items;
 }
 
 function decodeXml(value){
@@ -325,7 +339,7 @@ async function fetchHistory(symbol, days) {
     try{
       response=await coingeckoFetch(`/coins/${id}/market_chart?vs_currency=eur&days=${days}`);
       if(response.ok) break;
-      lastError=Error(`CoinGecko HTTP ${response.status}`);
+      lastError=await coingeckoError(response);
     }catch(e){ lastError=e; }
     if(attempt<2) await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
   }
