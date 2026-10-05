@@ -34,7 +34,8 @@ function openModal(type){authMode=type==="inscription"?"signup":"login";document
 function switchAuth(){openModal(authMode==="signup"?"connexion":"inscription")}
 async function submitAuth(){const email=document.getElementById("authEmail").value,password=document.getElementById("authPassword").value;const result=document.getElementById("authResult");result.textContent="Connexion…";try{const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify({email,password})});apiToken=d.token;localStorage.setItem("bitgold-token",apiToken);setConnected(true);closeModal();document.getElementById("compte")?.scrollIntoView({behavior:"smooth",block:"start"});try{await loadPortfolio()}catch(e){console.warn("Portfolio après authentification:",e.message)}}catch(e){result.textContent=e.message}}
 function closeModal(){document.getElementById("modal").hidden=true}
-loadMarket();setInterval(loadMarket,60000);\nsetConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
+loadMarket();setInterval(loadMarket,60000);
+setConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
 window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
