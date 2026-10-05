@@ -19,7 +19,7 @@ function renderMarket(markets){
       <div class="market-top"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><span class="market-dot">●</span></div>
       <div class="price">${priceText}</div>
       <div class="${change<0?"symbol":"positive"}">${changeText} <span class="change-label">24h</span></div>
-      <div class="market-actions"><button class="btn btn-ghost market-btn" onclick="openHistory('${symbol}',7)">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" onclick="openTrade('buy','${symbol}')">Acheter</button>`:""}</div>
+      <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement de la courbe…</span></div><div class="market-actions"><button class="btn btn-ghost market-btn history-open" data-symbol="${symbol}" type="button">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" onclick="openTrade('buy','${symbol}')">Acheter</button>`:""}</div>
     </article>`;
   }).join("");
 }
@@ -34,6 +34,7 @@ async function loadMarket(){
   }
 }
 let historyState={symbol:"BTC",days:7,prices:[]};
+let marketHistoryPreview={};
 
 function formatPrice(value){
   return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:value<10?4:2})+" €";
@@ -65,6 +66,31 @@ function buildHistoryChart(points){
     <div><span>Variation</span><strong class="${cls}">${pct>=0?"+":""}${pct.toFixed(2).replace(".",",")}%</strong></div>
     <div><span>Min / Max</span><strong>${formatPrice(min)} / ${formatPrice(max)}</strong></div>
   </div>`;
+}
+function buildSparkline(points){
+  if(!points?.length) return "";
+  const values=points.map(p=>Number(p.price));
+  const min=Math.min(...values),max=Math.max(...values),range=max-min||1;
+  const width=240,height=58,pad=3;
+  const line=values.map((value,i)=>{
+    const x=pad+(i/Math.max(values.length-1,1))*(width-pad*2);
+    const y=height-pad-((value-min)/range)*(height-pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Courbe sur 7 jours"><polyline points="${line}" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+async function loadMarketHistoryPreviews(){
+  try{
+    const data=await apiFetch("/api/market/history?days=7");
+    marketHistoryPreview=data.markets||{};
+    document.querySelectorAll("[data-sparkline]").forEach(el=>{
+      const points=marketHistoryPreview[el.dataset.sparkline]||[];
+      el.innerHTML=points.length?buildSparkline(points):"<span>Courbe indisponible</span>";
+    });
+  }catch(e){
+    document.querySelectorAll("[data-sparkline]").forEach(el=>el.innerHTML="<span>Courbe indisponible</span>");
+    console.warn("Historique marché:",e.message);
+  }
 }
 async function openHistory(symbol,days=7){
   historyState={symbol,days,prices:[]};
@@ -103,7 +129,8 @@ function openModal(type){authMode=type==="inscription"?"signup":"login";document
 function switchAuth(){openModal(authMode==="signup"?"connexion":"inscription")}
 async function submitAuth(){const email=document.getElementById("authEmail").value,password=document.getElementById("authPassword").value;const result=document.getElementById("authResult");result.textContent="Connexion…";try{const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify({email,password})});apiToken=d.token;localStorage.setItem("bitgold-token",apiToken);setConnected(true);closeModal();document.getElementById("compte")?.scrollIntoView({behavior:"smooth",block:"start"});try{await loadPortfolio()}catch(e){console.warn("Portfolio après authentification:",e.message)}}catch(e){result.textContent=e.message}}
 function closeModal(){document.getElementById("modal").hidden=true}
-loadMarket();setInterval(loadMarket,60000);
+async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews()}
+refreshMarketView();setInterval(refreshMarketView,60000);
 setConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
 window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
@@ -111,4 +138,5 @@ document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);
 document.querySelector("#topLogin")?.addEventListener("click",()=>openModal("connexion"));
 document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
+document.getElementById("marketGrid")?.addEventListener("click",event=>{const button=event.target.closest(".history-open");if(button) openHistory(button.dataset.symbol,7)});
 window.addEventListener("error",e=>{const el=document.getElementById("authResult");if(el)el.textContent="Erreur JavaScript : "+e.message;});

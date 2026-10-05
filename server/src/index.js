@@ -42,6 +42,7 @@ const marketIds = {
 };
 let marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
 let marketUpdatedAt = 0;
+const historyCache = new Map();
 
 async function refreshMarket(force=false) {
   if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
@@ -128,18 +129,36 @@ app.post("/api/auth/login", async (req,res) => {
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
 
+async function fetchHistory(symbol, days) {
+  const cacheKey=`${symbol}:${days}`;
+  const cached=historyCache.get(cacheKey);
+  if(cached && Date.now()-cached.updatedAt<60000) return cached.prices;
+  const id=marketIds[symbol];
+  if(!id) throw Error("Crypto inconnue.");
+  const response=await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=eur&days=${days}`,{headers:{accept:"application/json","user-agent":"BitGold/1.0"}});
+  if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
+  const data=await response.json();
+  const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
+  if(!pricesHistory.length) throw Error("Aucune donnée historique.");
+  historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
+  return pricesHistory;
+}
+app.get("/api/market/history",async(req,res)=>{
+  const days=Math.min(Math.max(Number(req.query.days||7),1),90);
+  try {
+    const entries=await Promise.all(Object.keys(marketIds).map(async symbol=>[symbol,await fetchHistory(symbol,days)]));
+    res.json({days,source:"CoinGecko",markets:Object.fromEntries(entries)});
+  } catch(e) {
+    console.error("[MARKET] history batch error",e.message);
+    res.status(502).json({error:"Historique temporairement indisponible."});
+  }
+});
 app.get("/api/market/history/:symbol",async(req,res)=>{
   const symbol=String(req.params.symbol||"").toUpperCase();
-  const days=Math.min(Math.max(Number(req.query.days||7),1),365);
-  const id=marketIds[symbol];
-  if(!id) return res.status(404).json({error:"Crypto inconnue."});
+  const days=Math.min(Math.max(Number(req.query.days||7),1),90);
+  if(!marketIds[symbol]) return res.status(404).json({error:"Crypto inconnue."});
   try {
-    const response=await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=eur&days=${days}&interval=${days<=1?"hourly":"daily"}`,{
-      headers:{accept:"application/json","user-agent":"BitGold/1.0"}
-    });
-    if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
-    const data=await response.json();
-    const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price));
+    const pricesHistory=await fetchHistory(symbol,days);
     res.json({symbol,days,source:"CoinGecko",prices:pricesHistory});
   } catch(e) {
     console.error("[MARKET] history error",symbol,e.message);
