@@ -62,30 +62,29 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   if(!points?.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
   const clean=points.map(p=>({timestamp:Number(p.timestamp),price:Number(p.price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
   if(!clean.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
-  const firstPrice=clean[0].price;
-  const values=clean.map(p=>((p.price-firstPrice)/firstPrice)*100);
-  const minValue=Math.min(...values,0),maxValue=Math.max(...values,0);
-  const spread=Math.max(maxValue-minValue,0.2);
-  const padding=spread*0.18;
-  const axisMin=minValue-padding,axisMax=maxValue+padding,valueRange=axisMax-axisMin||1;
-  const width=900,height=340,left=82,right=18,top=20,bottom=38;
+  const values=clean.map(p=>p.price);
+  const minValue=Math.min(...values),maxValue=Math.max(...values);
+  const spread=Math.max(maxValue-minValue,0.0000001);
+  const padding=spread*0.12;
+  const axisMin=Math.max(0,minValue-padding),axisMax=maxValue+padding,valueRange=axisMax-axisMin||1;
+  const width=900,height=340,left=92,right=18,top=20,bottom=38;
   const plotWidth=width-left-right,plotHeight=height-top-bottom;
   const coords=values.map((value,i)=>[left+(i/Math.max(values.length-1,1))*plotWidth,top+((axisMax-value)/valueRange)*plotHeight]);
   const line=coords.map(([x,y])=>x.toFixed(1)+","+y.toFixed(1)).join(" ");
   const area=line+" "+(width-right)+","+(height-bottom)+" "+left+","+(height-bottom);
-  const last=clean[clean.length-1];
-  const pct=values[values.length-1]||0;
+  const last=clean[clean.length-1],first=clean[0];
+  const pct=first.price?((last.price-first.price)/first.price)*100:0;
   const cls=pct>=0?"positive":"negative";
   const chartRange=HISTORY_RANGES[range]?range:"24h";
   const yTicks=Array.from({length:5},(_,i)=>axisMax-(valueRange*i/4));
-  const formatPercent=(value)=>((value>=0?"+":"")+Number(value).toFixed(2).replace(".",",")+"%");
   const yGrid=yTicks.map((value,i)=>{
     const y=top+(plotHeight*i/4);
-    return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".10\"/><text x=\""+(left-10)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".58\" font-size=\"12\">"+formatPercent(value)+"</text>";
+    return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".10\"/><text x=\""+(left-10)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".58\" font-size=\"12\">"+formatPrice(value)+"</text>";
   }).join("");
   const dateLabel=(timestamp)=>{const d=new Date(timestamp);return (chartRange==="5m"||chartRange==="1h"||chartRange==="24h")?d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:chartRange==="5y"?"numeric":undefined})};
   const mid=clean[Math.floor(clean.length/2)];
-  return "<div class=\"history-chart-wrap\"><div class=\"chart-labels\"><span>Performance relative</span><span>"+chartPeriodLabel(chartRange)+"</span></div><svg class=\"history-chart\" viewBox=\"0 0 "+width+" "+height+"\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Performance de "+symbol+" sur "+chartPeriodLabel(chartRange)+" en pourcentage\"><defs><linearGradient id=\"chartFill\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#c8ff45\" stop-opacity=\".24\"/><stop offset=\"100%\" stop-color=\"#c8ff45\" stop-opacity=\"0\"/></linearGradient></defs>"+yGrid+"<polygon points=\""+area+"\" fill=\"url(#chartFill)\"/><polyline points=\""+line+"\" fill=\"none\" stroke=\"#c8ff45\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><div class=\"history-axis\"><span>"+dateLabel(clean[0].timestamp)+"</span><span>"+dateLabel(mid.timestamp)+"</span><span>"+dateLabel(last.timestamp)+"</span></div></div><div class=\"history-stats\"><div><span>Départ</span><strong>0,00%</strong></div><div><span>Dernier cours</span><strong>"+formatPrice(last.price)+"</strong></div><div><span>Variation</span><strong class=\""+cls+"\">"+formatPercent(pct)+"</strong></div><div><span>Min / Max</span><strong>"+formatPrice(Math.min(...clean.map(p=>p.price)))+" / "+formatPrice(Math.max(...clean.map(p=>p.price)))+"</strong></div></div>";
+  const formatVariation=(value)=>(value>=0?"+":"")+Number(value).toFixed(2).replace(".",",")+"%";
+  return "<div class=\"history-chart-wrap\"><div class=\"chart-labels\"><span>Prix en euros</span><span>"+chartPeriodLabel(chartRange)+"</span></div><svg class=\"history-chart\" viewBox=\"0 0 "+width+" "+height+"\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Prix de "+symbol+" en euros sur "+chartPeriodLabel(chartRange)+"\"><defs><linearGradient id=\"chartFill\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#c8ff45\" stop-opacity=\".24\"/><stop offset=\"100%\" stop-color=\"#c8ff45\" stop-opacity=\"0\"/></linearGradient></defs>"+yGrid+"<polygon points=\""+area+"\" fill=\"url(#chartFill)\"/><polyline points=\""+line+"\" fill=\"none\" stroke=\"#c8ff45\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><div class=\"history-axis\"><span>"+dateLabel(first.timestamp)+"</span><span>"+dateLabel(mid.timestamp)+"</span><span>"+dateLabel(last.timestamp)+"</span></div></div><div class=\"history-stats\"><div><span>Départ</span><strong>"+formatPrice(first.price)+"</strong></div><div><span>Dernier cours</span><strong>"+formatPrice(last.price)+"</strong></div><div><span>Variation</span><strong class=\""+cls+"\">"+formatVariation(pct)+"</strong></div><div><span>Min / Max</span><strong>"+formatPrice(minValue)+" / "+formatPrice(maxValue)+"</strong></div></div>";
 }
 function seededNoise(seed,index){
   let x=(Math.imul((seed+index*374761393)|0,668265263)>>>0);

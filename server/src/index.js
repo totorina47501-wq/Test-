@@ -291,7 +291,6 @@ const HISTORY_RANGES={
   "30d":{label:"30 jours",days:30},
   "1y":{label:"1 an",days:365},
   "5y":{label:"5 ans",days:1825},
-  "max":{label:"Depuis création",days:"max"}
 };
 
 app.get("/api/market/details/:symbol",async(req,res)=>{
