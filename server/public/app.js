@@ -198,7 +198,7 @@ document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);
 document.querySelector("#topLogin")?.addEventListener("click",()=>openModal("connexion"));
 document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
-document.getElementById("marketGrid")?.addEventListener("click",event=>{if(event.target.closest("button"))return;const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto);const historyButton=event.target.closest(".history-open");if(historyButton){openHistory(historyButton.dataset.symbol,7);return}const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton)openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC")});
+document.getElementById("marketGrid")?.addEventListener("click",event=>{const historyButton=event.target.closest(".history-open");if(historyButton){event.stopPropagation();openHistory(historyButton.dataset.symbol,7);return}const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
 document.getElementById("simulateButton")?.addEventListener("click",simulate);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
