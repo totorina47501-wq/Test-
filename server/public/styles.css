@@ -16,3 +16,43 @@ body.modal-open{overflow:hidden}
 .crypto-detail-grid strong{font-size:1rem}
 .crypto-detail-actions{display:flex;gap:10px;margin-top:18px}
 @media(max-width:700px){.crypto-detail-head{flex-direction:column}.crypto-detail-price{align-items:flex-start}.crypto-detail-grid{grid-template-columns:repeat(2,1fr)}.crypto-detail-actions{flex-direction:column}}
+
+/* Marché premium */
+.market-section-head{align-items:flex-end}
+.section-subtitle{margin:0;color:#7f9189;font-size:14px;max-width:650px}
+.market-toolbar{display:flex;align-items:center;gap:18px}
+.market-toolbar .live{display:flex;align-items:center;gap:7px}
+.market-toolbar .live i,.market-live i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#c8ff45;box-shadow:0 0 10px #c8ff45}
+.market-periods{display:flex;gap:4px;padding:4px;background:#09150f;border:1px solid #213a30;border-radius:12px}
+.market-periods button{border:0;background:transparent;color:#71857c;padding:7px 11px;border-radius:8px;font-weight:750;cursor:pointer}
+.market-periods button.active{background:#c8ff45;color:#08110b}
+.market-grid{gap:18px}
+.market{position:relative;overflow:hidden;padding:20px;background:linear-gradient(145deg,#0e1d16,#0a1711);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.market:hover{border-color:#3d604f;box-shadow:0 18px 45px #0005}
+.market-card-head,.market-price-row,.market-chart-head,.market-card-foot{display:flex;align-items:center;justify-content:space-between}
+.market-card-head{gap:10px}
+.market-identity{display:flex;align-items:center;gap:11px;min-width:0}
+.market-identity>div{display:flex;flex-direction:column;min-width:0}
+.market-identity strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coin-mark{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#162a20;border:1px solid #29483a;color:#c8ff45;font-weight:900;font-size:13px}
+.market-live{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8da098;display:flex;align-items:center;gap:5px}
+.market-price-row{margin-top:17px;align-items:baseline}
+.market .price{margin:0;font-size:28px;letter-spacing:-.03em}
+.market-change{font-size:13px;font-weight:800;padding:5px 8px;border-radius:8px}
+.market-change.up{color:#c8ff45;background:#c8ff4510}
+.market-change.down{color:#ff8585;background:#ff858510}
+.market-chart-head{margin-top:18px;color:#708179;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.market-chart-head b{color:#b9c8c0}
+.market-sparkline{height:78px;margin-top:7px;border:0;background:linear-gradient(180deg,#0b1913,#08120e);border-radius:12px;padding:7px}
+.market-sparkline svg{height:100%}
+.market-card-foot{margin-top:8px;gap:8px}
+.market-meta{font-size:11px;color:#62766d}
+.market-arrow{font-size:11px;color:#a8b7b0}
+.market-actions{margin-top:14px;padding-top:13px;border-top:1px solid #1b3027}
+.market-btn{margin-top:0}
+.crypto-detail-chart .history-chart-wrap{border:0;padding:0;background:#07110d}
+.crypto-detail-chart .history-stats{display:none}
+.crypto-detail-chart .history-axis{padding:0 4px 4px}
+.chart-labels{display:flex;justify-content:space-between;color:#71857c;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin:0 0 7px}
+@media(max-width:900px){.market-section-head{align-items:flex-start}.market-toolbar{width:100%;justify-content:space-between}.market-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.market-toolbar{flex-direction:column;align-items:flex-start}.market-grid{grid-template-columns:1fr}.market{padding:18px}.market .price{font-size:25px}}

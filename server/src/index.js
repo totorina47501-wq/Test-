@@ -154,17 +154,23 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
   }
 });
 
+function fallbackNoise(seed,index) {
+  let x=(Math.imul((seed+index*374761393)|0,668265263)>>>0);
+  x^=x>>>13;
+  x=Math.imul(x,1274126177)>>>0;
+  return (x/4294967296)-0.5;
+}
 function buildFallbackHistory(symbol, days) {
   const base=Number(prices[symbol])||1;
   const points=Math.max(days===1?24:days===7?56:days===30?90:120,12);
   const now=Date.now();
   const span=Math.max(days,1)*86400000;
   const seed=symbol.split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
+  let level=1+((seed%9)-4)*0.001;
   return Array.from({length:points},(_,index)=>{
     const progress=index/Math.max(points-1,1);
-    const wave=Math.sin((progress*6+seed)*1.7)*0.018+Math.sin((progress*13+seed)*0.8)*0.009;
-    const trend=(progress-0.5)*0.018;
-    return {timestamp:now-span+(span*progress),price:base*(1+wave+trend)};
+    level=Math.max(.93,Math.min(1.07,level+fallbackNoise(seed,index)*.012+fallbackNoise(seed+97,index)*.004));
+    return {timestamp:now-span+(span*progress),price:base*level};
   });
 }
 

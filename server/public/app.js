@@ -10,19 +10,25 @@ let state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0}};
 const marketNames={BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"};
 let marketPrices={BTC:67420.10,ETH:3248.70,SOL:154.20,USDC:0.92,LINK:17.84,AVAX:28.16};
 const fallbackMarkets=[["Bitcoin","BTC",67420.10,0],["Ethereum","ETH",3248.70,0],["Solana","SOL",154.20,0],["USD Coin","USDC",0.92,0],["Chainlink","LINK",17.84,0],["Avalanche","AVAX",28.16,0]];
+let marketPreviewDays=1;
 function renderMarket(markets){
-  document.getElementById("marketGrid").innerHTML=markets.map(({symbol,price,change24h})=>{
+  document.getElementById("marketGrid").innerHTML=markets.map(({symbol,price,change24h,marketCap})=>{
     const name=marketNames[symbol]||symbol;
     const change=Number(change24h||0);
     marketPrices[symbol]=Number(price)||marketPrices[symbol];
-    const priceText=Number(marketPrices[symbol]).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+    const priceText=Number(marketPrices[symbol]).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:marketPrices[symbol]<10?4:2})+" €";
     const changeText=(change>0?"+":"")+change.toFixed(2).replace(".",",")+"%";
     const canTrade=["BTC","ETH","SOL","USDC","LINK","AVAX"].includes(symbol);
     return `<article class="market market-clickable" data-crypto="${symbol}">
-      <div class="market-top"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><span class="market-dot">●</span></div>
-      <div class="price">${priceText}</div>
-      <div class="${change<0?"symbol":"positive"}">${changeText} <span class="change-label">24h</span></div>
-      <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement de la courbe…</span></div><div class="market-actions"><button class="btn btn-ghost market-btn history-open" data-symbol="${symbol}" type="button">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter</button>`:""}</div>
+      <div class="market-card-head">
+        <div class="market-identity"><span class="coin-mark coin-${symbol.toLowerCase()}">${symbol.slice(0,1)}</span><div><strong>${name}</strong><span class="symbol">${symbol}</span></div></div>
+        <span class="market-live"><i></i> Live</span>
+      </div>
+      <div class="market-price-row"><div class="price">${priceText}</div><span class="market-change ${change>=0?"up":"down"}">${changeText}</span></div>
+      <div class="market-chart-head"><span>Évolution <b>${marketPreviewDays===1?"24h":marketPreviewDays+"j"}</b></span><span>EUR</span></div>
+      <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement…</span></div>
+      <div class="market-card-foot"><span class="market-meta">${marketCap?formatCompactEuro(marketCap)+" cap.": "Marché crypto"}</span><span class="market-arrow">Voir le détail →</span></div>
+      <div class="market-actions"><button class="btn btn-ghost market-btn history-open" data-symbol="${symbol}" type="button">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter</button>`:""}</div>
     </article>`;
   }).join("");
 }
@@ -43,9 +49,9 @@ function formatPrice(value){
   return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:value<10?4:2})+" €";
 }
 function chartPeriodLabel(chartDays){
-  if(days===1) return "24h";
-  if(days===7) return "7 jours";
-  if(days===30) return "30 jours";
+  if(chartDays===1) return "24 heures";
+  if(chartDays===7) return "7 jours";
+  if(chartDays===30) return "30 jours";
   return "90 jours";
 }
 function formatChartValue(value){
@@ -55,81 +61,77 @@ function formatChartValue(value){
   return n.toLocaleString("fr-FR",{maximumFractionDigits:4})+" €";
 }
 function buildHistoryChart(points,symbol=historyState.symbol,days=historyState.days){
-  if(!points.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
-  const values=points.map(p=>Number(p.price)).filter(Number.isFinite);
+  if(!points?.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
+  const clean=points.map(p=>({timestamp:Number(p.timestamp),price:Number(p.price)})).filter(p=>Number.isFinite(p.price));
+  if(!clean.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
+  const values=clean.map(p=>p.price);
   const minValue=Math.min(...values),maxValue=Math.max(...values);
-  const spread=Math.max(maxValue-minValue,Math.abs(maxValue)*0.002,0.0001);
-  const step=spread/4;
-  const axisMin=Math.max(0,minValue-step);
-  const axisMax=maxValue+step;
-  const range=axisMax-axisMin||1;
-  const width=900,height=320,left=78,right=18,top=18,bottom=38;
+  const spread=Math.max(maxValue-minValue,Math.abs(maxValue)*0.001,0.0001);
+  const padding=spread*0.18;
+  const axisMin=Math.max(0,minValue-padding),axisMax=maxValue+padding,range=axisMax-axisMin||1;
+  const width=900,height=340,left=82,right=18,top=20,bottom=38;
   const plotWidth=width-left-right,plotHeight=height-top-bottom;
-  const coords=values.map((value,i)=>{
-    const x=left+(i/Math.max(values.length-1,1))*plotWidth;
-    const y=top+((axisMax-value)/range)*plotHeight;
-    return [x,y];
-  });
+  const coords=values.map((value,i)=>[left+(i/Math.max(values.length-1,1))*plotWidth,top+((axisMax-value)/range)*plotHeight]);
   const line=coords.map(([x,y])=>x.toFixed(1)+","+y.toFixed(1)).join(" ");
-  const first=points[0],last=points[points.length-1];
-  const delta=Number(last.price)-Number(first.price);
-  const pct=first.price?delta/first.price*100:0;
+  const area=line+" "+(width-right)+","+(height-bottom)+" "+left+","+(height-bottom);
+  const first=clean[0],last=clean[clean.length-1];
+  const delta=last.price-first.price,pct=first.price?delta/first.price*100:0;
   const cls=pct>=0?"positive":"negative";
   const chartDays=Number(days)||7;
   const yTicks=Array.from({length:5},(_,i)=>axisMax-(range*i/4));
   const yGrid=yTicks.map((value,i)=>{
     const y=top+(plotHeight*i/4);
-    return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".12\"/><text x=\""+(left-8)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".65\" font-size=\"12\">"+formatChartValue(value)+"</text>";
+    return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".10\"/><text x=\""+(left-10)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".58\" font-size=\"12\">"+formatChartValue(value)+"</text>";
   }).join("");
   const dateLabel=(timestamp)=>chartDays===1?new Date(timestamp).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):new Date(timestamp).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
-  return "<div class=\"history-chart-wrap\"><svg class=\"history-chart\" viewBox=\"0 0 "+width+" "+height+"\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Évolution du cours de "+symbol+" sur "+chartPeriodLabel(chartDays)+"\">"+yGrid+"<polyline points=\""+line+"\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><div class=\"history-axis\"><span>"+dateLabel(first.timestamp)+"</span><span>"+dateLabel(last.timestamp)+"</span></div></div><div class=\"history-stats\"><div><span>Début</span><strong>"+formatPrice(first.price)+"</strong></div><div><span>Fin</span><strong>"+formatPrice(last.price)+"</strong></div><div><span>Variation</span><strong class=\""+cls+"\">"+(pct>=0?"+":"")+pct.toFixed(2).replace(".",",")+"%</strong></div><div><span>Min / Max</span><strong>"+formatPrice(minValue)+" / "+formatPrice(maxValue)+"</strong></div></div>";
+  const mid=clean[Math.floor(clean.length/2)];
+  return "<div class=\"history-chart-wrap\"><div class=\"chart-labels\"><span>Prix en EUR</span><span>"+chartPeriodLabel(chartDays)+"</span></div><svg class=\"history-chart\" viewBox=\"0 0 "+width+" "+height+"\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Évolution du cours de "+symbol+" sur "+chartPeriodLabel(chartDays)+"\"><defs><linearGradient id=\"chartFill\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#c8ff45\" stop-opacity=\".24\"/><stop offset=\"100%\" stop-color=\"#c8ff45\" stop-opacity=\"0\"/></linearGradient></defs>"+yGrid+"<polygon points=\""+area+"\" fill=\"url(#chartFill)\"/><polyline points=\""+line+"\" fill=\"none\" stroke=\"#c8ff45\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><div class=\"history-axis\"><span>"+dateLabel(first.timestamp)+"</span><span>"+dateLabel(mid.timestamp)+"</span><span>"+dateLabel(last.timestamp)+"</span></div></div><div class=\"history-stats\"><div><span>Début</span><strong>"+formatPrice(first.price)+"</strong></div><div><span>Dernier cours</span><strong>"+formatPrice(last.price)+"</strong></div><div><span>Variation</span><strong class=\""+cls+"\">"+(pct>=0?"+":"")+pct.toFixed(2).replace(".",",")+"%</strong></div><div><span>Min / Max</span><strong>"+formatPrice(minValue)+" / "+formatPrice(maxValue)+"</strong></div></div>";
+}
+function seededNoise(seed,index){
+  let x=(Math.imul((seed+index*374761393)|0,668265263)>>>0);
+  x^=x>>>13;
+  x=Math.imul(x,1274126177)>>>0;
+  return (x/4294967296)-0.5;
 }
 function fallbackHistory(symbol,days){
   const base=Number(marketPrices[symbol])||1;
   const count=Math.max(days===1?24:days===7?56:days===30?90:120,12);
-  const span=Math.max(days,1)*86400000;
-  const seed=String(symbol).split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
-  const now=Date.now();
+  const span=Math.max(days,1)*86400000,seed=String(symbol).split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
+  const now=Date.now(); let level=1+((seed%9)-4)*0.001;
   return Array.from({length:count},(_,index)=>{
     const progress=index/Math.max(count-1,1);
-    const wave=Math.sin((progress*6+seed)*1.7)*0.018+Math.sin((progress*13+seed)*0.8)*0.009;
-    const trend=(progress-0.5)*0.018;
-    return {timestamp:now-span+(span*progress),price:base*(1+wave+trend)};
+    level=Math.max(.93,Math.min(1.07,level+seededNoise(seed,index)*.012+seededNoise(seed+97,index)*.004));
+    return {timestamp:now-span+(span*progress),price:base*level};
   });
 }
 function buildSparkline(points){
   if(!points?.length) return "";
-  const values=points.map(p=>Number(p.price));
-  const min=Math.min(...values),max=Math.max(...values),range=max-min||1;
-  const width=240,height=58,pad=3;
-  const line=values.map((value,i)=>{
-    const x=pad+(i/Math.max(values.length-1,1))*(width-pad*2);
-    const y=height-pad-((value-min)/range)*(height-pad*2);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-  return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Courbe sur 24 heures"><polyline points="${line}" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const values=points.map(p=>Number(p.price)).filter(Number.isFinite);
+  if(!values.length) return "";
+  const min=Math.min(...values),max=Math.max(...values),range=max-min||Math.max(max*.002,.0001);
+  const width=240,height=64,pad=4;
+  const line=values.map((value,i)=>{const x=pad+(i/Math.max(values.length-1,1))*(width-pad*2);const y=height-pad-((value-min)/range)*(height-pad*2);return x.toFixed(1)+","+y.toFixed(1)}).join(" ");
+  return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Courbe sur ${marketPreviewDays===1?"24 heures":marketPreviewDays+" jours"}"><defs><linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8ff45" stop-opacity=".20"/><stop offset="100%" stop-color="#c8ff45" stop-opacity="0"/></linearGradient></defs><polyline points="${line} ${width-pad},${height-pad} ${pad},${height-pad}" fill="url(#sparkFill)" stroke="none"/><polyline points="${line}" fill="none" stroke="#c8ff45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
 function fallbackSparkline(symbol){
-  const base=Number(marketPrices[symbol])||1;
-  const seed=String(symbol).split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
+  const base=Number(marketPrices[symbol])||1,seed=String(symbol).split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
   let level=1;
-  const points=Array.from({length:24},(_,i)=>{
-    level=Math.max(0.985,Math.min(1.015,level+seededNoise(seed,i)*0.006+seededNoise(seed+17,i)*0.002));
-    return {timestamp:Date.now()-(23-i)*3600000,price:base*level};
-  });
+  const count=marketPreviewDays===1?24:marketPreviewDays===7?56:marketPreviewDays===30?90:120;
+  const span=Math.max(marketPreviewDays,1)*86400000;
+  const points=Array.from({length:count},(_,i)=>{level=Math.max(.985,Math.min(1.015,level+seededNoise(seed,i)*.006+seededNoise(seed+17,i)*.002));return {timestamp:Date.now()-span+(span*i/Math.max(count-1,1)),price:base*level}});
   return buildSparkline(points);
 }
 async function loadMarketHistoryPreviews(){
   try{
-    const data=await apiFetch("/api/market/history?days=1");
+    const data=await apiFetch("/api/market/history?days="+marketPreviewDays);
     marketHistoryPreview=data.markets||{};
-  }catch(e){
-    console.warn("Historique marché groupé:",e.message);
-  }
-  document.querySelectorAll("[data-sparkline]").forEach(el=>{
-    const points=marketHistoryPreview[el.dataset.sparkline]||[];
-    el.innerHTML=points.length?buildSparkline(points):fallbackSparkline(el.dataset.sparkline);
-  });
+  }catch(e){console.warn("Historique marché groupé:",e.message)}
+  document.querySelectorAll("[data-sparkline]").forEach(el=>{const points=marketHistoryPreview[el.dataset.sparkline]||[];el.innerHTML=points.length?buildSparkline(points):fallbackSparkline(el.dataset.sparkline)});
+}
+async function setMarketPreviewRange(days){
+  marketPreviewDays=Number(days)||1;
+  document.querySelectorAll(".market-periods button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===marketPreviewDays));
+  await loadMarketHistoryPreviews();
 }
 async function openHistory(symbol,days=7){
   historyState={symbol,days,prices:[]};
@@ -137,17 +139,17 @@ async function openHistory(symbol,days=7){
   document.getElementById("historyTitle").textContent=`${marketNames[symbol]||symbol} (${symbol})`;
   document.getElementById("historySource").textContent="Chargement de l'historique…";
   document.getElementById("historyChart").innerHTML="<div class=\"history-loading\">Chargement des cours…</div>";
-  modal.hidden=false;
+  modal.hidden=false;document.body.classList.add("modal-open");
   document.querySelectorAll(".history-range button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===days));
   try{
     const data=await apiFetch(`/api/market/history/${encodeURIComponent(symbol)}?days=${days}`);
     historyState.prices=data.prices||[];
-    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices);
-    document.getElementById("historySource").textContent=`Source : CoinGecko · ${historyState.prices.length} points`;
+    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices,symbol,days);
+    document.getElementById("historySource").textContent=`Source : ${data.source||"BitGold"} · ${historyState.prices.length} points`;
   }catch(e){
     historyState.prices=fallbackHistory(symbol,days);
-    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices);
-    document.getElementById("historySource").textContent="Source : BitGold · courbe de secours (CoinGecko indisponible)";
+    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices,symbol,days);
+    document.getElementById("historySource").textContent="Source : BitGold · données de secours";
   }
 }
 function formatCompactEuro(value){
@@ -225,12 +227,13 @@ function closeModal(){document.getElementById("modal").hidden=true;document.body
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews()}
 refreshMarketView();setInterval(refreshMarketView,60000);
 setConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
-window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;
+window.openModal=openModal;window.setMarketPreviewRange=setMarketPreviewRange;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);
 document.querySelector("#topLogin")?.addEventListener("click",()=>openModal("connexion"));
 document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
+document.querySelectorAll(".market-periods button").forEach(button=>button.addEventListener("click",()=>setMarketPreviewRange(Number(button.dataset.days))));
 document.getElementById("marketGrid")?.addEventListener("click",event=>{const historyButton=event.target.closest(".history-open");if(historyButton){event.stopPropagation();openHistory(historyButton.dataset.symbol,7);return}const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
 document.getElementById("simulateButton")?.addEventListener("click",simulate);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
@@ -350,7 +353,7 @@ async function openCryptoDetail(symbol){
     setDetailText("detail7dMax",values.length?formatPrice(Math.max(...values)):"—");
     setDetailText("detailMarketCap",formatCompactEuro(data.marketCap));
     setDetailText("detailVolume",formatCompactEuro(data.volume24h));
-    document.getElementById("cryptoDetailChart").innerHTML=points.length?buildSparkline(points).replace("<svg","<svg class=\"crypto-detail-svg\""):"<div class=\"history-empty\">Historique indisponible.</div>";
+    document.getElementById("cryptoDetailChart").innerHTML=points.length?buildHistoryChart(points,symbol,7):"<div class=\"history-empty\">Historique indisponible.</div>";
     setDetailText("cryptoDetailSource","Source : CoinGecko · données mises à jour automatiquement");
     document.getElementById("detailHistory").onclick=()=>{closeCryptoDetail();openHistory(symbol,7)};
     document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
