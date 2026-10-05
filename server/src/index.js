@@ -48,27 +48,33 @@ async function refreshMarket(force=false) {
   if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
   try {
     const ids = Object.values(marketIds).join(",");
-    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true`, {
+    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true&include_market_cap_rank=true`, {
       headers: { accept: "application/json", "user-agent": "BitGold/1.0" }
     });
     if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
     const data = await response.json();
     marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
-      const item = data[id];
-      const price = Number(item?.eur);
-      const change24h = Number(item?.eur_24h_change);
+      const item = data[id] || {};
+      const price = Number(item.eur);
+      const change24h = Number(item.eur_24h_change);
+      const marketCap = Number(item.eur_market_cap);
+      const volume24h = Number(item.eur_24h_vol);
+      const marketCapRank = Number(item.eur_market_cap_rank);
       if(Number.isFinite(price) && price > 0) prices[symbol] = price;
       return {
         symbol,
         price: Number.isFinite(price) && price > 0 ? price : prices[symbol],
-        change24h: Number.isFinite(change24h) ? change24h : 0
+        change24h: Number.isFinite(change24h) ? change24h : 0,
+        marketCap: Number.isFinite(marketCap) ? marketCap : null,
+        volume24h: Number.isFinite(volume24h) ? volume24h : null,
+        marketCapRank: Number.isFinite(marketCapRank) ? marketCapRank : null
       };
     });
     marketUpdatedAt = Date.now();
   } catch(e) {
     console.error("[MARKET] refresh error", e.message);
     if(!marketSnapshot.length) {
-      marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
+      marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0,marketCap:null,volume24h:null,marketCapRank:null}));
     }
   }
   return marketSnapshot;
@@ -128,6 +134,25 @@ app.post("/api/auth/login", async (req,res) => {
 
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
+app.get("/api/market/details/:symbol",async(req,res)=>{
+  const symbol=String(req.params.symbol||"").toUpperCase();
+  if(!marketIds[symbol]) return res.status(404).json({error:"Crypto inconnue."});
+  const market=await refreshMarket();
+  const item=market.find(row=>row.symbol===symbol);
+  try {
+    const pricesHistory=await fetchHistory(symbol,7);
+    const values=pricesHistory.map(point=>Number(point.price));
+    res.json({
+      ...item,
+      name:{BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"}[symbol],
+      days7:{min:Math.min(...values),max:Math.max(...values),points:pricesHistory},
+      source:"CoinGecko"
+    });
+  } catch(e) {
+    console.error("[MARKET] detail error",symbol,e.message);
+    res.json({...item,name:symbol,days7:{min:item.price,max:item.price,points:[]},source:"CoinGecko"});
+  }
+});
 
 async function fetchHistory(symbol, days) {
   const cacheKey=`${symbol}:${days}`;

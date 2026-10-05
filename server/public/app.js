@@ -18,7 +18,7 @@ function renderMarket(markets){
     const priceText=Number(marketPrices[symbol]).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
     const changeText=(change>0?"+":"")+change.toFixed(2).replace(".",",")+"%";
     const canTrade=["BTC","ETH","SOL"].includes(symbol);
-    return `<article class="market">
+    return `<article class="market market-clickable" data-crypto="${symbol}">
       <div class="market-top"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><span class="market-dot">●</span></div>
       <div class="price">${priceText}</div>
       <div class="${change<0?"symbol":"positive"}">${changeText} <span class="change-label">24h</span></div>
@@ -113,6 +113,59 @@ async function openHistory(symbol,days=7){
     document.getElementById("historySource").textContent="Historique indisponible";
   }
 }
+function formatCompactEuro(value){
+  const n=Number(value);
+  if(!Number.isFinite(n)) return "—";
+  if(n>=1e9) return (n/1e9).toLocaleString("fr-FR",{maximumFractionDigits:2})+" Md €";
+  if(n>=1e6) return (n/1e6).toLocaleString("fr-FR",{maximumFractionDigits:2})+" M €";
+  return n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+}
+function setDetailText(id,value){const el=document.getElementById(id);if(el)el.textContent=value}
+async function openCryptoDetail(symbol){
+  const modal=document.getElementById("cryptoDetailModal");
+  if(!modal) return;
+  document.body.classList.add("modal-open");
+  modal.hidden=false;
+  setDetailText("cryptoDetailTitle",`${marketNames[symbol]||symbol} (${symbol})`);
+  setDetailText("cryptoDetailRank","Chargement…");
+  setDetailText("cryptoDetailPrice","—");
+  setDetailText("cryptoDetailChange","—");
+  setDetailText("detailCurrentPrice","—");
+  setDetailText("detail24h","—");
+  setDetailText("detail7dMin","—");
+  setDetailText("detail7dMax","—");
+  setDetailText("detailMarketCap","—");
+  setDetailText("detailVolume","—");
+  setDetailText("cryptoDetailSource","Chargement des données…");
+  document.getElementById("cryptoDetailChart").innerHTML="<div class=\"history-loading\">Chargement des données…</div>";
+  try{
+    const data=await apiFetch(`/api/market/details/${encodeURIComponent(symbol)}`);
+    marketPrices[symbol]=Number(data.price)||marketPrices[symbol];
+    const price=formatPrice(data.price);
+    const change=Number(data.change24h||0);
+    setDetailText("cryptoDetailPrice",price);
+    const changeEl=document.getElementById("cryptoDetailChange");
+    changeEl.textContent=(change>=0?"+":"")+change.toFixed(2).replace(".",",")+"% · 24h";
+    changeEl.className=change>=0?"positive":"negative";
+    setDetailText("cryptoDetailRank",data.marketCapRank? `Classement #${data.marketCapRank}`:"Classement indisponible");
+    setDetailText("detailCurrentPrice",price);
+    setDetailText("detail24h",(change>=0?"+":"")+change.toFixed(2).replace(".",",")+"%");
+    const points=data.days7?.points||[];
+    const values=points.map(p=>Number(p.price)).filter(Number.isFinite);
+    setDetailText("detail7dMin",values.length?formatPrice(Math.min(...values)):"—");
+    setDetailText("detail7dMax",values.length?formatPrice(Math.max(...values)):"—");
+    setDetailText("detailMarketCap",formatCompactEuro(data.marketCap));
+    setDetailText("detailVolume",formatCompactEuro(data.volume24h));
+    document.getElementById("cryptoDetailChart").innerHTML=points.length?buildSparkline(points).replace("<svg","<svg class=\"crypto-detail-svg\""):"<div class=\"history-empty\">Historique indisponible.</div>";
+    setDetailText("cryptoDetailSource","Source : CoinGecko · données mises à jour automatiquement");
+    document.getElementById("detailHistory").onclick=()=>{closeCryptoDetail();openHistory(symbol,7)};
+    document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
+  }catch(e){
+    document.getElementById("cryptoDetailChart").innerHTML=`<div class="history-empty">${e.message}</div>`;
+    setDetailText("cryptoDetailSource","Données temporairement indisponibles");
+  }
+}
+function closeCryptoDetail(){const modal=document.getElementById("cryptoDetailModal");if(modal)modal.hidden=true;document.body.classList.remove("modal-open")}
 function setHistoryRange(days){
   historyState.days=days;
   document.querySelectorAll(".history-range button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===days));
@@ -135,19 +188,19 @@ function closeModal(){document.getElementById("modal").hidden=true;document.body
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews()}
 refreshMarketView();setInterval(refreshMarketView,60000);
 setConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
-window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;
+window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);
 document.querySelector("#topLogin")?.addEventListener("click",()=>openModal("connexion"));
 document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
-document.getElementById("marketGrid")?.addEventListener("click",event=>{const historyButton=event.target.closest(".history-open");if(historyButton){openHistory(historyButton.dataset.symbol,7);return}const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton)openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC")});
+document.getElementById("marketGrid")?.addEventListener("click",event=>{if(event.target.closest("button"))return;const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto);const historyButton=event.target.closest(".history-open");if(historyButton){openHistory(historyButton.dataset.symbol,7);return}const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton)openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC")});
 document.getElementById("simulateButton")?.addEventListener("click",simulate);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
 document.getElementById("tradeConfirm")?.addEventListener("click",executeTrade);
-document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="historyModal")closeHistory();else if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="modal")closeModal()}));
+document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="historyModal")closeHistory();else if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="cryptoDetailModal")closeCryptoDetail();else if(modal?.id==="modal")closeModal()}));
 document.querySelectorAll(".history-range button").forEach(button=>button.addEventListener("click",()=>setHistoryRange(Number(button.dataset.days))));
-document.querySelectorAll(".modal").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal){if(modal.id==="historyModal")closeHistory();else if(modal.id==="tradeModal")closeTrade();else if(modal.id==="modal")closeModal()}}));
-document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const open=document.querySelector(".modal:not([hidden])");if(!open)return;if(open.id==="historyModal")closeHistory();else if(open.id==="tradeModal")closeTrade();else closeModal()});
+document.querySelectorAll(".modal").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal){if(modal.id==="historyModal")closeHistory();else if(modal.id==="tradeModal")closeTrade();else if(modal.id==="cryptoDetailModal")closeCryptoDetail();else if(modal.id==="modal")closeModal()}}));
+document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const open=document.querySelector(".modal:not([hidden])");if(!open)return;if(open.id==="historyModal")closeHistory();else if(open.id==="tradeModal")closeTrade();else if(open.id==="cryptoDetailModal")closeCryptoDetail();else closeModal()});
 window.addEventListener("error",e=>{const el=document.getElementById("authResult");if(el)el.textContent="Erreur JavaScript : "+e.message;});
