@@ -63,7 +63,8 @@ async function submitAuth(){
     apiToken=d.token;localStorage.setItem("bitgold-token",apiToken);
     await loadPortfolio();
     result.textContent="Compte connecté.";
-    setTimeout(closeModal,500);
+    closeModal();
+    document.getElementById("compte")?.scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){result.textContent=e.message}
 }
 function closeModal(){document.getElementById("modal").hidden=true}
