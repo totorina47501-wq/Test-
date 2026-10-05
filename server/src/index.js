@@ -286,7 +286,7 @@ app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.
 const HISTORY_RANGES={
   "5m":{label:"5 min",days:1,maxAgeMs:5*60*1000},
   "1h":{label:"1 h",days:1,maxAgeMs:60*60*1000},
-  "24h":{label:"24 h",days:1},
+  "24h":{label:"24 h",days:1,maxAgeMs:24*60*60*1000},
   "7d":{label:"7 jours",days:7},
   "30d":{label:"30 jours",days:30},
   "1y":{label:"1 an",days:365},
@@ -324,12 +324,14 @@ function fallbackNoise(seed,index) {
   x=Math.imul(x,1274126177)>>>0;
   return (x/4294967296)-0.5;
 }
-function buildFallbackHistory(symbol, days) {
+function buildFallbackHistory(symbol, days, maxAgeMs=null) {
   const base=Number(prices[symbol])||1;
   const numericDays=days==="max"?3650:Math.max(Number(days)||7,1);
-  const points=Math.min(1000,Math.max(numericDays===1?288:numericDays===7?56:numericDays===30?90:numericDays>=365?365:120,12));
+  const fallbackWindowMs=Number.isFinite(maxAgeMs)&&maxAgeMs>0?maxAgeMs:numericDays*86400000;
+  const fallbackDays=fallbackWindowMs/86400000;
+  const points=maxAgeMs===5*60*1000?12:maxAgeMs===60*60*1000?24:Math.min(1000,Math.max(numericDays===1?288:numericDays===7?168:numericDays===30?720:numericDays>=365?365:120,12));
   const now=Date.now();
-  const span=numericDays*86400000;
+  const span=fallbackWindowMs;
   const seed=symbol.split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
   let level=1+((seed%9)-4)*0.001;
   return Array.from({length:points},(_,index)=>{
@@ -379,9 +381,9 @@ async function fetchHistoryRange(symbol,range){
   if(config.maxAgeMs){
     const cutoff=Date.now()-config.maxAgeMs;
     pricesHistory=source.filter(point=>Number(point.timestamp)>=cutoff);
-    if(pricesHistory.length<2)pricesHistory=buildFallbackHistory(symbol,1).filter(point=>Number(point.timestamp)>=cutoff);
+    if(pricesHistory.length<2)pricesHistory=buildFallbackHistory(symbol,1,config.maxAgeMs).filter(point=>Number(point.timestamp)>=cutoff);
   }
-  if(!pricesHistory.length)pricesHistory=buildFallbackHistory(symbol,config.days);
+  if(!pricesHistory.length)pricesHistory=buildFallbackHistory(symbol,config.days,config.maxAgeMs);
   historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
   return pricesHistory;
 }
