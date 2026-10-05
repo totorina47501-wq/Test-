@@ -21,6 +21,7 @@ setConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>con
 window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
-document.querySelector(".top-actions .btn-outline")?.addEventListener("click",()=>openModal("connexion"));
-document.querySelector(".hero .btn-primary")?.addEventListener("click",()=>openModal("inscription"));
+document.getElementById("authClose")?.addEventListener("click",closeModal);
+document.querySelector("#topLogin")?.addEventListener("click",()=>openModal("connexion"));
+document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
 window.addEventListener("error",e=>{const el=document.getElementById("authResult");if(el)el.textContent="Erreur JavaScript : "+e.message;});
