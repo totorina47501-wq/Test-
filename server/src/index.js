@@ -77,7 +77,7 @@ async function refreshMarket(force=false) {
   if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
   try {
     const ids = Object.values(marketIds).join(",");
-    const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true&include_market_cap_rank=true`);
+    const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
     if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
     const data = await response.json();
     marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
@@ -86,7 +86,6 @@ async function refreshMarket(force=false) {
       const change24h = Number(item.eur_24h_change);
       const marketCap = Number(item.eur_market_cap);
       const volume24h = Number(item.eur_24h_vol);
-      const marketCapRank = Number(item.eur_market_cap_rank);
       if(Number.isFinite(price) && price > 0) prices[symbol] = price;
       return {
         symbol,
@@ -94,7 +93,7 @@ async function refreshMarket(force=false) {
         change24h: Number.isFinite(change24h) ? change24h : 0,
         marketCap: Number.isFinite(marketCap) ? marketCap : null,
         volume24h: Number.isFinite(volume24h) ? volume24h : null,
-        marketCapRank: Number.isFinite(marketCapRank) ? marketCapRank : null
+        marketCapRank: null
       };
     });
     marketUpdatedAt = Date.now();
