@@ -19,7 +19,7 @@ function renderMarket(markets){
       <div class="market-top"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><span class="market-dot">●</span></div>
       <div class="price">${priceText}</div>
       <div class="${change<0?"symbol":"positive"}">${changeText} <span class="change-label">24h</span></div>
-      <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement de la courbe…</span></div><div class="market-actions"><button class="btn btn-ghost market-btn history-open" data-symbol="${symbol}" type="button">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" onclick="openTrade('buy','${symbol}')">Acheter</button>`:""}</div>
+      <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement de la courbe…</span></div><div class="market-actions"><button class="btn btn-ghost market-btn history-open" data-symbol="${symbol}" type="button">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter</button>`:""}</div>
     </article>`;
   }).join("");
 }
