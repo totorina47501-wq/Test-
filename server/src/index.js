@@ -148,7 +148,7 @@ async function fetchNews(){
   const response=await fetch(feed,{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});
   if(!response.ok)throw Error(`News HTTP ${response.status}`);
   const xml=await response.text();
-  const items=[...xml.matchAll(/<item>([\s\S]*?)<\\/item>/gi)].slice(0,12).map(match=>{
+  const items=[...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0,12).map(match=>{
     const block=match[1];
     const pick=tag=>{
       const found=block.match(new RegExp("<"+tag+"[^>]*>([\s\S]*?)</"+tag+">","i"));
