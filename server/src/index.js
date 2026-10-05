@@ -1,5 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -9,6 +11,7 @@ import pg from "pg";
 
 const { Pool } = pg;
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const secret = process.env.JWT_SECRET || "dev-only-change-me";
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -26,6 +29,7 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
 app.use(express.json());
 app.use(rateLimit({ windowMs: 60000, max: 120, standardHeaders: true, legacyHeaders: false }));
+app.use(express.static(path.join(__dirname, "../../public")));
 
 const prices = { BTC: 67420.10, ETH: 3248.70, SOL: 154.20 };
 function token(user){ return jwt.sign({sub:user.id,email:user.email},secret,{expiresIn:"7d"}); }
