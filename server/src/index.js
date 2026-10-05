@@ -187,7 +187,7 @@ async function fetchCoinGeckoNews(){
   if(!response.ok) throw Error("CoinGecko News HTTP "+response.status);
   const payload=await response.json();
   const raw=Array.isArray(payload)?payload:(Array.isArray(payload.data)?payload.data:[]);
-  const items=raw.map(normalizeNewsItem).filter(item=>item.title&&/^https?:\\/\\//i.test(item.url));
+  const items=raw.map(normalizeNewsItem).filter(item=>item.title&&/^https?:\/\//i.test(item.url));
   if(!items.length) throw Error("Aucun article CoinGecko");
   return items;
 }
