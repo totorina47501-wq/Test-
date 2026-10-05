@@ -3,19 +3,7 @@ body.modal-open{overflow:hidden}
 
 .market-clickable{cursor:pointer}
 .market-clickable:hover{transform:translateY(-2px)}
-.crypto-detail-box{max-width:900px}
-.crypto-detail-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin:10px 0 18px}
-.crypto-detail-head h3{margin:0 0 6px}
-.crypto-detail-price{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
-.crypto-detail-price strong{font-size:2rem}
-.crypto-detail-chart{min-height:170px;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px;margin:12px 0 18px;overflow:hidden}
-.crypto-detail-svg{width:100%;height:170px;display:block}
-.crypto-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.crypto-detail-grid>div{padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:12px}
-.crypto-detail-grid span{display:block;font-size:.78rem;opacity:.7;margin-bottom:6px}
-.crypto-detail-grid strong{font-size:1rem}
-.crypto-detail-actions{display:flex;gap:10px;margin-top:18px}
-@media(max-width:700px){.crypto-detail-head{flex-direction:column}.crypto-detail-price{align-items:flex-start}.crypto-detail-grid{grid-template-columns:repeat(2,1fr)}.crypto-detail-actions{flex-direction:column}}
+.crypto-detail-box{width:min(1180px,96vw);max-width:1180px;max-height:94vh;overflow:auto;padding:34px}.crypto-detail-head{display:flex;justify-content:space-between;gap:32px;align-items:flex-start;margin:10px 0 22px}.crypto-detail-head h3{margin:0 0 8px;font-size:30px}.crypto-detail-price{display:flex;flex-direction:column;align-items:flex-end;gap:7px}.crypto-detail-price strong{font-size:2.65rem}.crypto-detail-chart{min-height:430px;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:18px;margin:16px 0 22px;overflow:hidden}.crypto-detail-svg{width:100%;height:390px;display:block}.crypto-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.crypto-detail-grid>div{padding:20px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:#0b1711}.crypto-detail-grid span{display:block;font-size:.85rem;opacity:.7;margin-bottom:8px}.crypto-detail-grid strong{font-size:1.15rem}.crypto-detail-actions{display:flex;gap:12px;margin-top:22px}.crypto-detail-source{margin-top:18px;font-size:11px}.crypto-detail-chart .history-chart{height:390px}.crypto-detail-chart .history-loading,.crypto-detail-chart .history-empty{min-height:390px;display:grid;place-items:center}@media(max-width:700px){.crypto-detail-box{width:96vw;padding:22px}.crypto-detail-head{flex-direction:column}.crypto-detail-price{align-items:flex-start}.crypto-detail-price strong{font-size:2.1rem}.crypto-detail-chart{min-height:300px;padding:12px}.crypto-detail-chart .history-chart{height:270px}.crypto-detail-chart .history-loading,.crypto-detail-chart .history-empty{min-height:270px}.crypto-detail-grid{grid-template-columns:repeat(2,1fr)}.crypto-detail-grid>div{padding:15px}.crypto-detail-actions{flex-direction:column}}
 
 /* Marché premium */
 .market-section-head{align-items:flex-end}
@@ -92,7 +80,7 @@ body.is-visitor #authState{color:#a9b8b1}body.is-authenticated #authState{color:
 .news-live i{width:7px;height:7px;border-radius:50%;background:#c8ff45;box-shadow:0 0 10px #c8ff45}
 .news-rail-intro{color:#7f9189;font-size:12px;line-height:1.45;padding:12px 0 4px}
 .news-rail-list{display:flex;flex-direction:column}
-.news-rail-item{padding:15px 0;border-bottom:1px solid #1b3027}
+.news-rail-item{padding:15px 0;border-bottom:1px solid #1b3027}.news-rail-link{display:block;color:inherit;text-decoration:none}.news-rail-image-wrap{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:13px;background:#102017;margin-bottom:10px}.news-rail-image{display:block;width:100%;height:100%;object-fit:cover;transition:transform .25s ease}.news-rail-link:hover .news-rail-image{transform:scale(1.035)}.news-rail-image-placeholder{display:grid;place-items:center;color:#8aa095;font-size:11px;font-weight:900;letter-spacing:.18em;background:linear-gradient(135deg,#10251a,#0b1711)}.news-rail-item h3{font-size:14px;line-height:1.4;margin:0}.news-rail-item.featured h3{font-size:17px;line-height:1.32}.news-rail-item-meta,.news-rail-source{display:none}
 .news-rail-item.featured{padding-top:13px}
 .news-rail-item:last-child{border-bottom:0}
 .news-rail-item-meta{display:flex;justify-content:space-between;gap:8px;margin-bottom:7px}
