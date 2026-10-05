@@ -10,10 +10,10 @@ const server=fs.readFileSync(path.join(root,"src/index.js"),"utf8");
 test("visitor bot comparison is public and ordered",()=>{
   assert.match(html,/id="bots" class="section bots-section"/);
   assert.doesNotMatch(html,/id="bots"[^>]*auth-only/);
-  assert.match(app,//api/bots/catalog/);
+  assert.ok(app.includes("/api/bots/catalog"));
   assert.match(server,/app\.get\("\/api\/bots\/catalog"/);
   assert.match(server,/id:"gold"/); assert.match(server,/id:"silver"/); assert.match(server,/id:"shield"/);
-  assert.match(app,/Niveau '\+1/);
+  assert.ok(app.includes("Niveau '+(index+1)"));
 });
 
 test("authenticated bot choice is exclusive",()=>{
