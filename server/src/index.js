@@ -296,7 +296,9 @@ const HISTORY_RANGES={
 
 app.get("/api/market/details/:symbol",async(req,res)=>{
   const symbol=String(req.params.symbol||"").toUpperCase();
-  const range=HISTORY_RANGES[String(req.query.range||"24h")]?String(req.query.range):"24h";
+  const requestedRange=String(req.query.range||"24h").trim().toLowerCase();
+  const range=Object.prototype.hasOwnProperty.call(HISTORY_RANGES,requestedRange)?requestedRange:"24h";
+  const rangeConfig=HISTORY_RANGES[range];
   if(!marketIds[symbol]) return res.status(404).json({error:"Crypto inconnue."});
   const market=await refreshMarket();
   const item=market.find(row=>row.symbol===symbol);
@@ -306,12 +308,12 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
     res.json({
       ...item,
       name:{BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"}[symbol],
-      history:{range,label:HISTORY_RANGES[range].label,min:values.length?Math.min(...values):item.price,max:values.length?Math.max(...values):item.price,points:pricesHistory},
+      history:{range,label:rangeConfig.label,min:values.length?Math.min(...values):item.price,max:values.length?Math.max(...values):item.price,points:pricesHistory},
       source:"CoinGecko"
     });
   } catch(e) {
     console.error("[MARKET] detail error",symbol,range,e.message);
-    res.json({...item,name:symbol,history:{range,label:HISTORY_RANGES[range].label,min:item.price,max:item.price,points:[]},source:"CoinGecko"});
+    res.json({...item,name:symbol,history:{range,label:rangeConfig.label,min:item.price,max:item.price,points:[]},source:"CoinGecko"});
   }
 });
 
@@ -367,8 +369,9 @@ async function fetchHistory(symbol, days) {
   return pricesHistory;
 }
 async function fetchHistoryRange(symbol,range){
-  const config=HISTORY_RANGES[range]||HISTORY_RANGES["24h"];
-  const cacheKey=`${symbol}:range:${range}`;
+  const normalizedRange=String(range||"24h").trim().toLowerCase();
+  const config=HISTORY_RANGES[normalizedRange]||HISTORY_RANGES["24h"];
+  const cacheKey=`${symbol}:range:${normalizedRange}`;
   const cached=historyCache.get(cacheKey);
   if(cached && Date.now()-cached.updatedAt<60000)return cached.prices;
   const source=await fetchHistory(symbol,config.days);
