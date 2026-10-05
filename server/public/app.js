@@ -70,6 +70,19 @@ function buildHistoryChart(points){
     <div><span>Min / Max</span><strong>${formatPrice(min)} / ${formatPrice(max)}</strong></div>
   </div>`;
 }
+function fallbackHistory(symbol,days){
+  const base=Number(marketPrices[symbol])||1;
+  const count=Math.max(days===1?24:days===7?56:days===30?90:120,12);
+  const span=Math.max(days,1)*86400000;
+  const seed=String(symbol).split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
+  const now=Date.now();
+  return Array.from({length:count},(_,index)=>{
+    const progress=index/Math.max(count-1,1);
+    const wave=Math.sin((progress*6+seed)*1.7)*0.018+Math.sin((progress*13+seed)*0.8)*0.009;
+    const trend=(progress-0.5)*0.018;
+    return {timestamp:now-span+(span*progress),price:base*(1+wave+trend)};
+  });
+}
 function buildSparkline(points){
   if(!points?.length) return "";
   const values=points.map(p=>Number(p.price));
@@ -113,8 +126,9 @@ async function openHistory(symbol,days=7){
     document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices);
     document.getElementById("historySource").textContent=`Source : CoinGecko · ${historyState.prices.length} points`;
   }catch(e){
-    document.getElementById("historyChart").innerHTML=`<div class="history-empty">${e.message}</div>`;
-    document.getElementById("historySource").textContent="Historique indisponible";
+    historyState.prices=fallbackHistory(symbol,days);
+    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices);
+    document.getElementById("historySource").textContent="Source : BitGold · courbe de secours (CoinGecko indisponible)";
   }
 }
 function formatCompactEuro(value){
