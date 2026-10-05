@@ -31,7 +31,48 @@ app.use(express.json());
 app.use(rateLimit({ windowMs: 60000, max: 120, standardHeaders: true, legacyHeaders: false }));
 app.use(express.static(path.join(__dirname, "../public")));
 
-const prices = { BTC: 67420.10, ETH: 3248.70, SOL: 154.20 };
+const prices = { BTC: 67420.10, ETH: 3248.70, SOL: 154.20, USDC: 0.92, LINK: 17.84, AVAX: 28.16 };
+const marketIds = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  SOL: "solana",
+  USDC: "usd-coin",
+  LINK: "chainlink",
+  AVAX: "avalanche-2"
+};
+let marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
+let marketUpdatedAt = 0;
+
+async function refreshMarket(force=false) {
+  if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
+  try {
+    const ids = Object.values(marketIds).join(",");
+    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true`, {
+      headers: { accept: "application/json", "user-agent": "BitGold/1.0" }
+    });
+    if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
+    const data = await response.json();
+    marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
+      const item = data[id];
+      const price = Number(item?.eur);
+      const change24h = Number(item?.eur_24h_change);
+      if(Number.isFinite(price) && price > 0) prices[symbol] = price;
+      return {
+        symbol,
+        price: Number.isFinite(price) && price > 0 ? price : prices[symbol],
+        change24h: Number.isFinite(change24h) ? change24h : 0
+      };
+    });
+    marketUpdatedAt = Date.now();
+  } catch(e) {
+    console.error("[MARKET] refresh error", e.message);
+    if(!marketSnapshot.length) {
+      marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
+    }
+  }
+  return marketSnapshot;
+}
+refreshMarket(true).catch(()=>{});
 function token(user){ return jwt.sign({sub:user.id,email:user.email},secret,{expiresIn:"7d"}); }
 function auth(req,res,next){ try { req.user=jwt.verify((req.headers.authorization||"").replace("Bearer ",""),secret); next(); } catch { res.status(401).json({error:"Non authentifié"}); } }
 
@@ -85,7 +126,7 @@ app.post("/api/auth/login", async (req,res) => {
 });
 
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
-app.get("/api/market",(req,res)=>res.json(Object.entries(prices).map(([symbol,price])=>({symbol,price}))));
+app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
 
 app.get("/api/portfolio",auth,async(req,res)=>{
   try {
@@ -99,6 +140,7 @@ app.get("/api/portfolio",auth,async(req,res)=>{
 });
 
 app.post("/api/trades",auth,async(req,res)=>{
+  await refreshMarket();
   const side=req.body.side, asset=req.body.asset, amount=Number(req.body.amount);
   if(!["buy","sell"].includes(side)||!prices[asset]||!Number.isFinite(amount)||amount<=0) return res.status(400).json({error:"Ordre invalide."});
   const price=prices[asset], qty=amount/price, client=await pool.connect();
