@@ -50,7 +50,7 @@ const marketIds = {
 let marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
 let marketUpdatedAt = 0;
 const historyCache = new Map();
-const coingeckoBaseUrl=String(process.env.COINGECKO_API_BASE_URL||"https://api.coingecko.com/api/v3").replace(/\\/$/,"");
+const coingeckoBaseUrl=String(process.env.COINGECKO_API_BASE_URL||"https://api.coingecko.com/api/v3").replace(/\/$/,"");
 const coingeckoApiKey=String(process.env.COINGECKO_API_KEY||"").trim();
 
 function coingeckoHeaders(){
@@ -77,9 +77,7 @@ async function refreshMarket(force=false) {
   if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
   try {
     const ids = Object.values(marketIds).join(",");
-    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true&include_market_cap_rank=true`, {
-      headers: { accept: "application/json", "user-agent": "BitGold/1.0" }
-    });
+    const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true&include_market_cap_rank=true`);
     if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
     const data = await response.json();
     marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
