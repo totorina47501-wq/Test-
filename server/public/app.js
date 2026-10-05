@@ -11,6 +11,7 @@ const marketNames={BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LIN
 let marketPrices={BTC:67420.10,ETH:3248.70,SOL:154.20,USDC:0.92,LINK:17.84,AVAX:28.16};
 const fallbackMarkets=[["Bitcoin","BTC",67420.10,0],["Ethereum","ETH",3248.70,0],["Solana","SOL",154.20,0],["USD Coin","USDC",0.92,0],["Chainlink","LINK",17.84,0],["Avalanche","AVAX",28.16,0]];
 let marketPreviewDays=1;
+let botState={catalog:[],items:[],activity:[]};
 function renderMarket(markets){
   document.getElementById("marketGrid").innerHTML=markets.map(({symbol,price,change24h,marketCap})=>{
     const name=marketNames[symbol]||symbol;
@@ -29,7 +30,7 @@ function renderMarket(markets){
       <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement…</span></div>
       <div class="market-card-foot"><span class="market-meta">${marketCap?formatCompactEuro(marketCap)+" cap.": "Marché crypto"}</span><span class="market-arrow">Voir le détail →</span></div>
       <div class="market-indicators" data-indicators="${symbol}" aria-label="Indicateurs techniques"><span class="market-indicator muted">Analyse…</span></div>
-      <div class="market-actions"><button class="btn btn-ghost market-btn history-open" data-symbol="${symbol}" type="button">Historique</button>${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter</button>`:""}</div>
+      <div class="market-actions">${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter</button>`:""}</div>
     </article>`;
   }).join("");
 }
@@ -43,7 +44,6 @@ async function loadMarket(){
     renderMarket(fallbackMarkets.map(([name,symbol,price,change24h])=>({symbol,price,change24h})));
   }
 }
-let historyState={symbol:"BTC",days:7,prices:[]};
 let marketHistoryPreview={};
 
 function formatPrice(value){
@@ -136,25 +136,6 @@ async function setMarketPreviewRange(days){
   document.querySelectorAll(".market-periods button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===marketPreviewDays));
   await loadMarketHistoryPreviews();
 }
-async function openHistory(symbol,days=7){
-  historyState={symbol,days,prices:[]};
-  const modal=document.getElementById("historyModal");
-  document.getElementById("historyTitle").textContent=`${marketNames[symbol]||symbol} (${symbol})`;
-  document.getElementById("historySource").textContent="Chargement de l'historique…";
-  document.getElementById("historyChart").innerHTML="<div class=\"history-loading\">Chargement des cours…</div>";
-  modal.hidden=false;document.body.classList.add("modal-open");
-  document.querySelectorAll(".history-range button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===days));
-  try{
-    const data=await apiFetch(`/api/market/history/${encodeURIComponent(symbol)}?days=${days}`);
-    historyState.prices=data.prices||[];
-    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices,symbol,days);
-    document.getElementById("historySource").textContent=`Source : ${data.source||"BitGold"} · ${historyState.prices.length} points`;
-  }catch(e){
-    historyState.prices=fallbackHistory(symbol,days);
-    document.getElementById("historyChart").innerHTML=buildHistoryChart(historyState.prices,symbol,days);
-    document.getElementById("historySource").textContent="Source : BitGold · données de secours";
-  }
-}
 function formatCompactEuro(value){
   const n=Number(value);
   if(!Number.isFinite(n)) return "—";
@@ -200,7 +181,6 @@ async function openCryptoDetail(symbol){
     setDetailText("detailVolume",formatCompactEuro(data.volume24h));
     document.getElementById("cryptoDetailChart").innerHTML=points.length?buildHistoryChart(points,symbol,7):"<div class=\"history-empty\">Historique indisponible.</div>";
     setDetailText("cryptoDetailSource","Source : CoinGecko · données mises à jour automatiquement");
-    document.getElementById("detailHistory").onclick=()=>{closeCryptoDetail();openHistory(symbol,7)};
     document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
   }catch(e){
     document.getElementById("cryptoDetailChart").innerHTML=`<div class="history-empty">${e.message}</div>`;
@@ -208,14 +188,7 @@ async function openCryptoDetail(symbol){
   }
 }
 function closeCryptoDetail(){const modal=document.getElementById("cryptoDetailModal");if(modal)modal.hidden=true;document.body.classList.remove("modal-open")}
-function setHistoryRange(days){
-  historyState.days=days;
-  document.querySelectorAll(".history-range button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===days));
-  if(historyState.symbol) openHistory(historyState.symbol,days);
-}
-function closeHistory(){document.getElementById("historyModal").hidden=true;document.body.classList.remove("modal-open")}
-
-function setConnected(connected){document.getElementById("authState").textContent=connected?"● Connecté":"● Mode visiteur";const accountStatus=document.getElementById("accountStatus");if(accountStatus)accountStatus.textContent=connected?"Compte connecté":"Compte démo";document.body.classList.toggle("is-authenticated",connected);document.body.classList.toggle("is-visitor",!connected);document.querySelectorAll(".auth-only").forEach(el=>{el.hidden=!connected;el.setAttribute("aria-hidden",String(!connected))});const topLogin=document.getElementById("topLogin");if(topLogin){topLogin.textContent=connected?"Se déconnecter":"Se connecter"}}
+function setConnected(connected){document.getElementById("authState").textContent=connected?"● Connecté":"● Mode visiteur";const accountStatus=document.getElementById("accountStatus");if(accountStatus)accountStatus.textContent=connected?"Compte connecté":"Compte démo";document.body.classList.toggle("is-authenticated",connected);document.body.classList.toggle("is-visitor",!connected);document.querySelectorAll(".auth-only").forEach(el=>{el.hidden=!connected;el.setAttribute("aria-hidden",String(!connected))});const topLogin=document.getElementById("topLogin");if(topLogin){topLogin.textContent=connected?"Se déconnecter":"Se connecter"} if(connected) loadBots().catch(e=>console.warn("Bots:",e.message));}
 function logout(){apiToken="";safeStorageRemove("bitgold-token");state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0}};setConnected(false);renderWallet();loadNews();window.scrollTo({top:0,behavior:"smooth"})}
 function renderWallet(){const cash=document.getElementById("cashBalance");const holdings=document.getElementById("holdings");if(cash)cash.textContent=Number(state.cash).toLocaleString("fr-FR",{minimumFractionDigits:2})+" €";if(holdings)holdings.innerHTML=["BTC","ETH","SOL"].map(s=>`<div class="holding"><span>${s}</span><strong>${Number(state.holdings[s]||0).toFixed(6)}</strong></div>`).join("")}
 async function apiFetch(path,options={}){const headers={...(options.headers||{})};if(!headers["Content-Type"]&&options.body)headers["Content-Type"]="application/json";if(apiToken)headers.Authorization=`Bearer ${apiToken}`;let r;try{r=await fetch(API+path,{...options,headers})}catch(e){throw Error("Impossible de joindre l'API. Vérifiez que le service Northflank est démarré et que /api/health répond.")}let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||`Erreur API (${r.status})`);return data}
@@ -228,26 +201,29 @@ function openModal(type){authMode=type==="inscription"?"signup":"login";document
 function switchAuth(){openModal(authMode==="signup"?"connexion":"inscription")}
 async function submitAuth(){const email=document.getElementById("authEmail").value,password=document.getElementById("authPassword").value;const result=document.getElementById("authResult");result.textContent="Connexion…";try{const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify({email,password})});apiToken=d.token;safeStorageSet("bitgold-token",apiToken);setConnected(true);closeModal();document.getElementById("compte")?.scrollIntoView({behavior:"smooth",block:"start"});try{await loadPortfolio()}catch(e){console.warn("Portfolio après authentification:",e.message)}}catch(e){result.textContent=e.message}}
 function closeModal(){document.getElementById("modal").hidden=true;document.body.classList.remove("modal-open")}
+async function loadBots(){if(!apiToken){botState={catalog:[],items:[],activity:[]};renderBots();return}try{botState=await apiFetch("/api/bots");renderBots()}catch(e){console.warn("Bots:",e.message)}} 
+function renderBots(){const grid=document.getElementById("botGrid"),activity=document.getElementById("botActivity");if(!grid)return;const active=new Set((botState.items||[]).map(b=>b.bot_type));grid.innerHTML=(botState.catalog||[]).map(bot=>{const subscribed=active.has(bot.id);return '<article class="bot-card '+(bot.id==="gold"?"bot-gold":bot.id==="silver"?"bot-silver":"bot-shield")+'"><div class="bot-card-head"><div><span class="bot-tier">'+escapeHtml(bot.tier)+'</span><h3>'+escapeHtml(bot.name)+'</h3></div><span class="bot-status '+(subscribed?"active":"")+'">'+(subscribed?"Actif":"Disponible")+'</span></div><p>'+escapeHtml(bot.description)+'</p><div class="bot-tags"><span>Risque '+escapeHtml(bot.risk)+'</span><span>Allocation '+bot.allocation+'%</span><span>'+escapeHtml(bot.frequency)+'</span></div><div class="bot-strategy">'+escapeHtml(bot.strategy)+'</div><button class="btn '+(subscribed?"btn-ghost":"btn-primary")+' full" data-bot-action="'+(subscribed?"unsubscribe":"subscribe")+'" data-bot-type="'+bot.id+'">'+(subscribed?"Désabonner":"S'abonner au bot")+'</button></article>'}).join("");if(activity){activity.innerHTML=(botState.activity||[]).slice(0,8).map(item=>'<div class="bot-activity-item"><span class="bot-activity-dot '+(item.action==="buy"?"buy":item.action==="sell"?"sell":"")+'"></span><div><strong>'+escapeHtml(item.bot_name)+'</strong><span>'+escapeHtml(item.message)+'</span></div><time>'+escapeHtml(formatNewsAge(item.created_at))+'</time></div>').join("")||"<div class=\"bot-empty\">Aucune décision de bot pour le moment.</div>"}}
+async function toggleBot(type,subscribe){if(!apiToken){openModal("connexion");return}const button=document.querySelector('[data-bot-type="'+type+'"]');if(button)button.disabled=true;try{await apiFetch("/api/bots/subscriptions"+(subscribe?"":"/"+encodeURIComponent(type)),{method:subscribe?"POST":"DELETE",...(subscribe?{body:JSON.stringify({botType:type})}:{})});await loadBots()}catch(e){alert(e.message)}finally{if(button)button.disabled=false}}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]||char))}
 function formatNewsAge(timestamp){const date=new Date(timestamp);if(!Number.isFinite(date.getTime()))return "Récent";const minutes=Math.max(1,Math.floor((Date.now()-date.getTime())/60000));if(minutes<60)return "Il y a "+minutes+" min";const hours=Math.floor(minutes/60);if(hours<24)return "Il y a "+hours+" h";return "Il y a "+Math.floor(hours/24)+" j"}
 function renderNews(items){const grid=document.getElementById("newsGrid");if(!grid)return;if(!items?.length){grid.innerHTML="<div class=\"news-empty\">Aucune actualité disponible pour le moment.</div>";return}grid.innerHTML=items.slice(0,5).map((item,index)=>`<article class="news-rail-item ${index===0?"featured":""}"><div class="news-rail-item-meta"><span class="news-category">${escapeHtml(item.category||"Crypto")}</span><span class="news-age">${escapeHtml(formatNewsAge(item.publishedAt))}</span></div><h3><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a></h3><div class="news-rail-source">${escapeHtml(item.source||"Source crypto")}<span>↗</span></div></article>`).join("")}
 async function loadNews(){const section=document.getElementById("actualites");if(!section)return;const grid=document.getElementById("newsGrid");if(grid)grid.innerHTML="<div class=\"news-loading\">Actualités en cours de chargement…</div>";try{const data=await apiFetch("/api/news");renderNews(data.items||[])}catch(e){console.warn("Actualités:",e.message);renderNews([{title:"Voir les dernières actualités crypto",url:"https://www.coindesk.com/fr/latest-crypto-news",publishedAt:new Date().toISOString(),source:"CoinDesk · flux de secours",category:"Actualités"}])}}
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews();loadNews()}
 setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
-window.openModal=openModal;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;
+window.openModal=openModal;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openHistory=openHistory;window.closeHistory=closeHistory;window.setHistoryRange=setHistoryRange;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);
 document.querySelector("#topLogin")?.addEventListener("click",()=>apiToken?logout():openModal("connexion"));
 document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
 document.querySelectorAll(".market-periods button").forEach(button=>button.addEventListener("click",()=>setMarketPreviewRange(Number(button.dataset.days))));
-document.getElementById("marketGrid")?.addEventListener("click",event=>{const historyButton=event.target.closest(".history-open");if(historyButton){event.stopPropagation();openHistory(historyButton.dataset.symbol,7);return}const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
+document.getElementById("marketGrid")?.addEventListener("click",event=>{const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
 document.getElementById("simulateButton")?.addEventListener("click",simulate);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
 document.getElementById("tradeConfirm")?.addEventListener("click",executeTrade);
-document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="historyModal")closeHistory();else if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="cryptoDetailModal")closeCryptoDetail();else if(modal?.id==="modal")closeModal()}));
-document.querySelectorAll(".history-range button").forEach(button=>button.addEventListener("click",()=>setHistoryRange(Number(button.dataset.days))));
-document.querySelectorAll(".modal").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal){if(modal.id==="historyModal")closeHistory();else if(modal.id==="tradeModal")closeTrade();else if(modal.id==="cryptoDetailModal")closeCryptoDetail();else if(modal.id==="modal")closeModal()}}));
-document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const open=document.querySelector(".modal:not([hidden])");if(!open)return;if(open.id==="historyModal")closeHistory();else if(open.id==="tradeModal")closeTrade();else if(open.id==="cryptoDetailModal")closeCryptoDetail();else closeModal()});
+document.getElementById("botGrid")?.addEventListener("click",event=>{const button=event.target.closest("[data-bot-action]");if(!button)return;event.stopPropagation();toggleBot(button.dataset.botType,button.dataset.botAction==="subscribe")});
+document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="cryptoDetailModal")closeCryptoDetail();else if(modal?.id==="modal")closeModal()}));
+document.querySelectorAll(".modal").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal){if(modal.id==="tradeModal")closeTrade();else if(modal.id==="cryptoDetailModal")closeCryptoDetail();else if(modal.id==="modal")closeModal()}}));
+document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const open=document.querySelector(".modal:not([hidden])");if(!open)return;if(open.id==="tradeModal")closeTrade();else if(open.id==="cryptoDetailModal")closeCryptoDetail();else closeModal()});
 window.addEventListener("error",e=>{const el=document.getElementById("authResult");if(el)el.textContent="Erreur JavaScript : "+e.message;});

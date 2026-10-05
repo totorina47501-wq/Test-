@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NUL
 CREATE TABLE IF NOT EXISTS wallets(user_id INTEGER PRIMARY KEY REFERENCES users(id),cash DOUBLE PRECISION NOT NULL DEFAULT 10000);
 CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id),asset TEXT NOT NULL,quantity DOUBLE PRECISION NOT NULL DEFAULT 0,PRIMARY KEY(user_id,asset));
 CREATE TABLE IF NOT EXISTS trades(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),side TEXT NOT NULL,asset TEXT NOT NULL,amount_eur DOUBLE PRECISION NOT NULL,price_eur DOUBLE PRECISION NOT NULL,quantity DOUBLE PRECISION NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS bot_subscriptions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,portfolio_name TEXT NOT NULL DEFAULT 'Portefeuille principal',active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,last_run TIMESTAMPTZ,UNIQUE(user_id,bot_type));
+CREATE TABLE IF NOT EXISTS bot_activity(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,action TEXT NOT NULL DEFAULT 'hold',asset TEXT,message TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 `);
 
 app.use(helmet());
@@ -266,6 +268,52 @@ app.get("/api/market/history/:symbol",async(req,res)=>{
   }
 });
 
+const BOT_CATALOG=[
+{id:"gold",name:"Gold Bot",tier:"GOLD",risk:"Élevé",allocation:65,frequency:"15 min",strategy:"Détecte un régime de bull run via momentum BTC, breadth du marché et tendance 7 jours."},
+{id:"silver",name:"Silver Bot",tier:"SILVER",risk:"Modéré",allocation:45,frequency:"30 min",strategy:"Suit la tendance avec une allocation diversifiée BTC/ETH/SOL et évite les achats excessifs."},
+{id:"shield",name:"Shield Bot",tier:"SHIELD",risk:"Prudent",allocation:25,frequency:"30 min",strategy:"Priorise le cash, réduit les actifs baissiers et ne renforce que les signaux les plus propres."}
+];
+function botDefinition(type){return BOT_CATALOG.find(bot=>bot.id===type)}
+function botMomentum(points){const v=(points||[]).map(p=>Number(p.price)).filter(Number.isFinite);return v.length>2&&v[0]?((v[v.length-1]-v[0])/v[0])*100:0}
+function botRsi(points){const v=(points||[]).map(p=>Number(p.price)).filter(Number.isFinite);if(v.length<3)return 50;const start=Math.max(1,v.length-14),g=[],l=[];for(let i=start;i<v.length;i++){const d=v[i]-v[i-1];if(d>0)g.push(d);else if(d<0)l.push(Math.abs(d))}const ag=g.reduce((a,b)=>a+b,0)/(g.length||1),al=l.reduce((a,b)=>a+b,0)/(l.length||1);return al===0?100:100-(100/(1+ag/al))}
+async function botSignal(type){
+ await refreshMarket();
+ const symbols=Object.keys(marketIds),histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,7)])));
+ const momentum=Object.fromEntries(symbols.map(symbol=>[symbol,botMomentum(histories[symbol])]));
+ const positive=symbols.filter(symbol=>momentum[symbol]>0).length;
+ const bull=momentum.BTC>=8&&positive>=4&&momentum.ETH>2;
+ if(type==="gold"){if(bull)return{action:"buy",asset:momentum.ETH>=momentum.BTC?"ETH":"BTC",fraction:.065,message:"Signal bull run confirmé : momentum BTC, breadth et ETH convergent."};if(momentum.BTC<=-6)return{action:"sell",asset:"BTC",fraction:.04,message:"Signal de sortie : momentum BTC 7j fortement négatif."};return{action:"hold",asset:"BTC",message:"Pas de bull run confirmé : le bot conserve sa réserve."}}
+ if(type==="silver"){const leader=["BTC","ETH","SOL"].sort((a,b)=>momentum[b]-momentum[a])[0],rsi=botRsi(histories[leader]);if(momentum[leader]>=3&&rsi<72)return{action:"buy",asset:leader,fraction:.035,message:"Tendance positive détectée : renforcement progressif du leader."};if(momentum[leader]<=-5)return{action:"sell",asset:leader,fraction:.025,message:"Tendance dégradée : réduction de l’exposition."};return{action:"hold",asset:leader,message:"Tendance intermédiaire : aucune opération."}}
+ const weak=["SOL","LINK","AVAX"].sort((a,b)=>momentum[a]-momentum[b])[0],leader=["BTC","ETH"].sort((a,b)=>momentum[b]-momentum[a])[0];
+ if(momentum[weak]<=-7)return{action:"sell",asset:weak,fraction:.035,message:"Protection active : réduction d’un actif en tendance baissière."};
+ if(momentum[leader]>=5&&botRsi(histories[leader])<68)return{action:"buy",asset:leader,fraction:.02,message:"Signal défensif favorable : petite entrée sur un leader confirmé."};
+ return{action:"hold",asset:leader,message:"Marché incertain : priorité au capital disponible."};
+}
+async function executeBotDecision(subscription,signal){
+ const def=botDefinition(subscription.bot_type),client=await pool.connect();
+ try{
+  await client.query("BEGIN");
+  const w=await client.query("SELECT cash FROM wallets WHERE user_id=$1 FOR UPDATE",[subscription.user_id]);
+  const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,signal.asset]);
+  const cash=Number(w.rows[0]?.cash||0),qty=Number(h.rows[0]?.quantity||0),price=Number(prices[signal.asset]||0);
+  let amount=0,quantity=0;
+  if(signal.action==="buy"){amount=Math.min(cash*signal.fraction,cash*def.allocation/100);quantity=price?amount/price:0}
+  if(signal.action==="sell"){amount=Math.min(qty*price,(qty*price)*signal.fraction);quantity=price?amount/price:0}
+  if(signal.action==="hold"||amount<=0||quantity<=0){await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",signal.asset,signal.message]);await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");return}
+  await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2",[signal.action==="buy"?-amount:amount,subscription.user_id]);
+  await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3",[signal.action==="buy"?quantity:-quantity,subscription.user_id,signal.asset]);
+  await client.query("INSERT INTO trades(user_id,side,asset,amount_eur,price_eur,quantity) VALUES($1,$2,$3,$4,$5,$6)",[subscription.user_id,signal.action,signal.asset,amount,price,quantity]);
+  await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,signal.action,signal.asset,signal.message+" Montant simulé : "+amount.toFixed(2)+" €."]);
+  await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");
+ }catch(e){await client.query("ROLLBACK");console.error("[BOT] execution error",e.message)}finally{client.release()}
+}
+async function runBots(){
+ try{const r=await pool.query("SELECT * FROM bot_subscriptions WHERE active=TRUE AND (last_run IS NULL OR last_run<CURRENT_TIMESTAMP-INTERVAL '15 minutes') ORDER BY id");for(const sub of r.rows){try{await executeBotDecision(sub,await botSignal(sub.bot_type))}catch(e){console.error("[BOT] signal error",sub.bot_type,e.message);await pool.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[sub.id])}}}catch(e){console.error("[BOT] scheduler error",e.message)}
+}
+app.get("/api/bots",auth,async(req,res)=>{try{const [subs,activity]=await Promise.all([pool.query("SELECT bot_type,portfolio_name,active,created_at,last_run FROM bot_subscriptions WHERE user_id=$1 ORDER BY id",[req.user.sub]),pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id DESC LIMIT 12",[req.user.sub])]);res.json({catalog:BOT_CATALOG,items:subs.rows,activity:activity.rows})}catch(e){res.status(500).json({error:"Impossible de charger les bots."})}});
+app.post("/api/bots/subscriptions",auth,async(req,res)=>{const botType=String(req.body.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(400).json({error:"Bot inconnu."});try{await pool.query("INSERT INTO bot_subscriptions(user_id,bot_type) VALUES($1,$2) ON CONFLICT(user_id,bot_type) DO UPDATE SET active=TRUE",[req.user.sub,botType]);const sub=(await pool.query("SELECT * FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0];await executeBotDecision(sub,await botSignal(botType));res.status(201).json({ok:true,bot:def})}catch(e){console.error("[BOT] subscribe error",e.message);res.status(500).json({error:"Impossible d’activer ce bot."})}});
+app.delete("/api/bots/subscriptions/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});await pool.query("UPDATE bot_subscriptions SET active=FALSE WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType]);res.json({ok:true})});
+setInterval(runBots,60000);runBots().catch(()=>{});
 app.get("/api/portfolio",auth,async(req,res)=>{
   try {
     const [w,h,t]=await Promise.all([
