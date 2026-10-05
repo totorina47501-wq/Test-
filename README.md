@@ -53,3 +53,11 @@ Pour un déploiement frontend + API dans le même service Northflank, cette surc
 - Si une ancienne session est conservée après un changement de déploiement, supprimer le stockage local du site puis se reconnecter.
 
 **Pas de transactions réelles.** Pour passer en production : base de données managée, secrets sécurisés, sessions robustes, KYC/AML, prestataire crypto/paiement autorisé et audit de sécurité/réglementaire.
+
+## Bots Free / Pro
+
+- **Free** : 1 bot actif, Shield Bot inclus.
+- **Pro** : jusqu'à 3 bots actifs, Silver Bot, Gold Bot et Adaptive AI Bot.
+- **Adaptive AI** : moteur déterministe et explicable combinant momentum, RSI, position dans le range et volatilité, sans API IA externe.
+- Les ordres des bots restent **100 % simulés** dans le portefeuille démo.
+- Le changement Free/Pro présent dans cette version est un **mode de démonstration** ; un vrai paiement devra être relié à un prestataire de paiement avant commercialisation.
