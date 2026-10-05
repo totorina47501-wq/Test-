@@ -86,6 +86,7 @@ async function submitAuth(){
   }catch(e){result.textContent=e.message}
 }
 function closeModal(){document.getElementById("modal").hidden=true}
-loadMarket();setInterval(loadMarket,60000);\nsetConnected(!!apiToken);
+loadMarket();setInterval(loadMarket,60000);
+setConnected(!!apiToken);
 renderWallet();
 if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
