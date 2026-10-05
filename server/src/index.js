@@ -144,7 +144,7 @@ const newsCache={items:[],updatedAt:0};
 
 function decodeXml(value){
   return String(value||"")
-    .replace(/<!\[CDATA\[(.*?)\]\]>/gs,"$1")
+    .replace(/<!\\[CDATA\\[(.*?)\\]\\]>/gs,"$1")
     .replace(/&amp;/g,"&")
     .replace(/&lt;/g,"<")
     .replace(/&gt;/g,">")
@@ -153,25 +153,37 @@ function decodeXml(value){
     .replace(/&#x27;/gi,"'");
 }
 
+function normalizeImageUrl(value){
+  const raw=decodeXml(value).trim();
+  if(!raw)return "";
+  if(raw.startsWith("//"))return "https:"+raw;
+  return /^https?:\\/\\//i.test(raw)?raw:"";
+}
+
 function parseRssItems(xml,defaultSource="Crypto"){
-  const items=[...String(xml||"").matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)]
+  const items=[...String(xml||"").matchAll(/<item\\b[^>]*>([\\s\\S]*?)<\\/item>/gi)]
     .slice(0,12)
     .map(match=>{
       const block=match[1];
       const pick=tag=>{
-        const found=block.match(new RegExp("<"+tag+"\\b[^>]*>([\\s\\S]*?)</"+tag+">","i"));
+        const found=block.match(new RegExp("<"+tag+"\\\\b[^>]*>([\\s\\S]*?)</"+tag+">","i"));
         return found?decodeXml(found[1]).trim():"";
       };
       const pickAttr=(tag,attr)=>{
-        const found=block.match(new RegExp("<"+tag+"\\b[^>]*\\s"+attr+"=[\"']([^\"']+)[\"'][^>]*>","i"));
+        const found=block.match(new RegExp("<"+tag+"\\\\b[^>]*\\\\s"+attr+"=[\\"']([^\\"']+)[\\"'][^>]*>","i"));
         return found?decodeXml(found[1]).trim():"";
       };
       const description=pick("description");
-      const descriptionImage=(description.match(/<img[^>]+src=["']([^"']+)["']/i)||[])[1]||"";
-      const imageUrl=pickAttr("media:content","url")||pickAttr("media:thumbnail","url")||pickAttr("enclosure","url")||descriptionImage;
+      const descriptionImage=normalizeImageUrl(
+        (description.match(/<img[^>]+(?:src|data-src|data-original)=[\\"']([^\\"']+)[\\"']/i)||[])[1]||""
+      );
+      const imageUrl=normalizeImageUrl(pickAttr("media:content","url"))
+        ||normalizeImageUrl(pickAttr("media:thumbnail","url"))
+        ||normalizeImageUrl(pickAttr("enclosure","url"))
+        ||descriptionImage;
       let url=pick("link");
       if(!url){
-        const link=block.match(/<link[^>]*href=["']([^"']+)["']/i);
+        const link=block.match(/<link[^>]*href=[\\"']([^\\"']+)[\\"']/i);
         url=link?decodeXml(link[1]).trim():"";
       }
       return{
@@ -183,8 +195,49 @@ function parseRssItems(xml,defaultSource="Crypto"){
         imageUrl
       };
     })
-    .filter(item=>item.title&&/^https?:\/\//i.test(item.url));
+    .filter(item=>item.title&&/^https?:\\/\\//i.test(item.url));
   return items;
+}
+
+async function fetchArticleImage(url){
+  if(!/^https?:\\/\\//i.test(url))return "";
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),3500);
+  try{
+    const response=await fetch(url,{
+      redirect:"follow",
+      headers:{
+        accept:"text/html,application/xhtml+xml",
+        "user-agent":"BitGold/1.0"
+      },
+      signal:controller.signal
+    });
+    if(!response.ok)return "";
+    const type=response.headers.get("content-type")||"";
+    if(type&&!/text\\/(html|xhtml)/i.test(type))return "";
+    const html=(await response.text()).slice(0,1500000);
+    const metaImage=html.match(/<meta[^>]+(?:property|name)=[\\"'](?:og:image|twitter:image|twitter:image:src)[\\"'][^>]+content=[\\"']([^\\"']+)[\\"']/i)
+      ||html.match(/<meta[^>]+content=[\\"']([^\\"']+)[\\"'][^>]+(?:property|name)=[\\"'](?:og:image|twitter:image|twitter:image:src)[\\"']/i);
+    if(metaImage?.[1])return normalizeImageUrl(metaImage[1]);
+    const jsonLd=html.match(/["']image["']\\s*:\\s*["'](https?:\\/\\/[^"']+)["']/i);
+    return jsonLd?.[1]?normalizeImageUrl(jsonLd[1]):"";
+  }catch{
+    return "";
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function enrichNewsImages(items){
+  const enriched=[...items];
+  for(let i=0;i<enriched.length;i+=4){
+    const batch=enriched.slice(i,i+4);
+    await Promise.all(batch.map(async item=>{
+      if(item.imageUrl)return;
+      item.imageUrl=await fetchArticleImage(item.url);
+    }));
+  }
+  return enriched;
 }
 
 async function fetchNews(){
@@ -193,7 +246,7 @@ async function fetchNews(){
   const response=await fetch(feed,{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});
   if(!response.ok)throw Error(`News HTTP ${response.status}`);
   const xml=await response.text();
-  const items=parseRssItems(xml,"Google News");
+  const items=await enrichNewsImages(parseRssItems(xml,"Google News"));
   if(!items.length)throw Error("Aucun article Google News détecté");
   newsCache.items=items;
   newsCache.updatedAt=Date.now();
@@ -204,7 +257,7 @@ async function fetchCoinDeskFallback(){
   const response=await fetch("https://www.coindesk.com/arc/outboundfeeds/rss/",{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});
   if(!response.ok)throw Error(`CoinDesk RSS HTTP ${response.status}`);
   const xml=await response.text();
-  const items=parseRssItems(xml,"CoinDesk");
+  const items=await enrichNewsImages(parseRssItems(xml,"CoinDesk"));
   if(!items.length)throw Error("Aucun article CoinDesk RSS détecté");
   return items.slice(0,9);
 }
