@@ -1,10 +1,27 @@
-const markets=[["Bitcoin","BTC","67 420,10 €","+2,84%",67420.10],["Ethereum","ETH","3 248,70 €","+1,92%",3248.70],["Solana","SOL","154,20 €","+4,31%",154.20],["USD Coin","USDC","0,92 €","+0,01%",0.92],["Chainlink","LINK","17,84 €","-0,73%",17.84],["Avalanche","AVAX","28,16 €","+1,48%",28.16]];
-const DEFAULT_API=window.location.hostname.endsWith("github.io")?"https://p01--service-bitgold--dvn9t2gvmtgx.code.run":window.location.origin;
-const API=window.location.hostname.endsWith("github.io")?(localStorage.getItem("bitgold-api")||DEFAULT_API):window.location.origin;
-let apiToken=localStorage.getItem("bitgold-token")||"";
-const state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0}};
-let tradeSide="buy";let authMode="login";
-document.getElementById("marketGrid").innerHTML=markets.map(([name,symbol,price,change])=>`<article class="market"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><div class="price">${price}</div><div class="${change.startsWith("-")?"symbol":"positive"}">${change}</div><button class="btn btn-ghost market-btn" onclick="openTrade('buy','${symbol}')">Acheter</button></article>`).join("");
+const marketNames={BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"};
+let marketPrices={BTC:67420.10,ETH:3248.70,SOL:154.20,USDC:0.92,LINK:17.84,AVAX:28.16};
+const fallbackMarkets=[["Bitcoin","BTC",67420.10,0],["Ethereum","ETH",3248.70,0],["Solana","SOL",154.20,0],["USD Coin","USDC",0.92,0],["Chainlink","LINK",17.84,0],["Avalanche","AVAX",28.16,0]];
+function renderMarket(markets){
+  document.getElementById("marketGrid").innerHTML=markets.map(({symbol,price,change24h})=>{
+    const name=marketNames[symbol]||symbol;
+    const change=Number(change24h||0);
+    marketPrices[symbol]=Number(price)||marketPrices[symbol];
+    const priceText=Number(marketPrices[symbol]).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+    const changeText=(change>0?"+":"")+change.toFixed(2).replace(".",",")+"%";
+    const canTrade=["BTC","ETH","SOL"].includes(symbol);
+    return `<article class="market"><div><strong>${name}</strong> <span class="symbol">${symbol}</span></div><div class="price">${priceText}</div><div class="${change<0?"symbol":"positive"}">${changeText}</div>${canTrade?`<button class="btn btn-ghost market-btn" onclick="openTrade('buy','${symbol}')">Acheter</button>`:"<span class=\"symbol\">Cours actuel</span>"}</article>`;
+  }).join("");
+}
+async function loadMarket(){
+  try{
+    const data=await apiFetch("/api/market");
+    renderMarket(data.markets||[]);
+    return data;
+  }catch(e){
+    console.warn("Cours marché:",e.message);
+    renderMarket(fallbackMarkets.map(([name,symbol,price,change24h])=>({symbol,price,change24h})));
+  }
+}
 function setConnected(connected){document.getElementById("authState").textContent=connected?"Connecté":"Mode démo";document.getElementById("accountStatus").textContent=connected?"Compte connecté":"Compte démo"}
 function renderWallet(){document.getElementById("cashBalance").textContent=Number(state.cash).toLocaleString("fr-FR",{minimumFractionDigits:2})+" €";document.getElementById("holdings").innerHTML=["BTC","ETH","SOL"].map(s=>`<div class="holding"><span>${s}</span><strong>${Number(state.holdings[s]||0).toFixed(6)}</strong></div>`).join("")}
 async function apiFetch(path,options={}){const headers={...(options.headers||{})};if(!headers["Content-Type"]&&options.body)headers["Content-Type"]="application/json";if(apiToken)headers.Authorization=`Bearer ${apiToken}`;let r;try{r=await fetch(API+path,{...options,headers})}catch(e){throw Error(`Impossible de joindre l'API (${API}). Vérifiez que le service Northflank est démarré.`)}let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||`Erreur API (${r.status})`);return data}
@@ -17,7 +34,7 @@ function openModal(type){authMode=type==="inscription"?"signup":"login";document
 function switchAuth(){openModal(authMode==="signup"?"connexion":"inscription")}
 async function submitAuth(){const email=document.getElementById("authEmail").value,password=document.getElementById("authPassword").value;const result=document.getElementById("authResult");result.textContent="Connexion…";try{const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify({email,password})});apiToken=d.token;localStorage.setItem("bitgold-token",apiToken);setConnected(true);closeModal();document.getElementById("compte")?.scrollIntoView({behavior:"smooth",block:"start"});try{await loadPortfolio()}catch(e){console.warn("Portfolio après authentification:",e.message)}}catch(e){result.textContent=e.message}}
 function closeModal(){document.getElementById("modal").hidden=true}
-setConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
+loadMarket();setInterval(loadMarket,60000);\nsetConnected(!!apiToken);renderWallet();if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));
 window.openModal=openModal;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
