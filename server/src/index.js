@@ -182,7 +182,7 @@ function decodeXml(value){
 function parseRssItems(xml,defaultSource="Crypto"){
   return [...String(xml||"").matchAll(/<item\\b[^>]*>([\\s\\S]*?)<\\/item>/gi)].slice(0,12).map(match=>{
     const block=match[1];
-    const pick=tag=>{const found=block.match(new RegExp("<"+tag+"\\\\b[^>]*>([\\\\s\\\\S]*?)</"+tag+">","i"));return found?decodeXml(found[1]).trim():"";};
+    const pick=tag=>{const found=block.match(new RegExp("<"+tag+"\\b[^>]*>([\\s\\S]*?)</"+tag+">","i"));return found?decodeXml(found[1]).trim():"";};
     const pickAttr=(tag,attr)=>{const found=block.match(new RegExp("<"+tag+"\\\\b[^>]*\\\\s"+attr+"=[\\\"']([^\\\"']+)[\\\"'][^>]*>","i"));return found?decodeXml(found[1]).trim():"";};
     const description=pick("description");
     const descriptionImage=(description.match(/<img[^>]+(?:src|data-src|data-original)=[\\\"']([^\\\"']+)[\\\"']/i)||[])[1]||"";
