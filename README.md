@@ -37,7 +37,10 @@ Configuration :
    - `JWT_SECRET` : valeur aléatoire longue
    - `CLIENT_ORIGIN` : `https://totorina47501-wq.github.io`
 7. Déployer puis vérifier `/api/health`.
-8. Dans le navigateur, définir l'URL publique de l'API :
-   `localStorage.setItem("bitgold-api","https://TON-URL")`
+8. Ouvrir le frontend depuis le serveur BitGold lui-même (recommandé) : l’API est alors automatiquement utilisée sur la même origine.
+9. Si le frontend est hébergé sur GitHub Pages, définir explicitement l’URL publique de l’API dans la console du navigateur :
+   `localStorage.setItem("bitgold-api","https://TON-URL-API")`
+   puis recharger la page. L’ancienne URL Northflank codée en dur a été supprimée car elle pouvait rendre la connexion impossible si le service était supprimé ou recréé.
+10. Vérifier `https://TON-URL-API/api/health` avant de tester la connexion.
 
 **Pas de transactions réelles.** Pour passer en production : base de données managée, secrets sécurisés, sessions robustes, KYC/AML, prestataire crypto/paiement autorisé et audit de sécurité/réglementaire.
