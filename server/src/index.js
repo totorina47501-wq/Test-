@@ -243,7 +243,7 @@ function dedupeNews(items){
     const normalizedTitle=item.title.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
     const urlKey=item.url.replace(/[?#].*$/,"").trim().toLowerCase();
     const titleKey=normalizedTitle.split(" ").slice(0,18).join(" ");
-    const key=urlKey||titleKey;
+    const key=titleKey||urlKey;
     const previous=map.get(key);
     if(!previous||Date.parse(item.publishedAt)>Date.parse(previous.publishedAt)) map.set(key,item);
   }
