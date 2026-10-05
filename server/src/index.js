@@ -328,7 +328,6 @@ function buildFallbackHistory(symbol, days, maxAgeMs=null) {
   const base=Number(prices[symbol])||1;
   const numericDays=days==="max"?3650:Math.max(Number(days)||7,1);
   const fallbackWindowMs=Number.isFinite(maxAgeMs)&&maxAgeMs>0?maxAgeMs:numericDays*86400000;
-  const fallbackDays=fallbackWindowMs/86400000;
   const points=maxAgeMs===5*60*1000?12:maxAgeMs===60*60*1000?24:Math.min(1000,Math.max(numericDays===1?288:numericDays===7?168:numericDays===30?720:numericDays>=365?365:120,12));
   const now=Date.now();
   const span=fallbackWindowMs;
