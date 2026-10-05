@@ -37,12 +37,13 @@ function auth(req,res,next){ try { req.user=jwt.verify((req.headers.authorizatio
 
 app.get("/api/health", async (req,res) => {
   try { await pool.query("SELECT 1"); res.json({ok:true,service:"BitGold API"}); }
-  catch { res.status(503).json({ok:false,service:"BitGold API"}); }
+  catch(e) { console.error("[HEALTH] database error", e.message); res.status(503).json({ok:false,service:"BitGold API"}); }
 });
 
 app.post("/api/auth/signup", async (req,res) => {
   const email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
   if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8) return res.status(400).json({error:"Email valide et mot de passe de 8 caractères minimum requis."});
+  console.log("[AUTH] signup attempt", email);
   const client=await pool.connect();
   try {
     await client.query("BEGIN");
@@ -52,24 +53,39 @@ app.post("/api/auth/signup", async (req,res) => {
     await client.query("INSERT INTO wallets(user_id) VALUES($1)",[user.id]);
     for(const asset of Object.keys(prices)) await client.query("INSERT INTO holdings(user_id,asset,quantity) VALUES($1,$2,0)",[user.id,asset]);
     await client.query("COMMIT");
+    console.log("[AUTH] signup success", email);
     res.status(201).json({token:token(user),email:user.email});
   } catch(e) {
     await client.query("ROLLBACK");
+    console.error("[AUTH] signup error", e.message);
     res.status(e.code==="23505"?409:500).json({error:e.code==="23505"?"Ce compte existe déjà.":"Erreur serveur."});
   } finally { client.release(); }
 });
 
 app.post("/api/auth/login", async (req,res) => {
   const email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
+  console.log("[AUTH] login attempt", email);
   try {
     const r=await pool.query("SELECT * FROM users WHERE email=$1",[email]), u=r.rows[0];
-    if(!u||!(await bcrypt.compare(password,u.password_hash))) return res.status(401).json({error:"Identifiants incorrects."});
+    if(!u){
+      console.log("[AUTH] user not found", email);
+      return res.status(401).json({error:"Identifiants incorrects."});
+    }
+    const valid=await bcrypt.compare(password,u.password_hash);
+    if(!valid){
+      console.log("[AUTH] invalid password", email);
+      return res.status(401).json({error:"Identifiants incorrects."});
+    }
+    console.log("[AUTH] login success", email);
     res.json({token:token(u),email:u.email});
-  } catch { res.status(500).json({error:"Erreur serveur."}); }
+  } catch(e) {
+    console.error("[AUTH] login error", e.message);
+    res.status(500).json({error:"Erreur serveur."});
+  }
 });
 
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
-app.get("/api/market",(req,res)=>res.json(Object.entries(prices).map(([symbol,price])=>({symbol,price}))));
+app.get("/api/market",(req,res)=>res.json(Object.entries(prices).map(([symbol,price])=>({symbol,price})));
 
 app.get("/api/portfolio",auth,async(req,res)=>{
   try {
@@ -79,7 +95,7 @@ app.get("/api/portfolio",auth,async(req,res)=>{
       pool.query("SELECT side,asset,amount_eur,price_eur,quantity,created_at FROM trades WHERE user_id=$1 ORDER BY id DESC LIMIT 50",[req.user.sub])
     ]);
     res.json({cash:w.rows[0]?.cash??0,holdings:h.rows,trades:t.rows});
-  } catch { res.status(500).json({error:"Erreur serveur."}); }
+  } catch(e) { console.error("[PORTFOLIO] error", e.message); res.status(500).json({error:"Erreur serveur."}); }
 });
 
 app.post("/api/trades",auth,async(req,res)=>{
