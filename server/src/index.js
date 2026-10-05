@@ -245,6 +245,14 @@ async function fetchNewsRssFallback(){
   return items;
 }
 
+async function fetchCointelegraphFallback(){
+  const response=await fetch("https://cointelegraph.com/rss",{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"Mozilla/5.0 (compatible; BitGold/1.0)"}});
+  if(!response.ok)throw Error("Cointelegraph RSS HTTP "+response.status);
+  const items=parseRssItems(await response.text(),"Cointelegraph");
+  if(!items.length)throw Error("Aucun article Cointelegraph RSS");
+  return items.slice(0,9);
+}
+
 async function fetchCoinDeskFallback(){
   const response=await fetch("https://www.coindesk.com/arc/outboundfeeds/rss/",{headers:{accept:"application/rss+xml, application/xml, text/xml","user-agent":"BitGold/1.0"}});
   if(!response.ok)throw Error("CoinDesk RSS HTTP "+response.status);
