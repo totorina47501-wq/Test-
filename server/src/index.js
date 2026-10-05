@@ -56,21 +56,31 @@ const coingeckoApiKey=String(process.env.COINGECKO_API_KEY||"").trim();
 function coingeckoHeaders(){
   const headers={accept:"application/json","user-agent":"BitGold/1.0"};
   if(coingeckoApiKey){
-    headers["x-cg-demo-api-key"]=coingeckoApiKey;
-    headers["x-cg-pro-api-key"]=coingeckoApiKey;
+    const isPro=coingeckoBaseUrl.includes("pro-api.coingecko.com");
+    headers[isPro?"x-cg-pro-api-key":"x-cg-demo-api-key"]=coingeckoApiKey;
   }
   return headers;
 }
 
 async function coingeckoFetch(path, options={}){
-  const response=await fetch(coingeckoBaseUrl+path,{...options,headers:{...coingeckoHeaders(),...(options.headers||{})}});
+  const request=()=>fetch(coingeckoBaseUrl+path,{...options,headers:{...coingeckoHeaders(),...(options.headers||{})}});
+  let response=await request();
   if(response.status===429){
     const retryAfter=Number(response.headers.get("retry-after"));
     const waitMs=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,10000):2000;
     await new Promise(resolve=>setTimeout(resolve,waitMs));
-    return fetch(coingeckoBaseUrl+path,{...options,headers:{...coingeckoHeaders(),...(options.headers||{})}});
+    response=await request();
   }
   return response;
+}
+
+async function coingeckoError(response,prefix="CoinGecko"){
+  let detail="";
+  try{
+    const text=await response.text();
+    if(text) detail=": "+text.slice(0,300).replace(/\s+/g," ").trim();
+  }catch{}
+  return Error(`${prefix} HTTP ${response.status}${detail}`);
 }
 
 async function refreshMarket(force=false) {
@@ -78,7 +88,7 @@ async function refreshMarket(force=false) {
   try {
     const ids = Object.values(marketIds).join(",");
     const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
-    if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
+    if(!response.ok) throw await coingeckoError(response);
     const data = await response.json();
     marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
       const item = data[id] || {};
@@ -174,21 +184,7 @@ function normalizeNewsItem(item){
 }
 
 async function fetchCoinGeckoNews(){
-  const apiKey=String(process.env.COINGECKO_API_KEY||"").trim();
-  if(!apiKey) throw Error("COINGECKO_API_KEY non configurée");
-  const baseUrl=String(process.env.COINGECKO_API_BASE_URL||"https://api.coingecko.com/api/v3").replace(/\/$/,"");
-  const url=new URL(baseUrl+"/news");
-  url.searchParams.set("per_page","12");
-  url.searchParams.set("page","1");
-  url.searchParams.set("language","fr");
-  url.searchParams.set("type","news");
-  const response=await fetch(url,{headers:{accept:"application/json","x-cg-demo-api-key":apiKey,"x-cg-pro-api-key":apiKey,"user-agent":"BitGold/1.0"}});
-  if(!response.ok) throw Error("CoinGecko News HTTP "+response.status);
-  const payload=await response.json();
-  const raw=Array.isArray(payload)?payload:(Array.isArray(payload.data)?payload.data:[]);
-  const items=raw.map(normalizeNewsItem).filter(item=>item.title&&/^https?:\/\//i.test(item.url));
-  if(!items.length) throw Error("Aucun article CoinGecko");
-  return items;
+  throw Error("CoinGecko News API indisponible avec une clé Demo : endpoint réservé aux plans payants.");
 }
 
 function decodeXml(value){
@@ -199,16 +195,30 @@ function decodeXml(value){
 }
 
 function parseRssItems(xml,defaultSource="Crypto"){
-  return [...String(xml||"").matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].slice(0,12).map(match=>{
-    const block=match[1];
-    const pick=tag=>{const found=block.match(new RegExp("<"+tag+"\\b[^>]*>([\\s\S]*?)</"+tag+">","i"));return found?decodeXml(found[1]).trim():"";};
-    const pickAttr=(tag,attr)=>{const found=block.match(new RegExp("<"+tag+"\\b[^>]*\\s"+attr+"=[\"']([^\"']+)[\"'][^>]*>","i"));return found?decodeXml(found[1]).trim():"";};
-    const description=pick("description");
-    const descriptionImage=(description.match(/<img[^>]+(?:src|data-src|data-original)=["']([^"']+)["']/i)||[])[1]||"";
-    const imageUrl=pickAttr("media:content","url")||pickAttr("media:thumbnail","url")||pickAttr("enclosure","url")||descriptionImage;
-    let url=pick("link");
-    if(!url){const link=block.match(/<link[^>]*href=["']([^"']+)["']/i);url=link?decodeXml(link[1]).trim():"";}
-    return normalizeNewsItem({title:pick("title"),url,published_at:pick("pubDate")||pick("dc:date"),source_name:pick("source")||defaultSource,image:imageUrl});
+  const source=String(xml||"");
+  const blocks=[...source.matchAll(/<(?:item|entry)\b[^>]*>([\s\S]*?)<\/(?:item|entry)>/gi)].map(match=>match[1]).slice(0,12);
+  const stripCdata=value=>String(value||"").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi,"$1");
+  const decode=value=>decodeXml(stripCdata(value));
+  const pick=(block,tags)=>{
+    for(const tag of tags){
+      const found=block.match(new RegExp("<"+tag+"\\b[^>]*>([\\s\S]*?)</"+tag+">","i"));
+      if(found)return decode(found[1]).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+    }
+    return "";
+  };
+  const pickAttr=(block,tags,attr)=>{
+    for(const tag of tags){
+      const found=block.match(new RegExp("<"+tag+"\\b[^>]*\\s"+attr+"=[\"']([^\"']+)[\"'][^>]*>","i"));
+      if(found)return decode(found[1]).trim();
+    }
+    return "";
+  };
+  return blocks.map(block=>{
+    const description=decode(pick(block,["description","content:encoded","summary"]));
+    const descriptionImage=(description.match(/<img[^>]+(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i)||[])[1]||"";
+    const url=pick(block,["link"])||pickAttr(block,["link"],"href");
+    const imageUrl=pickAttr(block,["media:content","media:thumbnail","enclosure"],"url")||descriptionImage;
+    return normalizeNewsItem({title:pick(block,["title"]),url,published_at:pick(block,["pubDate","published","updated","dc:date"]),source_name:pick(block,["source"])||defaultSource,image:imageUrl});
   }).filter(item=>item.title&&/^https?:\/\//i.test(item.url));
 }
 
