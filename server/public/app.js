@@ -62,7 +62,11 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   if(!points?.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
   const clean=points.map(p=>({timestamp:Number(p.timestamp),price:Number(p.price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
   if(!clean.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
-  const values=clean.map(p=>p.price);
+  const pointCounts={"5m":12,"1h":12,"24h":24,"7d":28,"30d":30,"1y":12,"5y":10};
+  const chartRange=HISTORY_RANGES[range]?range:"24h";
+  const targetCount=pointCounts[chartRange]||24;
+  const sampled=clean.length>targetCount?Array.from({length:targetCount},(_,i)=>clean[Math.round(i*(clean.length-1)/Math.max(targetCount-1,1))]):clean;
+  const values=sampled.map(p=>p.price);
   const minValue=Math.min(...values),maxValue=Math.max(...values);
   const spread=Math.max(maxValue-minValue,0.0000001);
   const padding=spread*0.12;
@@ -72,17 +76,17 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   const coords=values.map((value,i)=>[left+(i/Math.max(values.length-1,1))*plotWidth,top+((axisMax-value)/valueRange)*plotHeight]);
   const line=coords.map(([x,y])=>x.toFixed(1)+","+y.toFixed(1)).join(" ");
   const area=line+" "+(width-right)+","+(height-bottom)+" "+left+","+(height-bottom);
-  const last=clean[clean.length-1],first=clean[0];
-  const pct=first.price?((last.price-first.price)/first.price)*100:0;
+  const rawLast=clean[clean.length-1],rawFirst=clean[0];
+  const pct=rawFirst.price?((rawLast.price-rawFirst.price)/rawFirst.price)*100:0;
   const cls=pct>=0?"positive":"negative";
-  const chartRange=HISTORY_RANGES[range]?range:"24h";
   const yTicks=Array.from({length:5},(_,i)=>axisMax-(valueRange*i/4));
+  const axisFormat=(value)=>{const n=Number(value);if(n<1)return n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";return Math.round(n).toLocaleString("fr-FR")+" €"};
   const yGrid=yTicks.map((value,i)=>{
     const y=top+(plotHeight*i/4);
     return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".10\"/><text x=\""+(left-10)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".58\" font-size=\"12\">"+formatPrice(value)+"</text>";
   }).join("");
   const dateLabel=(timestamp)=>{const d=new Date(timestamp);return (chartRange==="5m"||chartRange==="1h"||chartRange==="24h")?d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:chartRange==="5y"?"numeric":undefined})};
-  const mid=clean[Math.floor(clean.length/2)];
+  const first=sampled[0],last=sampled[sampled.length-1],mid=sampled[Math.floor(sampled.length/2)];
   const formatVariation=(value)=>(value>=0?"+":"")+Number(value).toFixed(2).replace(".",",")+"%";
   return "<div class=\"history-chart-wrap\"><div class=\"chart-labels\"><span>Prix en euros</span><span>"+chartPeriodLabel(chartRange)+"</span></div><svg class=\"history-chart\" viewBox=\"0 0 "+width+" "+height+"\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Prix de "+symbol+" en euros sur "+chartPeriodLabel(chartRange)+"\"><defs><linearGradient id=\"chartFill\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#c8ff45\" stop-opacity=\".24\"/><stop offset=\"100%\" stop-color=\"#c8ff45\" stop-opacity=\"0\"/></linearGradient></defs>"+yGrid+"<polygon points=\""+area+"\" fill=\"url(#chartFill)\"/><polyline points=\""+line+"\" fill=\"none\" stroke=\"#c8ff45\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><div class=\"history-axis\"><span>"+dateLabel(first.timestamp)+"</span><span>"+dateLabel(mid.timestamp)+"</span><span>"+dateLabel(last.timestamp)+"</span></div></div><div class=\"history-stats\"><div><span>Départ</span><strong>"+formatPrice(first.price)+"</strong></div><div><span>Dernier cours</span><strong>"+formatPrice(last.price)+"</strong></div><div><span>Variation</span><strong class=\""+cls+"\">"+formatVariation(pct)+"</strong></div><div><span>Min / Max</span><strong>"+formatPrice(minValue)+" / "+formatPrice(maxValue)+"</strong></div></div>";
 }
