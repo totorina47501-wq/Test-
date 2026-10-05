@@ -142,25 +142,12 @@ main{padding-right:365px}
 .bot-tags{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
 .bot-tags span{font-size:9px;color:#a5b4ad;background:#12221b;border:1px solid #233b31;border-radius:7px;padding:5px 7px}
 .bot-strategy{min-height:42px;margin:14px 0;padding:11px;border-left:2px solid #c8ff45;background:#0a1711;color:#7f9189;font-size:11px;line-height:1.45}
-.bot-activity{margin-top:24px;padding:20px;background:#0b1913;border:1px solid #20382e;border-radius:18px}
-.bot-activity-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.bot-activity-head h3{margin:4px 0 0}
-.bot-activity-item{display:grid;grid-template-columns:9px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #193027}
-.bot-activity-item:last-child{border-bottom:0}
-.bot-activity-item>div{display:flex;flex-direction:column;gap:2px}
-.bot-activity-item strong{font-size:12px}
-.bot-activity-item span{font-size:11px;color:#7f9189}
-.bot-activity-item time{font-size:9px;color:#60746b}
-.bot-activity-dot{width:7px;height:7px;border-radius:50%;background:#64776e}
-.bot-activity-dot.buy{background:#c8ff45;box-shadow:0 0 8px #c8ff45}
-.bot-activity-dot.sell{background:#ff8585}
 .bot-empty{padding:22px;text-align:center;color:#708179;border:1px dashed #29483a;border-radius:12px;font-size:12px}
 @media(max-width:900px){.bot-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.bot-grid{grid-template-columns:1fr}.bot-card p{min-height:0}.bot-activity-item{grid-template-columns:9px 1fr}.bot-activity-item time{grid-column:2}}
+@media(max-width:600px){.bot-grid{grid-template-columns:1fr}.bot-card p{min-height:0}}
 
 /* Comparatif bots visiteur / choix connecté */
 .bot-comparison-wrap{overflow-x:auto;padding:2px 2px 10px}.bot-grid{grid-template-columns:repeat(3,minmax(260px,1fr));align-items:stretch}.bot-card{height:100%;display:flex;flex-direction:column}.bot-level{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#71857c;margin-bottom:8px}.bot-card p{min-height:58px}.bot-summary{display:flex;flex-direction:column;gap:5px;padding:11px;border-radius:10px;background:#0a1711;border:1px solid #1b3027;margin:4px 0 10px}.bot-summary strong{font-size:10px;text-transform:uppercase;color:#c8ff45;letter-spacing:.08em}.bot-summary span{font-size:11px;color:#9aaca4;line-height:1.4}.bot-card .full{margin-top:auto}@media(max-width:900px){.bot-grid{grid-template-columns:repeat(3,minmax(245px,1fr))}.bot-comparison-wrap{margin-right:-2px}}
-body.is-visitor .bot-activity{display:none}
 
 /* Bots premium : comparaison + fiches dédiées */
 .bot-comparison-intro{display:flex;justify-content:space-between;gap:20px;align-items:center;margin:18px 0 14px;padding:15px 18px;border:1px solid #1c3429;border-radius:16px;background:linear-gradient(90deg,#0b1912,#101b16);box-shadow:0 12px 30px rgba(0,0,0,.14)}
