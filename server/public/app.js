@@ -42,7 +42,7 @@ let marketHistoryPreview={};
 function formatPrice(value){
   return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:value<10?4:2})+" €";
 }
-function chartPeriodLabel(days){
+function chartPeriodLabel(chartDays){
   if(days===1) return "24h";
   if(days===7) return "7 jours";
   if(days===30) return "30 jours";
@@ -54,7 +54,7 @@ function formatChartValue(value){
   if(n>=10) return n.toLocaleString("fr-FR",{maximumFractionDigits:2})+" €";
   return n.toLocaleString("fr-FR",{maximumFractionDigits:4})+" €";
 }
-function buildHistoryChart(points){
+function buildHistoryChart(points,symbol=historyState.symbol,days=historyState.days){
   if(!points.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
   const values=points.map(p=>Number(p.price)).filter(Number.isFinite);
   const minValue=Math.min(...values),maxValue=Math.max(...values);
@@ -75,14 +75,14 @@ function buildHistoryChart(points){
   const delta=Number(last.price)-Number(first.price);
   const pct=first.price?delta/first.price*100:0;
   const cls=pct>=0?"positive":"negative";
-  const days=Number(historyState.days)||7;
+  const chartDays=Number(days)||7;
   const yTicks=Array.from({length:5},(_,i)=>axisMax-(range*i/4));
   const yGrid=yTicks.map((value,i)=>{
     const y=top+(plotHeight*i/4);
     return "<line x1=\""+left+"\" y1=\""+y.toFixed(1)+"\" x2=\""+(width-right)+"\" y2=\""+y.toFixed(1)+"\" stroke=\"currentColor\" opacity=\".12\"/><text x=\""+(left-8)+"\" y=\""+(y+4).toFixed(1)+"\" text-anchor=\"end\" fill=\"currentColor\" opacity=\".65\" font-size=\"12\">"+formatChartValue(value)+"</text>";
   }).join("");
-  const dateLabel=(timestamp)=>days===1?new Date(timestamp).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):new Date(timestamp).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
-  return "<div class=\"history-chart-wrap\"><svg class=\"history-chart\" viewBox=\"0 0 "+width+" "+height+"\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Évolution du cours de "+historyState.symbol+" sur "+chartPeriodLabel(days)+"\">"+yGrid+"<polyline points=\""+line+"\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><div class=\"history-axis\"><span>"+dateLabel(first.timestamp)+"</span><span>"+dateLabel(last.timestamp)+"</span></div></div><div class=\"history-stats\"><div><span>Début</span><strong>"+formatPrice(first.price)+"</strong></div><div><span>Fin</span><strong>"+formatPrice(last.price)+"</strong></div><div><span>Variation</span><strong class=\""+cls+"\">"+(pct>=0?"+":"")+pct.toFixed(2).replace(".",",")+"%</strong></div><div><span>Min / Max</span><strong>"+formatPrice(minValue)+" / "+formatPrice(maxValue)+"</strong></div></div>";
+  const dateLabel=(timestamp)=>chartDays===1?new Date(timestamp).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):new Date(timestamp).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
+  return "<div class=\"history-chart-wrap\"><svg class=\"history-chart\" viewBox=\"0 0 "+width+" "+height+"\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Évolution du cours de "+symbol+" sur "+chartPeriodLabel(chartDays)+"\">"+yGrid+"<polyline points=\""+line+"\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><div class=\"history-axis\"><span>"+dateLabel(first.timestamp)+"</span><span>"+dateLabel(last.timestamp)+"</span></div></div><div class=\"history-stats\"><div><span>Début</span><strong>"+formatPrice(first.price)+"</strong></div><div><span>Fin</span><strong>"+formatPrice(last.price)+"</strong></div><div><span>Variation</span><strong class=\""+cls+"\">"+(pct>=0?"+":"")+pct.toFixed(2).replace(".",",")+"%</strong></div><div><span>Min / Max</span><strong>"+formatPrice(minValue)+" / "+formatPrice(maxValue)+"</strong></div></div>";
 }
 function fallbackHistory(symbol,days){
   const base=Number(marketPrices[symbol])||1;
@@ -193,7 +193,7 @@ async function openCryptoDetail(symbol){
     setDetailText("detail7dMax",values.length?formatPrice(Math.max(...values)):"—");
     setDetailText("detailMarketCap",formatCompactEuro(data.marketCap));
     setDetailText("detailVolume",formatCompactEuro(data.volume24h));
-    document.getElementById("cryptoDetailChart").innerHTML=points.length?buildSparkline(points).replace("<svg","<svg class=\"crypto-detail-svg\""):"<div class=\"history-empty\">Historique indisponible.</div>";
+    document.getElementById("cryptoDetailChart").innerHTML=points.length?buildHistoryChart(points,symbol,7):"<div class=\"history-empty\">Historique indisponible.</div>";
     setDetailText("cryptoDetailSource","Source : CoinGecko · données mises à jour automatiquement");
     document.getElementById("detailHistory").onclick=()=>{closeCryptoDetail();openHistory(symbol,7)};
     document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
