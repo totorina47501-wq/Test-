@@ -188,3 +188,41 @@ body.is-visitor .bot-activity{display:none}
 .activity-page{min-height:calc(100vh - 82px);padding:38px 5vw 70px;background:#07100c}.activity-page-shell{max-width:1120px;margin:0 auto}.activity-page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:28px 0 20px}.activity-page-head h2{font-size:44px;margin:7px 0 10px}.activity-page-head p{max-width:720px;color:#8fa198;line-height:1.6;font-size:13px}.activity-filters{display:flex;flex-wrap:wrap;gap:6px;padding:5px;background:#0b1913;border:1px solid #20382e;border-radius:13px;width:max-content;margin-bottom:16px}.activity-filters button{border:0;background:transparent;color:#7f9189;padding:9px 13px;border-radius:9px;font-weight:800;font-size:11px;cursor:pointer}.activity-filters button.active{background:#c8ff45;color:#08110b}.activity-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:14px}.activity-summary span{display:flex;flex-direction:column;gap:3px;padding:13px;border:1px solid #1d3328;border-radius:12px;background:#0b1711}.activity-summary b{font-size:20px;color:#eef5f1}.activity-summary small{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#71857c}.activity-log{border:1px solid #1d3328;border-radius:18px;background:#0b1711;padding:0 18px}.activity-row{display:grid;grid-template-columns:36px 1fr auto;gap:13px;align-items:center;padding:15px 2px;border-bottom:1px solid #1b3027}.activity-row:last-child{border-bottom:0}.activity-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#101f16;color:#aab9b2;font-weight:900}.activity-bot .activity-icon{color:#c8ff45;background:#c8ff4510}.activity-buy .activity-icon{color:#c8ff45;background:#c8ff4510}.activity-sell .activity-icon{color:#ff8585;background:#ff858510}.activity-subscription .activity-icon{color:#9fc8b5;background:#9fc8b511}.activity-row div{display:flex;flex-direction:column;gap:4px}.activity-row strong{font-size:12px}.activity-row div span{font-size:11px;color:#7f9189;line-height:1.4}.activity-row time{font-size:9px;color:#62766d;white-space:nowrap}
 body.activity-mode .topbar{display:flex}body.activity-mode main>section:not(#activite),body.activity-mode .news-rail,body.activity-mode footer{display:none!important}body.activity-mode #activite{display:block!important}
 @media(max-width:700px){.activity-page-head{align-items:flex-start;flex-direction:column}.activity-page-head h2{font-size:35px}.activity-summary{grid-template-columns:repeat(2,1fr)}.activity-row{grid-template-columns:34px 1fr}.activity-row time{grid-column:2}.activity-filters{width:auto;overflow:auto}}
+
+
+/* Portefeuille principal */
+body.is-authenticated .hero{display:none}
+body.is-authenticated .account-section{padding-top:54px;background:radial-gradient(circle at 15% 0%,#173c28 0,transparent 34%),linear-gradient(180deg,#09150f,#07110d)}
+.portfolio-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}
+.portfolio-heading h2{font-size:46px;margin:8px 0 8px;letter-spacing:-.03em}
+.portfolio-heading p{margin:0;color:#82948c;font-size:13px}
+.portfolio-overview{display:grid;grid-template-columns:1.5fr .8fr;gap:16px;margin-bottom:18px}
+.portfolio-total,.portfolio-cash{position:relative;overflow:hidden;padding:26px;border:1px solid #29483a;border-radius:22px;background:linear-gradient(145deg,#10241a,#0b1711);box-shadow:0 20px 55px #0004}
+.portfolio-total:after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;right:-70px;top:-90px;background:#c8ff4510;box-shadow:0 0 70px #c8ff4510}
+.portfolio-total>span,.portfolio-cash>span{display:block;color:#7e9289;font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.portfolio-total>strong{display:block;font-size:48px;line-height:1.1;margin:9px 0;color:#f2f7f4;letter-spacing:-.04em}
+.portfolio-total small{color:#71857c;font-size:11px}
+.portfolio-cash{display:flex;flex-direction:column;justify-content:center}
+.portfolio-cash>strong{font-size:30px;margin:7px 0 4px;color:#c8ff45}
+.portfolio-cash .wallet-actions{margin-top:8px}
+.portfolio-cash .wallet-actions .btn{flex:1}
+.portfolio-holdings{background:linear-gradient(145deg,#0d1c15,#09140f);border:1px solid #203b2f;border-radius:22px;padding:20px 22px}
+.holdings-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:5px}
+.holdings-head h3{margin:5px 0 0;font-size:20px}
+.portfolio-assets{display:flex;flex-direction:column}
+.portfolio-asset{display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(110px,.6fr) minmax(180px,.8fr);gap:18px;align-items:center;padding:17px 4px;border-bottom:1px solid #1b3027;transition:background .18s ease,transform .18s ease}
+.portfolio-asset:last-child{border-bottom:0}
+.portfolio-asset:hover{background:#102017;border-radius:12px;transform:translateX(3px)}
+.portfolio-asset.is-empty{opacity:.48}
+.portfolio-asset-identity{display:flex;align-items:center;gap:13px;min-width:0}
+.portfolio-asset-identity>div{display:flex;flex-direction:column;min-width:0}
+.portfolio-asset-identity strong{font-size:14px}
+.portfolio-asset-identity span,.portfolio-asset-quantity span,.portfolio-asset-value span{font-size:10px;color:#71857c;margin-top:3px}
+.coin-icon{width:42px;height:42px;display:grid;place-items:center;flex:none;border-radius:50%;font-size:19px;font-weight:950;background:#12251b;border:1px solid #31503f;box-shadow:0 8px 22px #0004}
+.coin-icon.coin-btc{color:#f7931a;background:#2a1d0e;border-color:#81511d}.coin-icon.coin-eth{color:#9da8ff;background:#151a35;border-color:#4a528d}.coin-icon.coin-sol{color:#c8ff45;background:#142519;border-color:#496b3e}.coin-icon.coin-usdc{color:#2775ca;background:#102238;border-color:#285b8f}.coin-icon.coin-link{color:#2a5ada;background:#111d38;border-color:#2b4b91}.coin-icon.coin-avax{color:#ff5b61;background:#321417;border-color:#81383d}
+.portfolio-asset-quantity,.portfolio-asset-value{display:flex;flex-direction:column}
+.portfolio-asset-quantity strong,.portfolio-asset-value strong{font-size:13px}
+.portfolio-asset-value{align-items:flex-end;text-align:right}
+.portfolio-asset-value strong{font-size:15px;color:#eaf2ed}
+@media(max-width:800px){.portfolio-heading{align-items:flex-start;flex-direction:column}.portfolio-heading h2{font-size:36px}.portfolio-overview{grid-template-columns:1fr}.portfolio-asset{grid-template-columns:1fr auto;gap:10px}.portfolio-asset-quantity{align-items:flex-end}.portfolio-asset-value{grid-column:2;grid-row:1;align-self:end}.portfolio-asset-value span{display:none}}
+@media(max-width:500px){.portfolio-total>strong{font-size:36px}.portfolio-holdings{padding:16px}.portfolio-asset-identity strong{font-size:13px}.portfolio-asset-identity span{font-size:9px}.coin-icon{width:38px;height:38px;font-size:17px}}
