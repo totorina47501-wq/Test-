@@ -139,7 +139,7 @@ async function openCryptoDetail(symbol){
   setDetailText("cryptoDetailSource","Chargement des données…");
   document.getElementById("cryptoDetailChart").innerHTML="<div class=\"history-loading\">Chargement des données…</div>";
   try{
-    const data=await apiFetch(`/api/market/${encodeURIComponent(symbol)}`);
+    const data=await apiFetch(`/api/market/details/${encodeURIComponent(symbol)}`);
     marketPrices[symbol]=Number(data.price)||marketPrices[symbol];
     const price=formatPrice(data.price);
     const change=Number(data.change24h||0);
