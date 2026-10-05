@@ -73,7 +73,7 @@ async function openHistory(symbol,days=7){
   document.getElementById("historySource").textContent="Chargement de l'historique…";
   document.getElementById("historyChart").innerHTML="<div class=\"history-loading\">Chargement des cours…</div>";
   modal.hidden=false;
-  setHistoryRange(days);
+  document.querySelectorAll(".history-range button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===days));
   try{
     const data=await apiFetch(`/api/market/history/${encodeURIComponent(symbol)}?days=${days}`);
     historyState.prices=data.prices||[];
