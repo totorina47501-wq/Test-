@@ -160,8 +160,17 @@ async function fetchHistory(symbol, days) {
   if(cached && Date.now()-cached.updatedAt<60000) return cached.prices;
   const id=marketIds[symbol];
   if(!id) throw Error("Crypto inconnue.");
-  const response=await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=eur&days=${days}`,{headers:{accept:"application/json","user-agent":"BitGold/1.0"}});
-  if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
+  let response;
+  let lastError;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      response=await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=eur&days=${days}`,{headers:{accept:"application/json","user-agent":"BitGold/1.0"}});
+      if(response.ok) break;
+      lastError=Error(`CoinGecko HTTP ${response.status}`);
+    }catch(e){ lastError=e; }
+    if(attempt<2) await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
+  }
+  if(!response?.ok) throw lastError||Error("CoinGecko indisponible.");
   const data=await response.json();
   const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
   if(!pricesHistory.length) throw Error("Aucune donnée historique.");
@@ -171,8 +180,10 @@ async function fetchHistory(symbol, days) {
 app.get("/api/market/history",async(req,res)=>{
   const days=Math.min(Math.max(Number(req.query.days||7),1),90);
   try {
-    const entries=await Promise.all(Object.keys(marketIds).map(async symbol=>[symbol,await fetchHistory(symbol,days)]));
-    res.json({days,source:"CoinGecko",markets:Object.fromEntries(entries)});
+    const results=await Promise.allSettled(Object.keys(marketIds).map(async symbol=>[symbol,await fetchHistory(symbol,days)]));
+    const markets=Object.fromEntries(results.filter(result=>result.status==="fulfilled").map(result=>result.value));
+    if(!Object.keys(markets).length) throw Error("Aucune donnée historique disponible.");
+    res.json({days,source:"CoinGecko",markets});
   } catch(e) {
     console.error("[MARKET] history batch error",e.message);
     res.status(502).json({error:"Historique temporairement indisponible."});
