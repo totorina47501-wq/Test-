@@ -1,5 +1,6 @@
 const markets=[["Bitcoin","BTC","67 420,10 €","+2,84%",67420.10],["Ethereum","ETH","3 248,70 €","+1,92%",3248.70],["Solana","SOL","154,20 €","+4,31%",154.20],["USD Coin","USDC","0,92 €","+0,01%",0.92],["Chainlink","LINK","17,84 €","-0,73%",17.84],["Avalanche","AVAX","28,16 €","+1,48%",28.16]];
-const API=localStorage.getItem("bitgold-api")||"https://p01--service-bitgold--dvn9t2gvmtgx.code.run";
+const DEFAULT_API=window.location.hostname.endsWith("github.io")?"https://p01--service-bitgold--dvn9t2gvmtgx.code.run":window.location.origin;
+const API=localStorage.getItem("bitgold-api")||DEFAULT_API;
 let apiToken=localStorage.getItem("bitgold-token")||"";
 const state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0}};
 let tradeSide="buy";let authMode="login";
