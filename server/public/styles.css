@@ -112,3 +112,15 @@ body.is-visitor #authState{color:#a9b8b1}body.is-authenticated #authState{color:
 main{padding-right:365px}
 @media(max-width:1200px){.news-rail{position:relative;top:auto;right:auto;width:auto;max-width:calc(100% - 16%);margin:24px 8% 0;max-height:none}main{padding-right:0}.news-rail-list{display:grid;grid-template-columns:repeat(2,1fr);column-gap:18px}.news-rail-item{padding:15px 0}.news-rail-more{max-width:320px}}
 @media(max-width:600px){.news-rail{max-width:none;margin:14px 6%;padding:16px;border-radius:16px}.news-rail-list{grid-template-columns:1fr}.news-rail-item.featured h3{font-size:16px}.news-rail-intro{font-size:11px}}
+
+
+/* Indicateurs techniques des actifs */
+.market-indicators{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid #182d24}
+.market-indicator{display:flex;flex-direction:column;gap:2px;min-width:0;padding:7px 6px;border-radius:8px;background:#09150f;color:#879a91;font-size:9px;line-height:1.15;text-align:center}
+.market-indicator b{font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:#667b71}
+.market-indicator.up{color:#c8ff45;background:#c8ff450d}.market-indicator.up b{color:#8fae65}
+.market-indicator.down{color:#ff8585;background:#ff85850d}.market-indicator.down b{color:#b77a7a}
+.market-indicator.hot{color:#ffb36b;background:#ffb36b0d}.market-indicator.hot b{color:#b78c66}
+.market-indicator.cold{color:#7dd3fc;background:#7dd3fc0d}.market-indicator.cold b{color:#6e9db4}
+.market-indicator.neutral{color:#b6c5be}.market-indicator.muted{grid-column:1/-1;color:#687b72;padding:8px}
+@media(max-width:600px){.market-indicators{grid-template-columns:repeat(2,1fr)}}
