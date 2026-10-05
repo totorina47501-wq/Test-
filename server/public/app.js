@@ -218,8 +218,40 @@ function closeBotDetail(){document.body.classList.remove("bot-detail-mode");cons
 function initBotRoute(){const match=window.location.pathname.match(/^\/bot\/(shield|silver|gold)$/);if(match)renderBotDetail(match[1]).catch(e=>console.warn("Bot route:",e.message));const activity=window.location.pathname==="/activite";if(activity){if(apiToken)openActivity();else openModal("connexion")}window.addEventListener("popstate",()=>{const next=window.location.pathname.match(/^\/bot\/(shield|silver|gold)$/);if(next)renderBotDetail(next[1]);else if(window.location.pathname==="/activite"){if(apiToken)openActivity();else openModal("connexion")}else{document.body.classList.remove("bot-detail-mode","activity-mode");const detail=document.getElementById("bot-detail"),page=document.getElementById("activite");if(detail)detail.hidden=true;if(page)page.hidden=true}})}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]||char))}
 function formatNewsAge(timestamp){const date=new Date(timestamp);if(!Number.isFinite(date.getTime()))return "Récent";const minutes=Math.max(1,Math.floor((Date.now()-date.getTime())/60000));if(minutes<60)return "Il y a "+minutes+" min";const hours=Math.floor(minutes/60);if(hours<24)return "Il y a "+hours+" h";return "Il y a "+Math.floor(hours/24)+" j"}
-function renderNews(items){const grid=document.getElementById("newsGrid");if(!grid)return;if(!items?.length){grid.innerHTML="<div class=\"news-empty\">Aucune actualité disponible pour le moment.</div>";return}grid.innerHTML=items.slice(0,6).map((item,index)=>{const image=item.imageUrl||"";return `<article class="news-rail-item ${index===0?"featured":""}"><a class="news-rail-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" aria-label="Lire : ${escapeHtml(item.title)}"><div class="news-rail-image-wrap">${image?`<img class="news-rail-image" src="${escapeHtml(image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`:`<div class="news-rail-image news-rail-image-placeholder" aria-hidden="true">BITGOLD</div>`}</div><h3>${escapeHtml(item.title)}</h3></a></article>`}).join("")}
-async function loadNews(){const section=document.getElementById("actualites");if(!section)return;const grid=document.getElementById("newsGrid");if(grid)grid.innerHTML="<div class=\"news-loading\">Actualités en cours de chargement…</div>";try{const data=await apiFetch("/api/news");renderNews(data.items||[])}catch(e){console.warn("Actualités:",e.message);renderNews([{title:"Voir les dernières actualités crypto",url:"https://www.coindesk.com/fr/latest-crypto-news",publishedAt:new Date().toISOString(),source:"CoinDesk · flux de secours",category:"Actualités",imageUrl:""}])}}
+function renderNews(items,sourceLabel="Sources crypto"){
+  const grid=document.getElementById("newsGrid");
+  if(!grid)return;
+  if(!items?.length){grid.innerHTML="<div class=\"news-empty\">Aucune actualité disponible pour le moment.</div>";return}
+  grid.innerHTML=items.slice(0,6).map((item,index)=>{
+    const image=item.imageUrl||"";
+    const source=escapeHtml(item.source||"Crypto");
+    const category=escapeHtml(item.category||"Crypto");
+    const age=escapeHtml(formatNewsAge(item.publishedAt));
+    return `<article class="news-rail-item ${index===0?"featured":""}">
+      <a class="news-rail-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" aria-label="Lire : ${escapeHtml(item.title)}">
+        <div class="news-rail-image-wrap">${image?`<img class="news-rail-image" src="${escapeHtml(image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`:`<div class="news-rail-image news-rail-image-placeholder" aria-hidden="true">BITGOLD</div>`}</div>
+        <div class="news-rail-item-meta"><span class="news-category">${category}</span><span class="news-age">${age}</span></div>
+        <h3>${escapeHtml(item.title)}</h3>
+        <div class="news-rail-source"><span>${source}</span><span>Lire l’article →</span></div>
+      </a>
+    </article>`
+  }).join("");
+  const intro=document.querySelector(".news-rail-intro");
+  if(intro)intro.textContent=sourceLabel+" · sélection actualisée automatiquement.";
+}
+async function loadNews(){
+  const section=document.getElementById("actualites");
+  if(!section)return;
+  const grid=document.getElementById("newsGrid");
+  if(grid)grid.innerHTML="<div class=\"news-loading\">Actualités en cours de chargement…</div>";
+  try{
+    const data=await apiFetch("/api/news");
+    renderNews(data.items||[],data.source||"BitGold News");
+  }catch(e){
+    console.warn("Actualités:",e.message);
+    renderNews([{title:"Voir les dernières actualités crypto",url:"https://www.coindesk.com/arc/outboundfeeds/rss/",publishedAt:new Date().toISOString(),source:"CoinDesk",category:"Actualités",imageUrl:""}],"Flux de secours");
+  }
+}
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews();if(apiToken)renderWallet();loadNews()}
 initBotRoute();setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
 window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;
