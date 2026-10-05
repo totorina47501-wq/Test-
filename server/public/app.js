@@ -62,7 +62,7 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   if(!points?.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
   const clean=points.map(p=>({timestamp:Number(p.timestamp),price:Number(p.price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
   if(!clean.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
-  const pointCounts={"5m":36,"1h":36,"24h":48,"7d":84,"30d":120,"1y":48,"5y":60};
+  const pointCounts={"5m":72,"1h":72,"24h":96,"7d":168,"30d":240,"1y":48,"5y":60};
   const chartRange=HISTORY_RANGES[range]?range:"24h";
   const targetCount=pointCounts[chartRange]||24;
   const sampled=clean.length>targetCount?Array.from({length:targetCount},(_,i)=>clean[Math.round(i*(clean.length-1)/Math.max(targetCount-1,1))]):clean;
