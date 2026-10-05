@@ -48,7 +48,7 @@ async function refreshMarket(force=false) {
   if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
   try {
     const ids = Object.values(marketIds).join(",");
-    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true`, {
+    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true&include_market_cap_rank=true`, {
       headers: { accept: "application/json", "user-agent": "BitGold/1.0" }
     });
     if(!response.ok) throw Error(`CoinGecko HTTP ${response.status}`);
@@ -56,7 +56,7 @@ async function refreshMarket(force=false) {
     marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
       const item = data[id];
       const price = Number(item?.eur);
-      const change24h = Number(item?.eur_24h_change);
+      const change24h = Number(item?.eur_24h_change);\n      const marketCap = Number(item?.eur_market_cap);\n      const volume24h = Number(item?.eur_24h_vol);\n      const marketCapRank = Number(item?.eur_market_cap_rank);
       if(Number.isFinite(price) && price > 0) prices[symbol] = price;
       return {
         symbol,
@@ -128,6 +128,25 @@ app.post("/api/auth/login", async (req,res) => {
 
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
+app.get("/api/market/:symbol",async(req,res)=>{
+  const symbol=String(req.params.symbol||"").toUpperCase();
+  if(!marketIds[symbol]) return res.status(404).json({error:"Crypto inconnue."});
+  const market=await refreshMarket();
+  const item=market.find(row=>row.symbol===symbol);
+  try {
+    const pricesHistory=await fetchHistory(symbol,7);
+    const values=pricesHistory.map(point=>Number(point.price));
+    res.json({
+      ...item,
+      name:{BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"}[symbol],
+      days7:{min:Math.min(...values),max:Math.max(...values),points:pricesHistory},
+      source:"CoinGecko"
+    });
+  } catch(e) {
+    console.error("[MARKET] detail error",symbol,e.message);
+    res.json({...item,name:symbol,days7:{min:item.price,max:item.price,points:[]},source:"CoinGecko"});
+  }
+});
 
 async function fetchHistory(symbol, days) {
   const cacheKey=`${symbol}:${days}`;
