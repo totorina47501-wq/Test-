@@ -18,7 +18,7 @@ test("visitor bot comparison is public and ordered",()=>{
 
 test("authenticated bot choice is exclusive",()=>{
   assert.match(server,/UPDATE bot_subscriptions SET active=FALSE WHERE user_id=\$1 AND bot_type<>\$2/);
-  assert.match(app,/Choisissez votre bot d’investissement/);
+  assert.match(app,/Choisissez votre niveau d’automatisation/);
 });
 
 test("logout listener is not blocked by stale history exports",()=>{
