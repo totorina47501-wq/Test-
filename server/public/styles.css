@@ -459,3 +459,9 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .held-asset-price{text-align:right}
 @media(max-width:900px){.dashboard-cockpit-strip{grid-template-columns:1fr}}
 @media(max-width:700px){.dashboard-membership-main{display:block}.dashboard-membership-main span{display:block;text-align:left;margin-top:5px}.held-asset-row{gap:8px}.held-asset-price{min-width:120px}}
+
+/* Authenticated users use the cockpit as the single portfolio view. */
+.legacy-wallet-section,
+.legacy-wallet-section[hidden],
+.auth-only.legacy-wallet-section,
+.auth-only#portefeuille{display:none!important}

@@ -5,6 +5,7 @@ import path from "node:path";
 const root=path.resolve(process.cwd());
 const html=fs.readFileSync(path.join(root,"public/index.html"),"utf8");
 const app=fs.readFileSync(path.join(root,"public/app.js"),"utf8");
+const css=fs.readFileSync(path.join(root,"public/styles.css"),"utf8");
 const server=fs.readFileSync(path.join(root,"src/index.js"),"utf8");
 
 test("visitor bot comparison is public and ordered",()=>{
@@ -124,4 +125,13 @@ test("cockpit shows only held assets, subscription reminder and hides pricing wh
   assert.match(app,/querySelectorAll\("\.visitor-only"\)/);
   assert.match(html,/href="#pricings" class="visitor-only"/);
   assert.match(html,/id="pricings" class="section pricing-page-section visitor-only"/);
+});
+
+
+test("authenticated portfolio is consolidated into the cockpit",()=>{
+  assert.match(html,/href="#dashboard" class="auth-only" hidden>Cockpit<\/a>/);
+  assert.match(html,/legacy-wallet-section/);
+  assert.match(html,/class="visitor-only">Pricings<\/a>/);
+  assert.match(app,/document\.getElementById\("dashboard"\)\?\.scrollIntoView/);
+  assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
 });
