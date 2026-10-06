@@ -586,7 +586,7 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .auth-field-grid input,.auth-field-grid select,.profile-grid input,.profile-grid select{width:100%;box-sizing:border-box}
 .google-auth-wrap{margin:12px 0}
 .auth-divider{display:flex;align-items:center;gap:10px;margin:10px 0;color:#566b61;font-size:8px;text-transform:uppercase;letter-spacing:.08em}
-.auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:#1c3027}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:#1c3027}.google-unavailable{display:block;width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #263b31;border-radius:8px;text-align:center;color:#a5b8ad;font-size:12px}
 #googleSignInButton{display:flex;justify-content:center;min-height:40px}
 #googleSignInButton>div{max-width:100%}
 .profile-heading{margin-bottom:18px}
