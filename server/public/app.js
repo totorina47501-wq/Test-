@@ -789,7 +789,7 @@ handleStripeReturn();initGoogleAuth();
 
 window.addEventListener('DOMContentLoaded',initBitGoldI18n);
 
-window.addEventListener("DOMContentLoaded",()=>{loadFxRates();if(apiToken){loadKycStatus();loadWalletLedger();loadSecurityCenter()}});
+window.addEventListener("DOMContentLoaded",()=>{const secBtn=document.getElementById("openSecurity");if(secBtn)secBtn.addEventListener("click",openSecurityCenter);loadFxRates();if(apiToken){loadKycStatus();loadWalletLedger();loadSecurityCenter()}});
 function rerenderCurrency(){if(lastMarketData.length)renderMarket(lastMarketData);if(state?.portfolio)renderWallet();if(apiToken)loadDashboard().catch(()=>{});}
 window.addEventListener("bitgold:fx-ready",rerenderCurrency);
 window.addEventListener("bitgold:currency-ready",rerenderCurrency);
