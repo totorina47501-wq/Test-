@@ -320,9 +320,112 @@ function simulate(){const amount=Number(document.getElementById("amount").value|
 function openTrade(side,asset="BTC"){tradeSide=side;document.getElementById("tradeTitle").textContent=side==="buy"?"Acheter des cryptos":"Vendre des cryptos";document.getElementById("tradeAsset").value=asset;document.getElementById("tradeAmount").value=100;document.getElementById("tradeResult").textContent=apiToken?"":"Connectez-vous pour effectuer une opération démo.";document.getElementById("tradeModal").hidden=false;document.body.classList.add("modal-open")}
 function closeTrade(){document.getElementById("tradeModal").hidden=true;document.body.classList.remove("modal-open")}
 async function executeTrade(){const result=document.getElementById("tradeResult");const asset=document.getElementById("tradeAsset").value;const amount=Number(document.getElementById("tradeAmount").value||0);if(!apiToken){result.textContent="Connectez-vous pour effectuer une opération démo.";return}if(amount<=0){result.textContent="Montant invalide.";return}result.textContent="Traitement…";try{await apiFetch("/api/trades",{method:"POST",body:JSON.stringify({side:tradeSide,asset,amount})});await loadPortfolio();result.textContent=`Opération démo effectuée : ${tradeSide==="buy"?"achat":"vente"} de ${(amount/(marketPrices[asset]||1)).toFixed(6)} ${asset} pour ${amount.toFixed(2)} €.`}catch(e){result.textContent=e.message}}
-function openModal(type){authMode=type==="inscription"?"signup":"login";document.getElementById("modalTitle").textContent=authMode==="signup"?"Créer un compte BitGold":"Connexion BitGold";document.getElementById("authSubmit").textContent=authMode==="signup"?"Créer mon compte":"Se connecter";document.getElementById("authSwitch").textContent=authMode==="signup"?"J'ai déjà un compte":"Créer un compte";document.getElementById("authResult").textContent="";document.getElementById("modal").hidden=false;document.body.classList.add("modal-open")}
+function setAuthFormMode(mode){
+  const signup=mode==="signup";
+  const fields=document.getElementById("signupFields");
+  if(fields)fields.hidden=!signup;
+  const password=document.getElementById("authPassword");
+  if(password)password.autocomplete=signup?"new-password":"current-password";
+  const submit=document.getElementById("authSubmit");
+  if(submit)submit.textContent=signup?"Créer mon compte":"Se connecter";
+  const title=document.getElementById("modalTitle");
+  if(title)title.textContent=signup?"Créer un compte BitGold":"Connexion BitGold";
+  const note=document.querySelector("#modal .modal-note");
+  if(note)note.textContent=signup?"Complétez votre profil pour personnaliser votre espace BitGold.":"Connectez-vous avec votre email ou votre compte Google.";
+  const switchButton=document.getElementById("authSwitch");
+  if(switchButton)switchButton.textContent=signup?"J'ai déjà un compte":"Créer un compte";
+}
+function collectSignupProfile(){
+  return {
+    first_name:document.getElementById("authFirstName")?.value||"",
+    last_name:document.getElementById("authLastName")?.value||"",
+    phone:document.getElementById("authPhone")?.value||"",
+    birth_date:document.getElementById("authBirthDate")?.value||"",
+    country:document.getElementById("authCountry")?.value||"",
+    city:document.getElementById("authCity")?.value||"",
+    postal_code:document.getElementById("authPostalCode")?.value||"",
+    address:document.getElementById("authAddress")?.value||"",
+    preferred_currency:document.getElementById("authCurrency")?.value||"EUR",
+    risk_profile:document.getElementById("authRisk")?.value||"moderate"
+  };
+}
+function fillProfileForm(profile){
+  const map={profileFirstName:"first_name",profileLastName:"last_name",profileEmail:"email",profilePhone:"phone",profileBirthDate:"birth_date",profileCountry:"country",profileCity:"city",profilePostalCode:"postal_code",profileAddress:"address",profileCurrency:"preferred_currency",profileRisk:"risk_profile"};
+  Object.entries(map).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=profile?.[key]||""});
+}
+async function openProfile(){
+  if(!apiToken)return openModal("connexion");
+  const result=document.getElementById("profileResult");
+  if(result){result.textContent="Chargement du profil…";result.className="result"}
+  document.getElementById("profileModal").hidden=false;
+  document.body.classList.add("modal-open");
+  try{
+    const profile=await apiFetch("/api/me");
+    fillProfileForm(profile);
+    if(result)result.textContent="";
+  }catch(e){
+    if(result){result.textContent=e.message||"Impossible de charger le profil.";result.className="result error"}
+  }
+}
+function closeProfile(){const modal=document.getElementById("profileModal");if(modal)modal.hidden=true;document.body.classList.remove("modal-open")}
+async function saveProfile(){
+  const result=document.getElementById("profileResult");
+  if(result){result.textContent="Enregistrement…";result.className="result"}
+  try{
+    const payload={
+      first_name:document.getElementById("profileFirstName")?.value||"",
+      last_name:document.getElementById("profileLastName")?.value||"",
+      phone:document.getElementById("profilePhone")?.value||"",
+      birth_date:document.getElementById("profileBirthDate")?.value||"",
+      country:document.getElementById("profileCountry")?.value||"",
+      city:document.getElementById("profileCity")?.value||"",
+      postal_code:document.getElementById("profilePostalCode")?.value||"",
+      address:document.getElementById("profileAddress")?.value||"",
+      preferred_currency:document.getElementById("profileCurrency")?.value||"EUR",
+      risk_profile:document.getElementById("profileRisk")?.value||"moderate"
+    };
+    const data=await apiFetch("/api/me",{method:"PUT",body:JSON.stringify(payload)});
+    fillProfileForm(data.profile);
+    if(result){result.textContent="Profil enregistré.";result.className="result success"}
+  }catch(e){
+    if(result){result.textContent=e.message||"Impossible d'enregistrer le profil.";result.className="result error"}
+  }
+}
+async function initGoogleAuth(){
+  try{
+    const config=await apiFetch("/api/auth/google/config");
+    const wrap=document.getElementById("googleAuthWrap");
+    if(!config.enabled||!config.clientId){if(wrap)wrap.hidden=true;return}
+    const render=()=>{
+      if(!window.google?.accounts?.id)return false;
+      window.google.accounts.id.initialize({client_id:config.clientId,callback:handleGoogleCredential,ux_mode:"popup"});
+      const target=document.getElementById("googleSignInButton");
+      if(target){target.innerHTML="";window.google.accounts.id.renderButton(target,{type:"standard",theme:"filled_black",size:"large",text:"continue_with",shape:"rectangular",logo_alignment:"left",width:360})}
+      return true;
+    };
+    if(render())return;
+    let attempts=0;
+    const timer=setInterval(()=>{attempts++;if(render()||attempts>=30)clearInterval(timer)},250);
+  }catch(e){console.warn("Google Sign-In:",e.message)}
+}
+async function handleGoogleCredential(response){
+  const result=document.getElementById("authResult");
+  if(result){result.textContent="Connexion Google…";result.className="result"}
+  try{
+    const data=await apiFetch("/api/auth/google",{method:"POST",body:JSON.stringify({credential:response.credential})});
+    apiToken=data.token;safeStorageSet("bitgold-token",apiToken);setConnected(true);closeModal();
+    await loadProfileAfterAuth(data.profile);
+    document.getElementById("dashboard")?.scrollIntoView({behavior:"smooth",block:"start"});
+    await loadPortfolio().catch(e=>console.warn("Portfolio après Google:",e.message));
+  }catch(e){if(result)result.textContent=e.message||"Connexion Google impossible."}
+}
+async function loadProfileAfterAuth(profile){
+  if(!profile)return;
+  fillProfileForm(profile);
+}
+function openModal(type){authMode=type==="inscription"?"signup":"login";setAuthFormMode(authMode);document.getElementById("authResult").textContent="";document.getElementById("modal").hidden=false;document.body.classList.add("modal-open")}
 function switchAuth(){openModal(authMode==="signup"?"connexion":"inscription")}
-async function submitAuth(){const email=document.getElementById("authEmail").value,password=document.getElementById("authPassword").value;const result=document.getElementById("authResult");result.textContent="Connexion…";try{const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify({email,password})});apiToken=d.token;safeStorageSet("bitgold-token",apiToken);setConnected(true);closeModal();document.getElementById("dashboard")?.scrollIntoView({behavior:"smooth",block:"start"});try{await loadPortfolio()}catch(e){console.warn("Portfolio après authentification:",e.message)}}catch(e){result.textContent=e.message}}
+async function submitAuth(){const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value,result=document.getElementById("authResult");result.textContent=authMode==="signup"?"Création du compte…":"Connexion…";result.className="result";try{const payload={email,password};if(authMode==="signup")Object.assign(payload,collectSignupProfile());const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify(payload)});apiToken=d.token;safeStorageSet("bitgold-token",apiToken);setConnected(true);closeModal();await loadProfileAfterAuth(d.profile);document.getElementById("dashboard")?.scrollIntoView({behavior:"smooth",block:"start"});try{await loadPortfolio()}catch(e){console.warn("Portfolio après authentification:",e.message)}}catch(e){result.textContent=e.message;result.className="result error"}}
 function closeModal(){document.getElementById("modal").hidden=true;document.body.classList.remove("modal-open")}
 async function loadBots(){removeHomepageActivity();try{botState=apiToken?await apiFetch("/api/bots"):await apiFetch("/api/bots/catalog");if(!botState.plan)botState.plan={plan:"free"};renderBots()}catch(e){console.warn("Bots:",e.message)}}
 function botCatalogOrder(catalog){const order=["shield","silver","gold","adaptive-ai","quant-pulse","macro-rotation"];return (catalog||[]).slice().sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id))}
@@ -380,12 +483,12 @@ async function loadNews(){
 }
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews();if(apiToken)renderWallet();loadNews()}
 initBotRoute();setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
-window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;window.simulateVisitorFees=simulateVisitorFees;
+window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openProfile=openProfile;window.closeProfile=closeProfile;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;window.simulateVisitorFees=simulateVisitorFees;
 document.getElementById("newsletterForm")?.addEventListener("submit",submitNewsletter);
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
-document.getElementById("authClose")?.addEventListener("click",closeModal);
-document.querySelector("#topLogin")?.addEventListener("click",()=>apiToken?logout():openModal("connexion"));const menuToggle=document.getElementById("menuToggle"),mainNav=document.getElementById("mainNav");menuToggle?.addEventListener("click",()=>{const open=mainNav?.classList.toggle("menu-open");menuToggle.setAttribute("aria-expanded",String(!!open));});document.querySelectorAll(".main-nav a").forEach(link=>link.addEventListener("click",()=>{mainNav?.classList.remove("menu-open");menuToggle?.setAttribute("aria-expanded","false")}));
+document.getElementById("authClose")?.addEventListener("click",closeModal);document.getElementById("profileClose")?.addEventListener("click",closeProfile);document.getElementById("profileSave")?.addEventListener("click",saveProfile);document.getElementById("profileLogout")?.addEventListener("click",()=>{closeProfile();logout()});
+document.querySelector("#topLogin")?.addEventListener("click",()=>apiToken?openProfile():openModal("connexion"));const menuToggle=document.getElementById("menuToggle"),mainNav=document.getElementById("mainNav");menuToggle?.addEventListener("click",()=>{const open=mainNav?.classList.toggle("menu-open");menuToggle.setAttribute("aria-expanded",String(!!open));});document.querySelectorAll(".main-nav a").forEach(link=>link.addEventListener("click",()=>{mainNav?.classList.remove("menu-open");menuToggle?.setAttribute("aria-expanded","false")}));
 document.querySelectorAll(".topbar nav a[href^='#']").forEach(link=>link.addEventListener("click",event=>{const target=link.getAttribute("href");if(target==="#"){if(window.location.pathname!=="/"){event.preventDefault();window.location.href="/";return}window.scrollTo({top:0,behavior:"smooth"});return}if(window.location.pathname!=="/"){event.preventDefault();window.location.href="/"+target;return}event.preventDefault();document.querySelector(target)?.scrollIntoView({behavior:"smooth",block:"start"})}));
 const navLinks=[...document.querySelectorAll(".main-nav a[href^='#']")];const navSections=navLinks.map(link=>({link,section:link.getAttribute("href")==="#"?null:document.querySelector(link.getAttribute("href"))})).filter(x=>x.section);const navObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){navLinks.forEach(link=>link.classList.remove("active"));const item=navSections.find(x=>x.section===entry.target);item?.link.classList.add("active")}})},{rootMargin:"-30% 0px -55% 0px",threshold:0});navSections.forEach(x=>navObserver.observe(x.section));
 document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
@@ -397,10 +500,10 @@ document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("bu
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
 document.getElementById("tradeConfirm")?.addEventListener("click",executeTrade);
 document.getElementById("botGrid")?.addEventListener("click",event=>{const button=event.target.closest("[data-bot-open]");if(!button)return;event.stopPropagation();openBotDetail(button.dataset.botOpen)});document.querySelectorAll("[data-plan-demo]").forEach(button=>button.addEventListener("click",()=>{const plan=button.dataset.planDemo;if(plan==="pro"||plan==="elite")startStripeCheckout(plan);else setDemoPlan(plan)}));document.getElementById("stripePortalButton")?.addEventListener("click",openStripePortal);document.getElementById("transferFeeQuote")?.addEventListener("click",simulateTransferFee);document.getElementById("botActivate")?.addEventListener("click",saveBotConfiguration);document.getElementById("botUnsubscribe")?.addEventListener("click",unsubscribeBot);document.getElementById("botBack")?.addEventListener("click",closeBotDetail);document.getElementById("activityBack")?.addEventListener("click",closeActivity);document.querySelectorAll("[data-activity-filter]").forEach(button=>button.addEventListener("click",()=>renderActivity(button.dataset.activityFilter)));document.getElementById("activityNav")?.addEventListener("click",event=>{if(apiToken){event.preventDefault();openActivity()}});
-document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="cryptoDetailModal")closeCryptoDetail();else if(modal?.id==="modal")closeModal()}));
+document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="cryptoDetailModal")closeCryptoDetail();else if(modal?.id==="modal")closeModal();else if(modal?.id==="profileModal")closeProfile()}));
 document.querySelectorAll(".modal").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal){if(modal.id==="tradeModal")closeTrade();else if(modal.id==="cryptoDetailModal")closeCryptoDetail();else if(modal.id==="modal")closeModal()}}));
-document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const open=document.querySelector(".modal:not([hidden])");if(!open)return;if(open.id==="tradeModal")closeTrade();else if(open.id==="cryptoDetailModal")closeCryptoDetail();else closeModal()});
+document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const open=document.querySelector(".modal:not([hidden])");if(!open)return;if(open.id==="tradeModal")closeTrade();else if(open.id==="cryptoDetailModal")closeCryptoDetail();else if(open.id==="profileModal")closeProfile();else closeModal()});
 window.addEventListener("error",e=>{const el=document.getElementById("authResult");if(el)el.textContent="Erreur JavaScript : "+e.message;});
 
 removeHomepageActivity();
-handleStripeReturn();
+handleStripeReturn();initGoogleAuth();
