@@ -234,3 +234,24 @@ test("authentication security baseline is enforced",()=>{
   assert.match(server,/app\.post\("\/api\/auth\/login", authRateLimit/);
   assert.match(server,/app\.post\("\/api\/auth\/google", authRateLimit/);
 });
+
+test("2FA security flow is wired for password and Google authentication",()=>{
+  const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
+  const env=fs.readFileSync(path.join(root,".env.example"),"utf8");
+  assert.equal(pkg.dependencies.otplib,"^13.0.1");
+  assert.equal(pkg.dependencies.qrcode,"^1.5.4");
+  assert.match(env,/TWO_FACTOR_ENCRYPTION_KEY=/);
+  assert.match(server,/CREATE TABLE IF NOT EXISTS user_2fa/);
+  assert.match(server,/aes-256-gcm/);
+  assert.match(server,/challenge_jti/);
+  assert.match(server,/challenge_used_at/);
+  assert.match(server,/twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/auth\/2fa\/verify",twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/security\/2fa\/setup",auth,twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/security\/2fa\/enable",auth,twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/security\/2fa\/disable",auth,twoFactorRateLimit/);
+  assert.match(server,/requires2FA/);
+  assert.match(server,/await verify\(\{secret:sec,token:code\}\)/);
+  assert.match(app,/requestBitGold2FA/);
+  assert.match(app,/\/api\/auth\/2fa\/verify/);
+});
