@@ -11,24 +11,58 @@ const BITGOLD_LANGS={
 };
 const BITGOLD_TRANSLATIONS={
   en:{
-    "Accueil":"Home","Marchés":"Markets","Tarifs":"Pricing","Bots":"Bots","Sécurité":"Security","Transparence":"Transparency","À propos":"About","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Activity",
-    "Commencer gratuitement":"Start for free","Explorer les marchés →":"Explore markets →","La crypto,":"Crypto,","Plus simple. Plus maîtrisée.":"Simpler. More controlled.","Votre niveau BitGold":"Your BitGold plan","Abonnement":"Subscription","Vos positions actuelles":"Your current positions","Aucun actif détenu.":"No assets held.","Connexion sécurisée avec Google":"Secure sign-in with Google","Mode démo":"Demo mode","Se connecter":"Sign in","Créer un compte":"Create an account","Connexion":"Sign in","Inscription":"Create account","Enregistrer":"Save","Déconnexion":"Sign out","Profil":"Profile",
-    "Voir les bots disponibles →":"View available bots →","Voir tout →":"View all →","Actualisation en attente":"Waiting for refresh","SIMULATION":"SIMULATION","Live":"Live","Calculer":"Calculate","Simuler les frais":"Simulate fees"
+    "Accueil":"Home","Marchés":"Markets","Tarifs":"Pricing","Sécurité":"Security","Transparence":"Transparency","À propos":"About","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Activity",
+    "Commencer gratuitement":"Start for free","Explorer les marchés →":"Explore the markets →","La crypto,":"Crypto,","Plus simple. Plus maîtrisée.":"Simpler. More controlled.",
+    "Votre niveau BitGold":"Your BitGold plan","Abonnement":"Subscription","Vos positions actuelles":"Your current positions","Aucun actif détenu.":"No assets held.",
+    "Connexion sécurisée avec Google":"Secure sign-in with Google","Mode démo":"Demo mode","Se connecter":"Sign in","Créer un compte":"Create an account","Connexion":"Sign in","Inscription":"Create account",
+    "Enregistrer":"Save","Déconnexion":"Sign out","Profil":"Profile","Voir les bots disponibles →":"View available bots →","Voir tout →":"View all →",
+    "Actualisation en attente":"Waiting for refresh","SIMULATION":"SIMULATION","Live":"Live","Calculer":"Calculate","Simuler les frais":"Simulate fees",
+    "Conservateur":"Conservative","Modéré":"Moderate","Dynamique":"Dynamic","EUR":"EUR","USD":"USD","GBP":"GBP"
   },
   es:{
-    "Accueil":"Inicio","Marchés":"Mercados","Tarifs":"Precios","Sécurité":"Seguridad","Transparence":"Transparencia","À propos":"Acerca de","FAQ":"Preguntas frecuentes","Cockpit":"Panel","Activité":"Actividad","Commencer gratuitement":"Empezar gratis","Mode démo":"Modo demo","Se connecter":"Iniciar sesión","Créer un compte":"Crear cuenta","Enregistrer":"Guardar","Déconnexion":"Cerrar sesión","Profil":"Perfil"
+    "Accueil":"Inicio","Marchés":"Mercados","Tarifs":"Precios","Sécurité":"Seguridad","Transparence":"Transparencia","À propos":"Acerca de","FAQ":"Preguntas frecuentes","Cockpit":"Panel","Activité":"Actividad",
+    "Commencer gratuitement":"Empezar gratis","Explorer les marchés →":"Explorar los mercados →","La crypto,":"Cripto,","Plus simple. Plus maîtrisée.":"Más sencilla. Más controlada.",
+    "Votre niveau BitGold":"Tu plan BitGold","Abonnement":"Suscripción","Vos positions actuelles":"Tus posiciones actuales","Aucun actif détenu.":"No tienes activos.",
+    "Connexion sécurisée avec Google":"Inicio de sesión seguro con Google","Mode démo":"Modo demo","Se connecter":"Iniciar sesión","Créer un compte":"Crear cuenta","Connexion":"Iniciar sesión","Inscription":"Crear cuenta",
+    "Enregistrer":"Guardar","Déconnexion":"Cerrar sesión","Profil":"Perfil","Voir les bots disponibles →":"Ver los bots disponibles →","Voir tout →":"Ver todo →",
+    "Actualisation en attente":"Esperando actualización","SIMULATION":"SIMULACIÓN","Live":"En directo","Calculer":"Calcular","Simuler les frais":"Simular las comisiones",
+    "Conservateur":"Conservador","Modéré":"Moderado","Dynamique":"Dinámico"
   },
   de:{
-    "Accueil":"Startseite","Marchés":"Märkte","Tarifs":"Preise","Sécurité":"Sicherheit","Transparence":"Transparenz","À propos":"Über uns","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Aktivität","Commencer gratuitement":"Kostenlos starten","Mode démo":"Demo-Modus","Se connecter":"Anmelden","Créer un compte":"Konto erstellen","Enregistrer":"Speichern","Déconnexion":"Abmelden","Profil":"Profil"
+    "Accueil":"Startseite","Marchés":"Märkte","Tarifs":"Preise","Sécurité":"Sicherheit","Transparence":"Transparenz","À propos":"Über uns","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Aktivität",
+    "Commencer gratuitement":"Kostenlos starten","Explorer les marchés →":"Märkte entdecken →","La crypto,":"Krypto,","Plus simple. Plus maîtrisée.":"Einfacher. Kontrollierter.",
+    "Votre niveau BitGold":"Dein BitGold-Tarif","Abonnement":"Abonnement","Vos positions actuelles":"Deine aktuellen Positionen","Aucun actif détenu.":"Keine Assets vorhanden.",
+    "Connexion sécurisée avec Google":"Sichere Anmeldung mit Google","Mode démo":"Demomodus","Se connecter":"Anmelden","Créer un compte":"Konto erstellen","Connexion":"Anmelden","Inscription":"Registrieren",
+    "Enregistrer":"Speichern","Déconnexion":"Abmelden","Profil":"Profil","Voir les bots disponibles →":"Verfügbare Bots anzeigen →","Voir tout →":"Alle anzeigen →",
+    "Actualisation en attente":"Warten auf Aktualisierung","SIMULATION":"SIMULATION","Live":"Live","Calculer":"Berechnen","Simuler les frais":"Gebühren simulieren",
+    "Conservateur":"Konservativ","Modéré":"Moderat","Dynamique":"Dynamisch"
   },
   it:{
-    "Accueil":"Home","Marchés":"Mercati","Tarifs":"Prezzi","Sécurité":"Sicurezza","Transparence":"Trasparenza","À propos":"Chi siamo","FAQ":"FAQ","Cockpit":"Pannello","Activité":"Attività","Commencer gratuitement":"Inizia gratis","Mode démo":"Modalità demo","Se connecter":"Accedi","Créer un compte":"Crea account","Enregistrer":"Salva","Déconnexion":"Esci","Profil":"Profilo"
+    "Accueil":"Home","Marchés":"Mercati","Tarifs":"Prezzi","Sécurité":"Sicurezza","Transparence":"Trasparenza","À propos":"Chi siamo","FAQ":"FAQ","Cockpit":"Pannello","Activité":"Attività",
+    "Commencer gratuitement":"Inizia gratis","Explorer les marchés →":"Esplora i mercati →","La crypto,":"Crypto,","Plus simple. Plus maîtrisée.":"Più semplice. Più controllata.",
+    "Votre niveau BitGold":"Il tuo piano BitGold","Abonnement":"Abbonamento","Vos positions actuelles":"Le tue posizioni attuali","Aucun actif détenu.":"Nessun asset detenuto.",
+    "Connexion sécurisée avec Google":"Accesso sicuro con Google","Mode démo":"Modalità demo","Se connecter":"Accedi","Créer un compte":"Crea account","Connexion":"Accedi","Inscription":"Registrati",
+    "Enregistrer":"Salva","Déconnexion":"Esci","Profil":"Profilo","Voir les bots disponibles →":"Vedi i bot disponibili →","Voir tout →":"Vedi tutto →",
+    "Actualisation en attente":"In attesa di aggiornamento","SIMULATION":"SIMULAZIONE","Live":"Live","Calculer":"Calcola","Simuler les frais":"Simula le commissioni",
+    "Conservateur":"Conservativo","Modéré":"Moderato","Dynamique":"Dinamico"
   },
   pt:{
-    "Accueil":"Início","Marchés":"Mercados","Tarifs":"Preços","Sécurité":"Segurança","Transparence":"Transparência","À propos":"Sobre nós","FAQ":"FAQ","Cockpit":"Painel","Activité":"Atividade","Commencer gratuitement":"Começar grátis","Mode démo":"Modo demonstração","Se connecter":"Entrar","Créer un compte":"Criar conta","Enregistrer":"Guardar","Déconnexion":"Sair","Profil":"Perfil"
+    "Accueil":"Início","Marchés":"Mercados","Tarifs":"Preços","Sécurité":"Segurança","Transparence":"Transparência","À propos":"Sobre nós","FAQ":"Perguntas frequentes","Cockpit":"Painel","Activité":"Atividade",
+    "Commencer gratuitement":"Começar grátis","Explorer les marchés →":"Explorar os mercados →","La crypto,":"Cripto,","Plus simple. Plus maîtrisée.":"Mais simples. Mais controlada.",
+    "Votre niveau BitGold":"O teu plano BitGold","Abonnement":"Subscrição","Vos positions actuelles":"As tuas posições atuais","Aucun actif détenu.":"Nenhum ativo detido.",
+    "Connexion sécurisée avec Google":"Início de sessão seguro com Google","Mode démo":"Modo de demonstração","Se connecter":"Iniciar sessão","Créer un compte":"Criar conta","Connexion":"Iniciar sessão","Inscription":"Criar conta",
+    "Enregistrer":"Guardar","Déconnexion":"Terminar sessão","Profil":"Perfil","Voir les bots disponibles →":"Ver bots disponíveis →","Voir tout →":"Ver tudo →",
+    "Actualisation en attente":"A aguardar atualização","SIMULATION":"SIMULAÇÃO","Live":"Em direto","Calculer":"Calcular","Simuler les frais":"Simular as comissões",
+    "Conservateur":"Conservador","Modéré":"Moderado","Dynamique":"Dinâmico"
   },
   nl:{
-    "Accueil":"Home","Marchés":"Markten","Tarifs":"Prijzen","Sécurité":"Beveiliging","Transparence":"Transparantie","À propos":"Over ons","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Activiteit","Commencer gratuitement":"Gratis starten","Mode démo":"Demomodus","Se connecter":"Inloggen","Créer un compte":"Account aanmaken","Enregistrer":"Opslaan","Déconnexion":"Uitloggen","Profil":"Profiel"
+    "Accueil":"Home","Marchés":"Markten","Tarifs":"Prijzen","Sécurité":"Beveiliging","Transparence":"Transparantie","À propos":"Over ons","FAQ":"Veelgestelde vragen","Cockpit":"Cockpit","Activité":"Activiteit",
+    "Commencer gratuitement":"Gratis starten","Explorer les marchés →":"Markten bekijken →","La crypto,":"Crypto,","Plus simple. Plus maîtrisée.":"Eenvoudiger. Beter beheerst.",
+    "Votre niveau BitGold":"Jouw BitGold-plan","Abonnement":"Abonnement","Vos positions actuelles":"Je huidige posities","Aucun actif détenu.":"Geen activa aangehouden.",
+    "Connexion sécurisée avec Google":"Veilig inloggen met Google","Mode démo":"Demomodus","Se connecter":"Inloggen","Créer un compte":"Account aanmaken","Connexion":"Inloggen","Inscription":"Registreren",
+    "Enregistrer":"Opslaan","Déconnexion":"Uitloggen","Profil":"Profiel","Voir les bots disponibles →":"Beschikbare bots bekijken →","Voir tout →":"Alles bekijken →",
+    "Actualisation en attente":"Wachten op update","SIMULATION":"SIMULATIE","Live":"Live","Calculer":"Berekenen","Simuler les frais":"Kosten simuleren",
+    "Conservateur":"Conservatief","Modéré":"Gemiddeld","Dynamique":"Dynamisch"
   }
 };
 function detectBitGoldLanguage(){
@@ -49,10 +83,15 @@ function translateBitGoldText(lang){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
   nodes.forEach(node=>{
+    if(node.parentElement?.closest("script,style,svg,option")) return;
     const original=node.nodeValue.trim();
-    if(!original || node.parentElement?.closest("script,style,svg,option")) return;
+    if(!original) return;
     const translated=dict[original];
     if(translated) node.nodeValue=node.nodeValue.replace(original,translated);
+  });
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const key=el.getAttribute("data-i18n");
+    if(dict[key]) el.textContent=dict[key];
   });
 }
 function initBitGoldI18n(){
