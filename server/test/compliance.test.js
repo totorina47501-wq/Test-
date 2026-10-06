@@ -39,3 +39,14 @@ test("provider webhook is authenticated by HMAC and normalizes decisions",()=>{
   assert.match(compliance,/RISK_LEVELS/);
   assert.match(server,/\/api\/compliance\/provider\/webhook/);
 });
+
+test("compliance is tiered by subscription without waiving KYC/AML",()=>{
+  assert.match(compliance,/COMPLIANCE_PLAN_POLICY/);
+  assert.match(compliance,/free: \{ label:"Free", requiredKycLevel:"standard", maxTransactionEur:2000, dailyLimitEur:2000/);
+  assert.match(compliance,/pro: \{ label:"Pro", requiredKycLevel:"standard", maxTransactionEur:10000, dailyLimitEur:10000/);
+  assert.match(compliance,/elite: \{ label:"Elite", requiredKycLevel:"enhanced", maxTransactionEur:50000, dailyLimitEur:50000/);
+  assert.match(compliance,/kyc_level/);
+  assert.match(compliance,/Niveau de vérification KYC insuffisant/);
+  assert.match(compliance,/COMPLIANCE_REVIEW_REQUIRED/);
+  assert.match(server,/compliance\.assertTransactionAllowed\(subscription\.user_id/);
+});
