@@ -519,6 +519,48 @@ app.get("/api/portfolio",auth,async(req,res)=>{
   } catch(e) { console.error("[PORTFOLIO] error", e.message); res.status(500).json({error:"Erreur serveur."}); }
 });
 
+app.get("/api/dashboard/analytics",auth,async(req,res)=>{
+  try{
+    const [trades,activity,subscriptions]=await Promise.all([
+      pool.query("SELECT side,asset,amount_eur,price_eur,quantity,created_at FROM trades WHERE user_id=$1 ORDER BY id ASC",[req.user.sub]),
+      pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id ASC",[req.user.sub]),
+      pool.query("SELECT bot_type,active,last_run FROM bot_subscriptions WHERE user_id=$1 ORDER BY id",[req.user.sub])
+    ]);
+    const initialCapital=10000;
+    const rows=trades.rows;
+    const byBot=new Map();
+    for(const sub of subscriptions.rows){
+      const key=sub.bot_type;
+      const botLogs=activity.rows.filter(row=>row.bot_type===key);
+      byBot.set(key,{bot_type:key,active:sub.active!==false,last_run:sub.last_run,signals:botLogs.length,buys:botLogs.filter(row=>row.action==="buy").length,sells:botLogs.filter(row=>row.action==="sell").length,holds:botLogs.filter(row=>row.action==="hold").length});
+    }
+    const timeline=[];
+    const cashByDay=new Map();
+    let cash=initialCapital;
+    const holdings={};
+    for(const trade of rows){
+      const asset=String(trade.asset||"").toUpperCase();
+      const amount=Number(trade.amount_eur||0);
+      const qty=Number(trade.quantity||0);
+      if(trade.side==="buy"){cash-=amount;holdings[asset]=(holdings[asset]||0)+qty}
+      else{cash+=amount;holdings[asset]=(holdings[asset]||0)-qty}
+      const day=new Date(trade.created_at).toISOString().slice(0,10);
+      cashByDay.set(day,{cash,holdings:{...holdings}});
+    }
+    for(const [date,snapshot] of [...cashByDay.entries()].slice(-30)){
+      let invested=0;
+      for(const [asset,qty] of Object.entries(snapshot.holdings)) invested+=Math.max(0,Number(qty))*Number(prices[asset]||0);
+      timeline.push({date,total:Number(snapshot.cash)+invested,invested,cash:Number(snapshot.cash)});
+    }
+    if(!timeline.length) timeline.push({date:new Date().toISOString().slice(0,10),total:initialCapital,invested:0,cash:initialCapital});
+    const first=timeline[0].total,last=timeline[timeline.length-1].total;
+    res.json({updatedAt:Date.now(),performance:{initialCapital,reconstructed:true,returnPct:first?((last-first)/first)*100:0,points:timeline},bots:[...byBot.values()]});
+  }catch(e){
+    console.error("[DASHBOARD ANALYTICS] error",e.message);
+    res.status(500).json({error:"Impossible de charger les analytics."});
+  }
+});
+
 app.get("/api/dashboard",auth,async(req,res)=>{
   try{
     const market=await refreshMarket();
