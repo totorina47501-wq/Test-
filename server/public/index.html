@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BitGold — Investir dans les cryptos</title><meta name="description" content="BitGold, une interface moderne de suivi et d'investissement crypto."><link rel="stylesheet" href="styles.css?v=20261006-planpro1">
+<title>BitGold — Investir dans les cryptos</title><meta name="description" content="BitGold, une interface moderne de suivi et d'investissement crypto."><link rel="stylesheet" href="styles.css?v=20261006-pricingpro1">
 </head>
 <body>
 <header class="topbar"><a class="brand" href="#"><span class="logo">₿</span><span>BitGold</span></a><nav><a href="#marches">Marchés</a><a href="#bots">Bots</a><a href="#compte" class="auth-only" hidden>Portefeuille</a><a href="/activite" class="auth-only" hidden id="activityNav">Activité</a><a href="#securite">Sécurité</a></nav><div class="top-actions"><span id="authState" class="live">Mode démo</span><button class="btn btn-outline" id="topLogin">Se connecter</button></div></header>
@@ -30,29 +30,39 @@
   <p class="news-disclaimer">Sources externes · BitGold n’édite pas les articles.</p>
 </aside>
 
-<section id="bots" class="section bots-section"><div class="section-title"><div><span class="eyebrow">AUTOMATION PREMIUM</span><h2 id="botsTitle">Les bots BitGold</h2><p id="botsSummary" class="section-subtitle">Six philosophies : protection, équilibre, momentum, IA adaptative, mean-reversion et rotation macro.</p></div></div><div class="bot-plan-selector" aria-label="Niveau d'automatisation">
-  <div class="bot-plan-selector-head">
+<section id="bots" class="section bots-section"><div class="section-title"><div><span class="eyebrow">AUTOMATION PREMIUM</span><h2 id="botsTitle">Les bots BitGold</h2><p id="botsSummary" class="section-subtitle">Six philosophies : protection, équilibre, momentum, IA adaptative, mean-reversion et rotation macro.</p></div></div><div class="pricing-section" aria-label="Pricings BitGold">
+  <div class="pricing-heading">
     <div>
-      <span class="eyebrow">VOTRE NIVEAU</span>
-      <h3 id="botPlanLabel">BitGold Free</h3>
-      <p id="botPlanDescription">Commencez gratuitement avec Shield, puis évoluez selon votre stratégie.</p>
+      <span class="eyebrow">PRICINGS</span>
+      <h3>Choisissez votre niveau d'automatisation</h3>
+      <p>Commencez simplement, puis augmentez la profondeur des stratégies et le nombre de bots lorsque vous êtes prêt.</p>
     </div>
-    <span class="bot-plan-current" id="botsMode">FREE</span>
+    <span class="pricing-demo-badge">MODE DÉMO</span>
   </div>
-  <div class="bot-plan-options">
-    <button class="bot-plan-option active" type="button" data-plan-demo="free">
-      <span class="bot-plan-option-top"><strong>Free</strong><span>1 bot</span></span>
-      <small>Shield · protection</small>
-    </button>
-    <button class="bot-plan-option" type="button" data-plan-demo="pro">
-      <span class="bot-plan-option-top"><strong>Pro</strong><span>3 bots</span></span>
-      <small>IA · Quant · stratégies avancées</small>
-    </button>
-    <button class="bot-plan-option elite" type="button" data-plan-demo="elite">
-      <span class="bot-plan-option-top"><strong>Elite</strong><span>5 bots</span></span>
-      <small>Macro · Quant · garde-fous renforcés</small>
-    </button>
+  <div class="pricing-grid">
+    <article class="pricing-card" data-pricing-card="free">
+      <div class="pricing-card-top"><span class="pricing-name">Free</span><span class="pricing-tag">Pour débuter</span></div>
+      <div class="pricing-value"><strong>1</strong><span>bot actif</span></div>
+      <p>Une base défensive pour découvrir l'automatisation sans complexité.</p>
+      <ul><li>Shield inclus</li><li>Risque prudent</li><li>Garde-fous essentiels</li><li>BTC · ETH · SOL · LINK · AVAX</li></ul>
+      <button class="pricing-select" type="button" data-plan-demo="free">Choisir Free</button>
+    </article>
+    <article class="pricing-card featured" data-pricing-card="pro">
+      <div class="pricing-card-top"><span class="pricing-name">Pro</span><span class="pricing-tag">Le plus équilibré</span></div>
+      <div class="pricing-value"><strong>3</strong><span>bots actifs</span></div>
+      <p>Pour combiner protection, tendance, IA adaptative et analyse quantitative.</p>
+      <ul><li>Silver · Gold · Adaptive AI</li><li>Quant Pulse disponible</li><li>Risque et allocations avancés</li><li>Jusqu'à 5 000 € par position</li></ul>
+      <button class="pricing-select" type="button" data-plan-demo="pro">Choisir Pro</button>
+    </article>
+    <article class="pricing-card elite" data-pricing-card="elite">
+      <div class="pricing-card-top"><span class="pricing-name">Elite</span><span class="pricing-tag">Super Pro</span></div>
+      <div class="pricing-value"><strong>5</strong><span>bots actifs</span></div>
+      <p>Le niveau avancé pour exploiter toutes les philosophies et la rotation macro.</p>
+      <ul><li>Toutes les stratégies</li><li>Macro Rotation inclus</li><li>Garde-fous renforcés</li><li>Jusqu'à 15 000 € par position</li></ul>
+      <button class="pricing-select" type="button" data-plan-demo="elite">Choisir Elite</button>
+    </article>
   </div>
+  <div class="pricing-foot"><span>✓ Aucun paiement réel</span><span>✓ Aucun dépôt</span><span>✓ Activation simulée</span><span>✓ Changement de niveau à tout moment</span></div>
 </div><div class="bot-comparison-wrap"><div id="botGrid" class="bot-grid"><div class="bot-empty">Chargement des bots…</div></div></div></section>
 <section id="activite" class="activity-page auth-only" hidden>
   <div class="activity-page-shell">
