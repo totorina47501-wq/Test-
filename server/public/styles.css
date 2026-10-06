@@ -465,3 +465,23 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .legacy-wallet-section[hidden],
 .auth-only.legacy-wallet-section,
 .auth-only#portefeuille{display:none!important}
+
+/* Politique de frais de transfert — Cash-in / Cash-out */
+.transfer-fee-panel{margin:12px 0}
+.transfer-fee-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.transfer-fee-card{padding:16px;border:1px solid #1d3329;border-radius:14px;background:#08140e}
+.transfer-fee-card>span{display:block;color:#83978d;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.transfer-fee-card>strong{display:block;margin-top:7px;color:#c8ff45;font-size:20px}
+.transfer-fee-card>small{display:block;margin-top:4px;color:#aab9b2;font-size:9px}
+.transfer-fee-card>p{margin:10px 0 0;color:#60756b;font-size:8px;line-height:1.45}
+.transfer-fee-note{margin-top:12px;padding-top:12px;border-top:1px solid #172b22;color:#5f756a;font-size:8px;line-height:1.5}
+@media(max-width:700px){.transfer-fee-grid{grid-template-columns:1fr}.transfer-fee-card{padding:14px}}
+
+.transfer-fee-simulator{margin-top:14px;padding:14px;border:1px solid #1d3329;border-radius:14px;background:#08140e}
+.transfer-fee-simulator>div:first-child p{margin:5px 0 0;color:#71857b;font-size:9px}
+.transfer-fee-controls{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:12px}
+.transfer-fee-controls select,.transfer-fee-controls input{min-width:0;padding:11px 12px;border:1px solid #30483e;border-radius:9px;background:#07110d;color:#e8f0eb;outline:none;font:inherit;font-size:10px}
+.transfer-fee-controls select:focus,.transfer-fee-controls input:focus{border-color:#8eaf48;box-shadow:0 0 0 3px rgba(200,255,69,.08)}
+.transfer-fee-controls .btn{margin:0;white-space:nowrap}
+.transfer-fee-result{margin-top:10px;color:#a8b8b0;font-size:9px;line-height:1.5}
+@media(max-width:700px){.transfer-fee-controls{grid-template-columns:1fr 1fr}.transfer-fee-controls .btn{grid-column:1/-1;width:100%}}

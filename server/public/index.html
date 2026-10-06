@@ -34,6 +34,15 @@
       <div id="dashHeldAssets" class="held-assets-list"><div class="empty-state">Aucun actif détenu.</div></div>
     </article>
   </div>
+  <div class="pro-panel transfer-fee-panel">
+    <div class="pro-panel-head"><div><span class="eyebrow">FRAIS & TRANSFERTS</span><h3>Une tarification plus avantageuse selon votre niveau</h3></div><span id="dashFeePlan" class="status-pill">FREE</span></div>
+    <div class="transfer-fee-grid">
+      <div class="transfer-fee-card"><span>Cash-in</span><strong id="dashCashinFee">—</strong><small id="dashCashinFixed">—</small><p>Le montant crédité est diminué des frais.</p></div>
+      <div class="transfer-fee-card"><span>Cash-out</span><strong id="dashCashoutFee">—</strong><small id="dashCashoutFixed">—</small><p>Le montant reçu est diminué des frais.</p></div>
+      <div class="transfer-fee-card"><span>Limite quotidienne</span><strong id="dashTransferLimit">—</strong><small>Selon votre formule</small><p>Limite indicative de transfert en mode démo.</p></div>
+    </div>
+    <div class="transfer-fee-simulator"><div><span class="eyebrow">SIMULATEUR DE FRAIS</span><p>Contrôlez le coût avant toute opération.</p></div><div class="transfer-fee-controls"><select id="transferFeeType" aria-label="Type de transfert"><option value="cashin">Cash-in · dépôt</option><option value="cashout">Cash-out · retrait</option></select><input id="transferFeeAmount" type="number" min="1" step="1" value="1000" aria-label="Montant du transfert en euros"><button id="transferFeeQuote" class="btn btn-primary" type="button">Calculer</button></div><div id="transferFeeResult" class="transfer-fee-result" role="status" aria-live="polite">Simulation uniquement · aucun mouvement d'argent réel.</div></div>
+  </div>
   <div class="dashboard-pro-grid">
     <article class="pro-panel performance-panel">
       <div class="pro-panel-head"><div><span class="eyebrow">PERFORMANCE</span><h3>Lecture du portefeuille</h3></div><span id="dashPerformanceBadge" class="status-pill">SIMULATION</span></div>
@@ -166,6 +175,7 @@
     <details><summary>Puis-je changer de formule ?</summary><p>Oui, les niveaux Free, Pro et Elite sont disponibles en mode démo afin de comparer les capacités et les garde-fous.</p></details>
     <details><summary>Pourquoi demander mon email pour la newsletter ?</summary><p>Uniquement pour vous envoyer les actualités et sélections BitGold. Vous pouvez vous désinscrire à tout moment.</p></details>
     <details><summary>BitGold donne-t-il des conseils financiers ?</summary><p>Non. Les informations et signaux présentés sont fournis à titre pédagogique et ne constituent pas un conseil en investissement.</p></details>
+    <details><summary>Quels sont les frais de cash-in et cash-out ?</summary><p>Les frais indicatifs diminuent selon la formule : Free 1,50 % + 0,50 € en cash-in et 1,99 % + 0,50 € en cash-out ; Pro 0,90 % + 0,35 € et 1,25 % + 0,35 € ; Elite 0,45 % + 0,20 € et 0,75 % + 0,20 €. Les tarifs réels dépendront du prestataire utilisé.</p></details>
   </div>
 </section>
 
