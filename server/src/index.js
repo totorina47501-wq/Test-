@@ -756,6 +756,7 @@ async function botSignal(type){
  return{action:"hold",asset:leader,message:"Marché incertain : priorité au capital disponible."};
 }
 async function executeBotDecision(subscription,signal){
+ const complianceCheck=()=>compliance.assertTransactionAllowed(subscription.user_id);
  const def=botDefinition(subscription.bot_type),client=await pool.connect();
  try{
   await client.query("BEGIN");
