@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-i18n-ready="false">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BitGold — Investir dans les cryptos</title><meta name="description" content="BitGold, une interface moderne de suivi et d'investissement crypto."><link rel="stylesheet" href="styles.css?v=20261006-googlepro"><link rel="stylesheet" href="sticky-header.css?v=20261006-1"><script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -24,7 +24,7 @@
       <a href="/activite" class="auth-only" hidden id="activityNav">Activité</a>
     </nav>
     <div class="top-actions">
-      <div class="auth-indicator"><span class="auth-dot"></span><span id="authState">Mode démo</span></div>
+      <div class="language-switcher" id="languageSwitcher" aria-label="Choisir la langue"><span class="language-globe" aria-hidden="true">◎</span><select id="languageSelect" aria-label="Langue"><option value="auto">Auto</option><option value="fr">FR</option><option value="en">EN</option><option value="es">ES</option><option value="de">DE</option><option value="it">IT</option><option value="pt">PT</option><option value="nl">NL</option></select></div><div class="auth-indicator"><span class="auth-dot"></span><span id="authState">Mode démo</span></div>
       <button class="menu-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button><button class="top-user" id="topLogin" type="button" aria-label="Se connecter" title="Se connecter"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.8 20c.9-3.4 3.3-5.2 7.2-5.2s6.3 1.8 7.2 5.2"></path></svg><span class="user-status-dot"></span></button>
     </div>
   </div>
@@ -287,4 +287,4 @@
 </div>
 <div class="profile-actions"><button type="button" id="profileSave" class="btn btn-primary">Enregistrer les modifications</button><button type="button" id="profileLogout" class="btn btn-ghost">Se déconnecter</button></div><div id="profileResult" class="result"></div></div></div>
 <script src="app.js?v=20261006-profile-google1"></script>
-</body></html>
+<div id="languageToast" class="language-toast" role="status" aria-live="polite" hidden></div></body></html>
