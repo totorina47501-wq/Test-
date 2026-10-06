@@ -200,3 +200,26 @@ test("Stripe subscription configuration is server-side and webhook-ready",()=>{
   assert.match(server,/app\.post\("\/api\/stripe\/portal",auth/);
   assert.match(server,/app\.post\("\/api\/stripe\/webhook"/);
 });
+
+
+test("user profile and Google authentication are implemented end-to-end",()=>{
+  const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
+  const env=fs.readFileSync(path.join(root,".env.example"),"utf8");
+  assert.equal(pkg.dependencies["google-auth-library"],"^10.3.0");
+  assert.match(env,/GOOGLE_CLIENT_ID=/);
+  assert.match(server,/ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name/);
+  assert.match(server,/ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub/);
+  assert.match(server,/app\.get\("\/api\/auth\/google\/config"/);
+  assert.match(server,/verifyIdToken/);
+  assert.match(server,/app\.post\("\/api\/auth\/google"/);
+  assert.match(server,/app\.put\("\/api\/me",auth/);
+  assert.match(server,/preferred_currency/);
+  assert.match(html,/id="signupFields"/);
+  assert.match(html,/id="profileModal"/);
+  assert.match(html,/id="googleSignInButton"/);
+  assert.match(app,/initGoogleAuth/);
+  assert.match(app,/handleGoogleCredential/);
+  assert.match(app,/function openProfile/);
+  assert.match(app,/apiFetch\("\/api\/me",{method:"PUT"/);
+  assert.match(css,/Profil utilisateur \+ authentification Google/);
+});
