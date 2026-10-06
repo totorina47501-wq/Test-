@@ -172,7 +172,7 @@ async function refreshMarket(force=false) {
     const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
     if(!response.ok) throw await coingeckoError(response);
     const data = await response.json();
-    marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
+    const snapshot = Object.entries(marketIds).map(([symbol,id]) => {
       const item = data[id] || {};
       const price = Number(item.eur);
       const change24h = Number(item.eur_24h_change);
@@ -188,6 +188,9 @@ async function refreshMarket(force=false) {
         marketCapRank: null
       };
     });
+    const ranked = snapshot.slice().sort((a,b)=>(Number(b.marketCap)||0)-(Number(a.marketCap)||0));
+    const rankMap = new Map(ranked.map((item,index)=>[item.symbol,index+1]));
+    marketSnapshot = snapshot.map(item=>({...item,marketCapRank:rankMap.get(item.symbol)||null}));
     marketUpdatedAt = Date.now();
   } catch(e) {
     console.error("[MARKET] refresh error", e.message);
