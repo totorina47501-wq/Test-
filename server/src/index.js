@@ -285,6 +285,8 @@ app.post("/api/auth/login", async (req,res) => {
       return res.status(401).json({error:"Identifiants incorrects."});
     }
     console.log("[AUTH] login success", email);
+    const twofa=(await pool.query("SELECT enabled FROM user_2fa WHERE user_id=$1",[u.id])).rows[0]?.enabled===true;
+    if(twofa)return res.json({requires2FA:true,challengeToken:challengeToken(u),email:u.email});
     res.json({token:token(u),email:u.email,profile:profileFromRow(u)});
   } catch(e) {
     console.error("[AUTH] login error", e.message);
