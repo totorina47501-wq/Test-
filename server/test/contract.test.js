@@ -125,3 +125,12 @@ test("cockpit shows only held assets, subscription reminder and hides pricing wh
   assert.match(html,/href="#pricings" class="visitor-only"/);
   assert.match(html,/id="pricings" class="section pricing-page-section visitor-only"/);
 });
+
+
+test("authenticated portfolio is consolidated into the cockpit",()=>{
+  assert.match(html,/href="#dashboard" class="auth-only" hidden>Cockpit<\/a>/);
+  assert.match(html,/legacy-wallet-section/);
+  assert.match(html,/class="visitor-only">Pricings<\/a>/);
+  assert.match(app,/document\.getElementById\("dashboard"\)\?\.scrollIntoView/);
+  assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
+});
