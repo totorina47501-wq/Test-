@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pg from "pg";
 import Stripe from "stripe";
+import { OAuth2Client } from "google-auth-library";
 
 const { Pool } = pg;
 const app = express();
@@ -16,6 +17,9 @@ const stripeSecretKey=String(process.env.STRIPE_SECRET_KEY||"").trim();
 const stripeWebhookSecret=String(process.env.STRIPE_WEBHOOK_SECRET||"").trim();
 const stripe=new Stripe(stripeSecretKey||"sk_test_not_configured");
 const stripeConfigured=Boolean(stripeSecretKey);
+const googleClientId=String(process.env.GOOGLE_CLIENT_ID||"").trim();
+const googleClient=new OAuth2Client(googleClientId||undefined);
+const googleConfigured=Boolean(googleClientId);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const secret = process.env.JWT_SECRET || "dev-only-change-me";
 const pool = new Pool({
@@ -25,7 +29,20 @@ const pool = new Pool({
 
 await pool.query(`
 CREATE TABLE IF NOT EXISTS newsletter_subscribers(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,subscribed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,active BOOLEAN NOT NULL DEFAULT TRUE);
-CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,password_hash TEXT,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS postal_code TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_currency TEXT NOT NULL DEFAULT 'EUR';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS risk_profile TEXT NOT NULL DEFAULT 'moderate';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub TEXT UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT 'password';
 CREATE TABLE IF NOT EXISTS wallets(user_id INTEGER PRIMARY KEY REFERENCES users(id),cash DOUBLE PRECISION NOT NULL DEFAULT 10000);
 CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id),asset TEXT NOT NULL,quantity DOUBLE PRECISION NOT NULL DEFAULT 0,PRIMARY KEY(user_id,asset));
 CREATE TABLE IF NOT EXISTS trades(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),side TEXT NOT NULL,asset TEXT NOT NULL,amount_eur DOUBLE PRECISION NOT NULL,price_eur DOUBLE PRECISION NOT NULL,quantity DOUBLE PRECISION NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -41,7 +58,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
 `);
 
-app.use(helmet({contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"]}}}));
+app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
 app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,res)=>{
   if(!stripeConfigured||!stripeWebhookSecret)return res.status(503).json({error:"Stripe webhook non configuré."});
@@ -157,21 +174,61 @@ app.get("/api/health", async (req,res) => {
   catch(e) { console.error("[HEALTH] database error", e.message); res.status(503).json({ok:false,service:"BitGold API"}); }
 });
 
+function normalizeProfile(body={}){
+  const value=(key,max=160)=>String(body[key]??"").trim().slice(0,max);
+  const risk=["conservative","moderate","dynamic"].includes(value("risk_profile"))?value("risk_profile"):"moderate";
+  const currency=["EUR","USD","GBP"].includes(value("preferred_currency"))?value("preferred_currency"):"EUR";
+  const birth=value("birth_date");
+  const validBirth=!birth||(!Number.isNaN(Date.parse(birth+"T00:00:00Z"))&&birth<=new Date().toISOString().slice(0,10));
+  return {
+    first_name:value("first_name",80),
+    last_name:value("last_name",80),
+    phone:value("phone",40),
+    birth_date:/^\\d{4}-\\d{2}-\\d{2}$/.test(birth)&&validBirth?birth:"",
+    country:value("country",80),
+    city:value("city",100),
+    postal_code:value("postal_code",20),
+    address:value("address",200),
+    preferred_currency:currency,
+    risk_profile:risk
+  };
+}
+function profileFromRow(u){
+  return {
+    id:u.id,email:u.email,
+    first_name:u.first_name||"",last_name:u.last_name||"",phone:u.phone||"",
+    birth_date:u.birth_date?new Date(u.birth_date).toISOString().slice(0,10):"",
+    country:u.country||"",city:u.city||"",postal_code:u.postal_code||"",address:u.address||"",
+    preferred_currency:u.preferred_currency||"EUR",risk_profile:u.risk_profile||"moderate",
+    auth_provider:u.auth_provider||"password",created_at:u.created_at
+  };
+}
+async function provisionUserAssets(client,userId){
+  await client.query("INSERT INTO wallets(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING",[userId]);
+  for(const asset of Object.keys(prices)){
+    await client.query("INSERT INTO holdings(user_id,asset,quantity) VALUES($1,$2,0) ON CONFLICT(user_id,asset) DO NOTHING",[userId,asset]);
+  }
+}
+
 app.post("/api/auth/signup", async (req,res) => {
   const email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
-  if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8) return res.status(400).json({error:"Email valide et mot de passe de 8 caractères minimum requis."});
+  const profile=normalizeProfile(req.body);
+  if(!/^\\S+@\\S+\\.\\S+$/.test(email)||password.length<8) return res.status(400).json({error:"Email valide et mot de passe de 8 caractères minimum requis."});
+  if(!profile.first_name||!profile.last_name||!profile.country||!profile.city||!profile.postal_code) return res.status(400).json({error:"Prénom, nom, pays, ville et code postal sont requis pour créer votre profil."});
   console.log("[AUTH] signup attempt", email);
   const client=await pool.connect();
   try {
     await client.query("BEGIN");
     const hash=await bcrypt.hash(password,12);
-    const r=await client.query("INSERT INTO users(email,password_hash) VALUES($1,$2) RETURNING id,email",[email,hash]);
+    const r=await client.query(
+      "INSERT INTO users(email,password_hash,first_name,last_name,phone,birth_date,country,city,postal_code,address,preferred_currency,risk_profile) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *",
+      [email,hash,profile.first_name,profile.last_name,profile.phone,profile.birth_date||null,profile.country,profile.city,profile.postal_code,profile.address,profile.preferred_currency,profile.risk_profile]
+    );
     const user=r.rows[0];
-    await client.query("INSERT INTO wallets(user_id) VALUES($1)",[user.id]);
-    for(const asset of Object.keys(prices)) await client.query("INSERT INTO holdings(user_id,asset,quantity) VALUES($1,$2,0)",[user.id,asset]);
+    await provisionUserAssets(client,user.id);
     await client.query("COMMIT");
     console.log("[AUTH] signup success", email);
-    res.status(201).json({token:token(user),email:user.email});
+    res.status(201).json({token:token(user),email:user.email,profile:profileFromRow(user)});
   } catch(e) {
     await client.query("ROLLBACK");
     console.error("[AUTH] signup error", e.message);
@@ -184,8 +241,8 @@ app.post("/api/auth/login", async (req,res) => {
   console.log("[AUTH] login attempt", email);
   try {
     const r=await pool.query("SELECT * FROM users WHERE email=$1",[email]), u=r.rows[0];
-    if(!u){
-      console.log("[AUTH] user not found", email);
+    if(!u||!u.password_hash){
+      console.log("[AUTH] password login unavailable", email);
       return res.status(401).json({error:"Identifiants incorrects."});
     }
     const valid=await bcrypt.compare(password,u.password_hash);
@@ -194,14 +251,83 @@ app.post("/api/auth/login", async (req,res) => {
       return res.status(401).json({error:"Identifiants incorrects."});
     }
     console.log("[AUTH] login success", email);
-    res.json({token:token(u),email:u.email});
+    res.json({token:token(u),email:u.email,profile:profileFromRow(u)});
   } catch(e) {
     console.error("[AUTH] login error", e.message);
     res.status(500).json({error:"Erreur serveur."});
   }
 });
 
-app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
+app.get("/api/auth/google/config",(req,res)=>res.json({enabled:googleConfigured,clientId:googleConfigured?googleClientId:null}));
+
+app.post("/api/auth/google", async (req,res) => {
+  if(!googleConfigured) return res.status(503).json({error:"La connexion Google n'est pas encore configurée."});
+  const credential=String(req.body.credential||"").trim();
+  if(!credential) return res.status(400).json({error:"Jeton Google manquant."});
+  try {
+    const ticket=await googleClient.verifyIdToken({idToken:credential,audience:googleClientId});
+    const payload=ticket.getPayload();
+    const googleSub=String(payload?.sub||"").trim();
+    const email=String(payload?.email||"").trim().toLowerCase();
+    if(!googleSub||!email||payload?.email_verified!==true) return res.status(401).json({error:"Compte Google non vérifié."});
+    const given=String(payload.given_name||"").trim().slice(0,80);
+    const family=String(payload.family_name||"").trim().slice(0,80);
+    const client=await pool.connect();
+    try{
+      await client.query("BEGIN");
+      let r=await client.query("SELECT * FROM users WHERE google_sub=$1",[googleSub]);
+      let user=r.rows[0];
+      if(!user){
+        r=await client.query("SELECT * FROM users WHERE email=$1",[email]);
+        user=r.rows[0];
+      }
+      if(user){
+        r=await client.query(
+          "UPDATE users SET google_sub=$1,auth_provider=CASE WHEN password_hash IS NULL THEN 'google' ELSE auth_provider END,first_name=COALESCE(NULLIF(first_name,''),$2),last_name=COALESCE(NULLIF(last_name,''),$3) WHERE id=$4 RETURNING *",
+          [googleSub,given,family,user.id]
+        );
+        user=r.rows[0];
+      }else{
+        r=await client.query(
+          "INSERT INTO users(email,password_hash,first_name,last_name,google_sub,auth_provider) VALUES($1,NULL,$2,$3,$4,'google') RETURNING *",
+          [email,given,family,googleSub]
+        );
+        user=r.rows[0];
+        await provisionUserAssets(client,user.id);
+      }
+      await client.query("COMMIT");
+      res.json({token:token(user),email:user.email,profile:profileFromRow(user)});
+    }catch(e){await client.query("ROLLBACK");throw e}
+    finally{client.release()}
+  }catch(e){
+    console.error("[AUTH] Google error",e.message);
+    res.status(401).json({error:"Connexion Google impossible ou jeton invalide."});
+  }
+});
+
+app.get("/api/me",auth,async(req,res)=>{
+  try{
+    const r=await pool.query("SELECT * FROM users WHERE id=$1",[req.user.sub]);
+    if(!r.rows[0]) return res.status(404).json({error:"Profil introuvable."});
+    res.json(profileFromRow(r.rows[0]));
+  }catch(e){res.status(500).json({error:"Impossible de charger le profil."})}
+});
+
+app.put("/api/me",auth,async(req,res)=>{
+  const profile=normalizeProfile(req.body);
+  if(!profile.first_name||!profile.last_name) return res.status(400).json({error:"Prénom et nom sont requis."});
+  try{
+    const r=await pool.query(
+      "UPDATE users SET first_name=$1,last_name=$2,phone=$3,birth_date=$4,country=$5,city=$6,postal_code=$7,address=$8,preferred_currency=$9,risk_profile=$10 WHERE id=$11 RETURNING *",
+      [profile.first_name,profile.last_name,profile.phone,profile.birth_date||null,profile.country,profile.city,profile.postal_code,profile.address,profile.preferred_currency,profile.risk_profile,req.user.sub]
+    );
+    if(!r.rows[0]) return res.status(404).json({error:"Profil introuvable."});
+    res.json({ok:true,profile:profileFromRow(r.rows[0])});
+  }catch(e){
+    console.error("[PROFILE] update error",e.message);
+    res.status(500).json({error:"Impossible d'enregistrer le profil."});
+  }
+});
 
 app.post("/api/newsletter/subscribe", async (req,res) => {
   const email=String(req.body.email||"").trim().toLowerCase();
