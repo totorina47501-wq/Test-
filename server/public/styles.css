@@ -325,3 +325,6 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
  .pricing-page-section{padding-top:52px;padding-bottom:52px}
  .bots-section{padding-top:58px}
 }
+
+.main-nav a.active{color:#c8ff45!important;background:#14251a;box-shadow:inset 0 0 0 1px #c8ff4522}
+.main-nav a.active:after{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:2px;border-radius:2px;background:#c8ff45}
