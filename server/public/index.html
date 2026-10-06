@@ -32,11 +32,17 @@
 <main>
 <section class="hero visitor-hero bitgold-home-hero">
   <div class="hero-copy">
-    <div class="badge">● BitGold · plateforme crypto en mode démo</div>
-    <h1>Comprenez. <span>Simulez.</span><br>Pilotez votre stratégie.</h1>
-    <p>Une expérience unique pour explorer les marchés, tester un achat de Bitcoin, appliquer un bot, contrôler les frais et visualiser votre cockpit — sans argent réel.</p>
+    <div class="badge">● BITGOLD · COCKPIT CRYPTO & AUTOMATISATION</div>
+    <h1>Pilotez vos actifs.<br><span>Automatisez vos stratégies.</span></h1>
+    <p>Une plateforme conçue pour suivre les marchés en direct, analyser la performance, simuler vos opérations et piloter des bots — avec un Risk Center et une transparence totale sur les frais.</p>
+    <div class="hero-keypoints" aria-label="Fonctions clés BitGold">
+      <span><i>↗</i> Marchés & cours en direct</span>
+      <span><i>◒</i> Cockpit performance</span>
+      <span><i>✦</i> Bots automatisés</span>
+      <span><i>✓</i> Risque & garde-fous</span>
+    </div>
     <div class="actions hero-actions">
-      <button class="btn btn-primary" id="heroDemo" type="button">Lancer la démo interactive →</button>
+      <button class="btn btn-primary" id="heroDemo" type="button">Explorer la plateforme →</button>
       <button class="btn btn-ghost" id="heroSignup" type="button">Créer mon compte</button>
     </div>
     <div class="hero-proof">
@@ -44,7 +50,49 @@
       <span><b>6</b> stratégies</span>
       <span><b>100 %</b> simulé</span>
     </div>
-    <p class="risk">⚠️ Aucun dépôt, paiement ou ordre réel. Les achats et décisions des bots sont simulés.</p>
+    <p class="risk">⚠️ Mode démo : aucun dépôt, paiement ou ordre réel. Les achats et décisions des bots sont simulés.</p>
+  </div>
+  <div class="hero-market-visual" aria-label="Aperçu d'une courbe de marché BitGold">
+    <div class="hero-chart-glow"></div>
+    <div class="hero-chart-card">
+      <div class="hero-chart-top">
+        <div>
+          <span class="hero-chart-kicker">PORTFOLIO PERFORMANCE</span>
+          <strong>+18,42 %</strong>
+        </div>
+        <span class="hero-chart-live"><i></i> Simulation live</span>
+      </div>
+      <div class="hero-chart-meta"><span>Valeur du portefeuille</span><b>12 842,60 €</b></div>
+      <div class="hero-chart">
+        <svg viewBox="0 0 760 330" role="img" aria-label="Courbe de performance simulée">
+          <defs>
+            <linearGradient id="heroChartFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#c8ff45" stop-opacity=".24"/>
+              <stop offset="100%" stop-color="#c8ff45" stop-opacity="0"/>
+            </linearGradient>
+            <filter id="heroChartGlow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="7" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g class="hero-chart-grid">
+            <line x1="0" y1="55" x2="760" y2="55"/><line x1="0" y1="135" x2="760" y2="135"/>
+            <line x1="0" y1="215" x2="760" y2="215"/><line x1="0" y1="295" x2="760" y2="295"/>
+            <line x1="95" y1="0" x2="95" y2="330"/><line x1="250" y1="0" x2="250" y2="330"/>
+            <line x1="405" y1="0" x2="405" y2="330"/><line x1="560" y1="0" x2="560" y2="330"/><line x1="715" y1="0" x2="715" y2="330"/>
+          </g>
+          <path class="hero-chart-area" d="M0 272 C52 260 72 278 112 238 S177 220 214 232 S279 178 315 194 S382 150 418 170 S475 116 515 139 S575 101 612 120 S676 74 760 42 L760 330 L0 330 Z"/>
+          <path class="hero-chart-line" d="M0 272 C52 260 72 278 112 238 S177 220 214 232 S279 178 315 194 S382 150 418 170 S475 116 515 139 S575 101 612 120 S676 74 760 42" filter="url(#heroChartGlow)"/>
+          <circle class="hero-chart-point" cx="612" cy="120" r="7"/><circle class="hero-chart-point pulse" cx="760" cy="42" r="8"/>
+        </svg>
+      </div>
+      <div class="hero-chart-axis"><span>J-30</span><span>J-21</span><span>J-14</span><span>J-7</span><span>Aujourd’hui</span></div>
+      <div class="hero-chart-footer">
+        <span><b>Risque</b> Modéré</span>
+        <span><b>Cash</b> 32,8 %</span>
+        <span><b>Bot</b> Adaptive AI</span>
+      </div>
+    </div>
   </div>
   <div class="home-explorer">
     <div class="home-explorer-head">
