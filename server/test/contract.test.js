@@ -5,6 +5,7 @@ import path from "node:path";
 const root=path.resolve(process.cwd());
 const html=fs.readFileSync(path.join(root,"public/index.html"),"utf8");
 const app=fs.readFileSync(path.join(root,"public/app.js"),"utf8");
+const css=fs.readFileSync(path.join(root,"public/styles.css"),"utf8");
 const server=fs.readFileSync(path.join(root,"src/index.js"),"utf8");
 
 test("visitor bot comparison is public and ordered",()=>{
