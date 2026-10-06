@@ -1,4 +1,5 @@
 
+function formatVisitorEuro(value){return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €"}
 const VISITOR_FEE_POLICY={
   free:{cashin:{rate:0.015,fixed:0.50},cashout:{rate:0.0199,fixed:0.50}},
   pro:{cashin:{rate:0.009,fixed:0.35},cashout:{rate:0.0125,fixed:0.35}},
@@ -16,7 +17,7 @@ function simulateVisitorFees(){
   const net=Math.round((amount-fee)*100)/100;
   const operation=type==="cashin"?"Cash-in":"Cash-out";
   const label=plan.charAt(0).toUpperCase()+plan.slice(1);
-  result.innerHTML="<span>Pour "+formatEuro(amount)+" en "+operation+" "+label+"</span><strong>"+formatEuro(fee)+" de frais</strong><small>Net simulé : "+formatEuro(net)+" · "+(rule.rate*100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" % + "+formatEuro(rule.fixed)+" · Aucun mouvement réel</small>";
+  result.innerHTML="<span>Pour "+formatVisitorEuro(amount)+" en "+operation+" "+label+"</span><strong>"+formatVisitorEuro(fee)+" de frais</strong><small>Net simulé : "+formatVisitorEuro(net)+" · "+(rule.rate*100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" % + "+formatVisitorEuro(rule.fixed)+" · Aucun mouvement réel</small>";
 }
 async function submitNewsletter(event){
   event.preventDefault();
