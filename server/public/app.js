@@ -1,4 +1,76 @@
 
+/* BitGold i18n — automatic locale detection with manual override. */
+const BITGOLD_LANGS={
+  fr:{label:"Français",countries:["FR","BE","CH","LU","MC","CA"]},
+  en:{label:"English",countries:["US","GB","IE","AU","NZ","CA","IN","SG","ZA"]},
+  es:{label:"Español",countries:["ES","MX","AR","CL","CO","PE","UY"]},
+  de:{label:"Deutsch",countries:["DE","AT","CH","LI"]},
+  it:{label:"Italiano",countries:["IT","SM","VA","CH"]},
+  pt:{label:"Português",countries:["PT","BR","AO","MZ"]},
+  nl:{label:"Nederlands",countries:["NL","BE"]},
+};
+const BITGOLD_TRANSLATIONS={
+  en:{
+    "Accueil":"Home","Marchés":"Markets","Tarifs":"Pricing","Bots":"Bots","Sécurité":"Security","Transparence":"Transparency","À propos":"About","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Activity",
+    "Commencer gratuitement":"Start for free","Explorer les marchés →":"Explore markets →","La crypto,":"Crypto,","Plus simple. Plus maîtrisée.":"Simpler. More controlled.","Votre niveau BitGold":"Your BitGold plan","Abonnement":"Subscription","Vos positions actuelles":"Your current positions","Aucun actif détenu.":"No assets held.","Connexion sécurisée avec Google":"Secure sign-in with Google","Mode démo":"Demo mode","Se connecter":"Sign in","Créer un compte":"Create an account","Connexion":"Sign in","Inscription":"Create account","Enregistrer":"Save","Déconnexion":"Sign out","Profil":"Profile",
+    "Voir les bots disponibles →":"View available bots →","Voir tout →":"View all →","Actualisation en attente":"Waiting for refresh","SIMULATION":"SIMULATION","Live":"Live","Calculer":"Calculate","Simuler les frais":"Simulate fees"
+  },
+  es:{
+    "Accueil":"Inicio","Marchés":"Mercados","Tarifs":"Precios","Sécurité":"Seguridad","Transparence":"Transparencia","À propos":"Acerca de","FAQ":"Preguntas frecuentes","Cockpit":"Panel","Activité":"Actividad","Commencer gratuitement":"Empezar gratis","Mode démo":"Modo demo","Se connecter":"Iniciar sesión","Créer un compte":"Crear cuenta","Enregistrer":"Guardar","Déconnexion":"Cerrar sesión","Profil":"Perfil"
+  },
+  de:{
+    "Accueil":"Startseite","Marchés":"Märkte","Tarifs":"Preise","Sécurité":"Sicherheit","Transparence":"Transparenz","À propos":"Über uns","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Aktivität","Commencer gratuitement":"Kostenlos starten","Mode démo":"Demo-Modus","Se connecter":"Anmelden","Créer un compte":"Konto erstellen","Enregistrer":"Speichern","Déconnexion":"Abmelden","Profil":"Profil"
+  },
+  it:{
+    "Accueil":"Home","Marchés":"Mercati","Tarifs":"Prezzi","Sécurité":"Sicurezza","Transparence":"Trasparenza","À propos":"Chi siamo","FAQ":"FAQ","Cockpit":"Pannello","Activité":"Attività","Commencer gratuitement":"Inizia gratis","Mode démo":"Modalità demo","Se connecter":"Accedi","Créer un compte":"Crea account","Enregistrer":"Salva","Déconnexion":"Esci","Profil":"Profilo"
+  },
+  pt:{
+    "Accueil":"Início","Marchés":"Mercados","Tarifs":"Preços","Sécurité":"Segurança","Transparence":"Transparência","À propos":"Sobre nós","FAQ":"FAQ","Cockpit":"Painel","Activité":"Atividade","Commencer gratuitement":"Começar grátis","Mode démo":"Modo demonstração","Se connecter":"Entrar","Créer un compte":"Criar conta","Enregistrer":"Guardar","Déconnexion":"Sair","Profil":"Perfil"
+  },
+  nl:{
+    "Accueil":"Home","Marchés":"Markten","Tarifs":"Prijzen","Sécurité":"Beveiliging","Transparence":"Transparantie","À propos":"Over ons","FAQ":"FAQ","Cockpit":"Cockpit","Activité":"Activiteit","Commencer gratuitement":"Gratis starten","Mode démo":"Demomodus","Se connecter":"Inloggen","Créer un compte":"Account aanmaken","Enregistrer":"Opslaan","Déconnexion":"Uitloggen","Profil":"Profiel"
+  }
+};
+function detectBitGoldLanguage(){
+  const saved=localStorage.getItem("bitgold-language");
+  if(saved && BITGOLD_LANGS[saved]) return {lang:saved,source:"manual"};
+  const locales=[...(navigator.languages||[]),navigator.language||"fr-FR"];
+  for(const locale of locales){
+    const parts=String(locale).toLowerCase().split("-");
+    const base=parts[0], region=(parts[1]||"").toUpperCase();
+    if(BITGOLD_LANGS[base]) return {lang:base,source:"locale"};
+    for(const [lang,data] of Object.entries(BITGOLD_LANGS)) if(region && data.countries.includes(region)) return {lang,source:"country"};
+  }
+  return {lang:"en",source:"default"};
+}
+function translateBitGoldText(lang){
+  const dict=BITGOLD_TRANSLATIONS[lang]||{};
+  if(lang==="fr") return;
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node=>{
+    const original=node.nodeValue.trim();
+    if(!original || node.parentElement?.closest("script,style,svg,option")) return;
+    const translated=dict[original];
+    if(translated) node.nodeValue=node.nodeValue.replace(original,translated);
+  });
+}
+function initBitGoldI18n(){
+  const select=document.getElementById("languageSelect"); if(!select) return;
+  const detected=detectBitGoldLanguage();
+  select.value=detected.source==="manual"?detected.lang:"auto";
+  document.documentElement.lang=detected.lang;
+  translateBitGoldText(detected.lang);
+  document.documentElement.dataset.i18nReady="true";
+  select.addEventListener("change",()=>{
+    const value=select.value;
+    if(value==="auto") localStorage.removeItem("bitgold-language");
+    else localStorage.setItem("bitgold-language",value);
+    location.reload();
+  });
+}
+
+
 function formatVisitorEuro(value){return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €"}
 const VISITOR_FEE_POLICY={
   free:{cashin:{rate:0.015,fixed:0.50},cashout:{rate:0.0199,fixed:0.50}},
@@ -507,3 +579,5 @@ window.addEventListener("error",e=>{const el=document.getElementById("authResult
 
 removeHomepageActivity();
 handleStripeReturn();initGoogleAuth();
+
+window.addEventListener('DOMContentLoaded',initBitGoldI18n);
