@@ -184,7 +184,7 @@ function normalizeProfile(body={}){
     first_name:value("first_name",80),
     last_name:value("last_name",80),
     phone:value("phone",40),
-    birth_date:/^\\d{4}-\\d{2}-\\d{2}$/.test(birth)&&validBirth?birth:"",
+    birth_date:/^\d{4}-\d{2}-\d{2}$/.test(birth)&&validBirth?birth:"",
     country:value("country",80),
     city:value("city",100),
     postal_code:value("postal_code",20),
@@ -213,7 +213,7 @@ async function provisionUserAssets(client,userId){
 app.post("/api/auth/signup", async (req,res) => {
   const email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
   const profile=normalizeProfile(req.body);
-  if(!/^\\S+@\\S+\\.\\S+$/.test(email)||password.length<8) return res.status(400).json({error:"Email valide et mot de passe de 8 caractères minimum requis."});
+  if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8) return res.status(400).json({error:"Email valide et mot de passe de 8 caractères minimum requis."});
   if(!profile.first_name||!profile.last_name||!profile.country||!profile.city||!profile.postal_code) return res.status(400).json({error:"Prénom, nom, pays, ville et code postal sont requis pour créer votre profil."});
   console.log("[AUTH] signup attempt", email);
   const client=await pool.connect();
