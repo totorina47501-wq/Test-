@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BitGold — Investir dans les cryptos</title><meta name="description" content="BitGold, une interface moderne de suivi et d'investissement crypto."><link rel="stylesheet" href="styles.css?v=20261006-botfix1">
+<title>BitGold — Investir dans les cryptos</title><meta name="description" content="BitGold, une interface moderne de suivi et d'investissement crypto."><link rel="stylesheet" href="styles.css?v=20261006-planpro1">
 </head>
 <body>
 <header class="topbar"><a class="brand" href="#"><span class="logo">₿</span><span>BitGold</span></a><nav><a href="#marches">Marchés</a><a href="#bots">Bots</a><a href="#compte" class="auth-only" hidden>Portefeuille</a><a href="/activite" class="auth-only" hidden id="activityNav">Activité</a><a href="#securite">Sécurité</a></nav><div class="top-actions"><span id="authState" class="live">Mode démo</span><button class="btn btn-outline" id="topLogin">Se connecter</button></div></header>
@@ -30,7 +30,30 @@
   <p class="news-disclaimer">Sources externes · BitGold n’édite pas les articles.</p>
 </aside>
 
-<section id="bots" class="section bots-section"><div class="section-title"><div><span class="eyebrow">AUTOMATION PREMIUM</span><h2 id="botsTitle">Les bots BitGold</h2><p id="botsSummary" class="section-subtitle">Six philosophies : protection, équilibre, momentum, IA adaptative, mean-reversion et rotation macro.</p></div><span class="live" id="botsMode">Découverte</span></div><div class="bot-plan-banner"><div><span class="eyebrow">NIVEAU D'AUTOMATISATION</span><strong id="botPlanLabel">BitGold Free</strong><p id="botPlanDescription">1 bot actif · Shield inclus · passez Pro ou Elite pour aller plus loin</p></div><div class="bot-plan-actions"><button class="btn btn-primary" type="button" data-plan-demo="elite">Mode Elite · Super Pro</button><button class="btn btn-ghost" type="button" data-plan-demo="pro">Mode Pro</button><button class="btn btn-ghost" type="button" data-plan-demo="free">Revenir Free</button></div></div><div class="bot-comparison-intro"><div><strong>Choisissez votre stratégie.</strong><span>Free : 1 bot. Pro : 3 bots + IA/Quant. Elite : 5 bots + Macro Rotation et garde-fous renforcés.</span></div><span>FREE · PRO · ELITE</span></div><div class="bot-comparison-wrap"><div id="botGrid" class="bot-grid"><div class="bot-empty">Chargement des bots…</div></div></div></section>
+<section id="bots" class="section bots-section"><div class="section-title"><div><span class="eyebrow">AUTOMATION PREMIUM</span><h2 id="botsTitle">Les bots BitGold</h2><p id="botsSummary" class="section-subtitle">Six philosophies : protection, équilibre, momentum, IA adaptative, mean-reversion et rotation macro.</p></div><span class="live" id="botsMode">Découverte</span></div><div class="bot-plan-selector" aria-label="Niveau d'automatisation">
+  <div class="bot-plan-selector-head">
+    <div>
+      <span class="eyebrow">VOTRE NIVEAU</span>
+      <h3 id="botPlanLabel">BitGold Free</h3>
+      <p id="botPlanDescription">Commencez gratuitement avec Shield, puis évoluez selon votre stratégie.</p>
+    </div>
+    <span class="bot-plan-current" id="botsMode">FREE</span>
+  </div>
+  <div class="bot-plan-options">
+    <button class="bot-plan-option active" type="button" data-plan-demo="free">
+      <span class="bot-plan-option-top"><strong>Free</strong><span>1 bot</span></span>
+      <small>Shield · protection</small>
+    </button>
+    <button class="bot-plan-option" type="button" data-plan-demo="pro">
+      <span class="bot-plan-option-top"><strong>Pro</strong><span>3 bots</span></span>
+      <small>IA · Quant · stratégies avancées</small>
+    </button>
+    <button class="bot-plan-option elite" type="button" data-plan-demo="elite">
+      <span class="bot-plan-option-top"><strong>Elite</strong><span>5 bots</span></span>
+      <small>Macro · Quant · garde-fous renforcés</small>
+    </button>
+  </div>
+</div><div class="bot-comparison-wrap"><div id="botGrid" class="bot-grid"><div class="bot-empty">Chargement des bots…</div></div></div></section>
 <section id="activite" class="activity-page auth-only" hidden>
   <div class="activity-page-shell">
     <button id="activityBack" class="btn btn-ghost" type="button">← Retour au tableau de bord</button>
