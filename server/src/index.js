@@ -342,6 +342,8 @@ app.post("/api/auth/google", async (req,res) => {
         await provisionUserAssets(client,user.id);
       }
       await client.query("COMMIT");
+      const twofa=(await pool.query("SELECT enabled FROM user_2fa WHERE user_id=$1",[user.id])).rows[0]?.enabled===true;
+      if(twofa)return res.json({requires2FA:true,challengeToken:challengeToken(user),email:user.email});
       res.json({token:token(user),email:user.email,profile:profileFromRow(user)});
     }catch(e){await client.query("ROLLBACK");throw e}
     finally{client.release()}
