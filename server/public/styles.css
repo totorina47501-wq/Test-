@@ -573,3 +573,34 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .top-user.is-connected{background:#152318;border-color:#506b3e}
 .top-user.is-connected .user-status-dot{background:#c8ff45;box-shadow:0 0 8px rgba(200,255,69,.45)}
 @media(max-width:520px){.top-user{width:35px;height:35px}.top-user svg{width:17px;height:17px}}
+
+
+/* Profil utilisateur + authentification Google */
+.auth-modal-box,.profile-modal-box{width:min(720px,calc(100vw - 28px));max-height:calc(100vh - 40px);overflow:auto}
+.auth-modal-box{width:min(560px,calc(100vw - 28px))}
+.signup-fields{display:grid;gap:10px;margin-bottom:4px}
+.auth-field-grid,.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.auth-field-grid>div,.profile-grid>div{min-width:0}
+.auth-field-grid label,.profile-grid label{display:block}
+.auth-field-grid label span,.profile-grid label span{color:#657a70;font-weight:500}
+.auth-field-grid input,.auth-field-grid select,.profile-grid input,.profile-grid select{width:100%;box-sizing:border-box}
+.google-auth-wrap{margin:12px 0}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:10px 0;color:#566b61;font-size:8px;text-transform:uppercase;letter-spacing:.08em}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:#1c3027}
+#googleSignInButton{display:flex;justify-content:center;min-height:40px}
+#googleSignInButton>div{max-width:100%}
+.profile-heading{margin-bottom:18px}
+.profile-heading h3{margin:6px 0 0}
+.profile-grid{gap:12px}
+.profile-full{grid-column:1/-1}
+.profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid #172b22}
+.profile-actions .btn{margin:0}
+.result.success{color:#c8ff45}
+.result.error{color:#ff9c8f}
+@media(max-width:600px){
+  .auth-field-grid,.profile-grid{grid-template-columns:1fr}
+  .profile-full{grid-column:auto}
+  .auth-modal-box,.profile-modal-box{width:calc(100vw - 20px);max-height:calc(100vh - 24px)}
+  .profile-actions{display:grid}.profile-actions .btn{width:100%}
+  #googleSignInButton>div{width:100%!important}
+}
