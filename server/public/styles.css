@@ -400,3 +400,45 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .bot-stat-row small{display:block;color:#5f756a;text-align:center;font-size:7px}
 @media(max-width:900px){.dashboard-analytics-grid{grid-template-columns:1fr}}
 @media(max-width:700px){.dashboard-performance-chart{padding:8px}.bot-stat-row{grid-template-columns:1fr 38px 38px 38px}.dashboard-chart-wrap{height:195px}.dashboard-chart-wrap svg{height:155px}}
+
+/* À propos, FAQ, newsletter et footer */
+.about-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px}
+.about-card{min-height:250px;padding:24px;border:1px solid #20392e;border-radius:20px;background:linear-gradient(145deg,#0d1c15,#09150f);box-shadow:0 15px 38px rgba(0,0,0,.14)}
+.about-card-main{border-color:#465d38}
+.about-number{display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;border:1px solid #31483b;border-radius:10px;color:#c8ff45;font-size:10px;font-weight:800}
+.about-card h3{margin:25px 0 10px;font-size:20px}
+.about-card p{margin:0;color:#84988e;font-size:11px;line-height:1.65}
+.about-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:22px}
+.about-tags span{padding:6px 9px;border:1px solid #294334;border-radius:999px;color:#a8b8b0;font-size:8px;text-transform:uppercase;letter-spacing:.08em}
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.faq-grid details{border:1px solid #20392e;border-radius:14px;background:#0b1812;padding:0 16px}
+.faq-grid summary{padding:17px 2px;color:#dce6e0;font-size:12px;font-weight:750;cursor:pointer;list-style:none}
+.faq-grid summary::-webkit-details-marker{display:none}
+.faq-grid summary:after{content:"+";float:right;color:#c8ff45;font-size:17px;font-weight:400}
+.faq-grid details[open] summary:after{content:"−"}
+.faq-grid details p{margin:0;padding:0 2px 17px;color:#7f9389;font-size:10px;line-height:1.6}
+.newsletter-section{padding-top:65px;padding-bottom:65px}
+.newsletter-card{display:grid;grid-template-columns:1.15fr .85fr;gap:35px;align-items:center;padding:34px;border:1px solid #334d3d;border-radius:24px;background:radial-gradient(circle at 15% 20%,rgba(200,255,69,.09),transparent 35%),linear-gradient(145deg,#102018,#09150f);box-shadow:0 22px 60px rgba(0,0,0,.22)}
+.newsletter-card h2{margin:8px 0 10px;font-size:34px;line-height:1.1}
+.newsletter-card p{margin:0;color:#83978d;font-size:11px;line-height:1.6}
+.newsletter-points{display:flex;gap:14px;flex-wrap:wrap;margin-top:20px;color:#9eb0a7;font-size:9px}
+.newsletter-form{padding:20px;border:1px solid #213a2f;border-radius:17px;background:#08140e}
+.newsletter-form label{display:block;color:#aebdb6;font-size:10px;font-weight:700;margin-bottom:8px}
+.newsletter-input-row{display:flex;gap:8px}
+.newsletter-input-row input{flex:1;min-width:0;padding:13px 14px;border:1px solid #30483e;border-radius:10px;background:#07110d;color:#fff;outline:none}
+.newsletter-input-row input:focus{border-color:#8eaf48;box-shadow:0 0 0 3px rgba(200,255,69,.08)}
+.newsletter-input-row button{margin:0;white-space:nowrap}
+.newsletter-consent{margin-top:10px!important;color:#5f756a!important;font-size:8px!important}
+.newsletter-result{min-height:18px;margin-top:10px;color:#91a49b;font-size:9px}
+.newsletter-result.success{color:#c8ff45}.newsletter-result.error{color:#ff9c8f}
+.site-footer{padding:55px 8% 25px;border-top:1px solid #172b22;background:#06100b}
+.footer-main{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:35px;padding-bottom:35px}
+.site-footer .brand{font-size:18px}.site-footer .logo{width:30px;height:30px;font-size:15px}
+.site-footer p{max-width:270px;color:#667b70;font-size:9px;line-height:1.6}
+.footer-links{display:grid;align-content:start;gap:8px}
+.footer-links strong{margin-bottom:4px;color:#b8c7bf;font-size:9px;text-transform:uppercase;letter-spacing:.12em}
+.footer-links a,.footer-links span{color:#687c72;text-decoration:none;font-size:9px}
+.footer-links a:hover{color:#c8ff45}
+.footer-bottom{display:flex;justify-content:space-between;gap:20px;padding-top:18px;border-top:1px solid #172b22;color:#52675d;font-size:8px}
+@media(max-width:900px){.about-grid{grid-template-columns:1fr}.faq-grid{grid-template-columns:1fr}.newsletter-card{grid-template-columns:1fr}.footer-main{grid-template-columns:1.2fr 1fr 1fr}}
+@media(max-width:700px){.about-card{min-height:0;padding:19px}.faq-grid details{padding:0 13px}.newsletter-section{padding-top:50px;padding-bottom:50px}.newsletter-card{padding:20px;border-radius:19px}.newsletter-card h2{font-size:25px}.newsletter-input-row{display:grid;grid-template-columns:1fr}.newsletter-input-row button{width:100%}.footer-main{grid-template-columns:1fr 1fr;gap:25px}.footer-bottom{display:grid;gap:7px}}

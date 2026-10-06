@@ -19,6 +19,7 @@ const pool = new Pool({
 });
 
 await pool.query(`
+CREATE TABLE IF NOT EXISTS newsletter_subscribers(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,subscribed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,active BOOLEAN NOT NULL DEFAULT TRUE);
 CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS wallets(user_id INTEGER PRIMARY KEY REFERENCES users(id),cash DOUBLE PRECISION NOT NULL DEFAULT 10000);
 CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id),asset TEXT NOT NULL,quantity DOUBLE PRECISION NOT NULL DEFAULT 0,PRIMARY KEY(user_id,asset));
@@ -171,6 +172,33 @@ app.post("/api/auth/login", async (req,res) => {
 });
 
 app.get("/api/me",auth,(req,res)=>res.json({id:req.user.sub,email:req.user.email}));
+
+app.post("/api/newsletter/subscribe", async (req,res) => {
+  const email=String(req.body.email||"").trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({error:"Adresse email invalide."});
+  try {
+    await pool.query(
+      "INSERT INTO newsletter_subscribers(email,active) VALUES($1,TRUE) ON CONFLICT(email) DO UPDATE SET active=TRUE,subscribed_at=CURRENT_TIMESTAMP",
+      [email]
+    );
+    res.status(201).json({ok:true,message:"Inscription confirmée. Vous recevrez les prochaines sélections BitGold."});
+  } catch(e) {
+    console.error("[NEWSLETTER] subscribe error",e.message);
+    res.status(500).json({error:"Inscription temporairement indisponible."});
+  }
+});
+app.post("/api/newsletter/unsubscribe", async (req,res) => {
+  const email=String(req.body.email||"").trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({error:"Adresse email invalide."});
+  try {
+    await pool.query("UPDATE newsletter_subscribers SET active=FALSE WHERE email=$1",[email]);
+    res.json({ok:true,message:"Désinscription enregistrée."});
+  } catch(e) {
+    console.error("[NEWSLETTER] unsubscribe error",e.message);
+    res.status(500).json({error:"Désinscription temporairement indisponible."});
+  }
+});
+
 const newsCache={items:[],updatedAt:0,source:"BitGold News"};
 
 const NEWS_FEEDS=[
