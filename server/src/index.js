@@ -759,7 +759,6 @@ async function executeBotDecision(subscription,signal){
  const complianceCheck=()=>compliance.assertTransactionAllowed(subscription.user_id);
  const def=botDefinition(subscription.bot_type),client=await pool.connect();
  try{
-  await complianceCheck();
   await client.query("BEGIN");
   const w=await client.query("SELECT cash FROM wallets WHERE user_id=$1 FOR UPDATE",[subscription.user_id]);
   const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,signal.asset]);
@@ -767,6 +766,7 @@ async function executeBotDecision(subscription,signal){
   let amount=0,quantity=0;
   if(signal.action==="buy"){const maxTrade=Number(subscription.max_trade_eur||250);const maxPosition=Number(subscription.max_position_eur||1000);const currentPosition=qty*price;const remaining=Math.max(0,maxPosition-currentPosition);const reserve=Math.max(0,Math.min(90,Number(subscription.min_cash_pct||20)))/100;const spendable=Math.max(0,cash*(1-reserve));amount=Math.min(cash*signal.fraction,cash*def.allocation/100,maxTrade,remaining,spendable);quantity=price?amount/price:0}
   if(signal.action==="sell"){amount=Math.min(qty*price,(qty*price)*signal.fraction);quantity=price?amount/price:0}
+  if(signal.action!=="hold"&&amount>0&&quantity>0)await complianceCheck(amount);
   if(signal.action==="hold"||amount<=0||quantity<=0){await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",signal.asset,signal.message]);await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");return}
   await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2",[signal.action==="buy"?-amount:amount,subscription.user_id]);
   await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3",[signal.action==="buy"?quantity:-quantity,subscription.user_id,signal.asset]);
