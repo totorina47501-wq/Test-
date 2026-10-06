@@ -222,3 +222,7 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .bot-card .full{min-height:46px;height:46px;margin-top:auto;display:flex;align-items:center;justify-content:center;padding:10px 16px;font-size:14px;line-height:1;white-space:nowrap}
 @media(max-width:1100px){.bot-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(610px,1fr)}.bot-card{min-height:610px}}
 @media(max-width:700px){.bot-comparison-wrap{overflow:visible}.bot-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:16px}.bot-card{min-height:0;height:auto}.bot-card .full{width:100%;margin-left:0;margin-right:0}.bot-plan-actions .btn{min-height:44px}}
+
+/* Couleur unifiée des boutons Découvrir des cartes bots */
+.bot-card .full{background:#c8ff45!important;color:#08110b!important;border:0!important}
+.bot-card .full:hover{background:#c8ff45!important;color:#08110b!important;filter:brightness(.96)}
