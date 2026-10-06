@@ -207,3 +207,18 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 
 .crypto-detail-ranges{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 18px;padding:5px;background:#09150f;border:1px solid #213a30;border-radius:13px}.crypto-detail-ranges button{border:0;background:transparent;color:#81938b;padding:8px 11px;border-radius:9px;font-weight:750;font-size:12px;cursor:pointer;white-space:nowrap}.crypto-detail-ranges button:hover{color:#fff}.crypto-detail-ranges button.active{background:#c8ff45;color:#08110b}.crypto-detail-grid{grid-template-columns:repeat(5,1fr)}@media(max-width:900px){.crypto-detail-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.crypto-detail-ranges{overflow-x:auto;flex-wrap:nowrap}.crypto-detail-ranges button{flex:none}.crypto-detail-grid{grid-template-columns:repeat(2,1fr)}}
 .bot-plan-banner{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:18px 0 14px;padding:18px 20px;border:1px solid #29483a;border-radius:18px;background:linear-gradient(100deg,#0d1d15,#101a15);box-shadow:0 14px 34px rgba(0,0,0,.18)}.bot-plan-banner strong{display:block;font-size:22px;margin:3px 0 5px}.bot-plan-banner p{margin:0;color:#8fa198;font-size:11px}.bot-plan-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.bot-locked{opacity:.72}.bot-locked .bot-visual{filter:saturate(.65)}.bot-locked .bot-status{color:#e6b76c;background:#e6b76c12}.bot-adaptive-ai{border-top:2px solid #c8ff45!important}.bot-adaptive-ai .bot-character-face{color:#c8ff45;border-color:#718f3f}@media(max-width:700px){.bot-plan-banner{align-items:flex-start;flex-direction:column}.bot-plan-actions{justify-content:flex-start;width:100%}}
+
+
+/* Normalisation finale des cartes bots et de leurs actions */
+.bot-comparison-wrap{overflow:visible;padding:2px 2px 18px}
+.bot-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(620px,1fr);gap:18px;align-items:stretch}
+.bot-card{height:100%;min-width:0;min-height:620px;display:flex;flex-direction:column}
+.bot-visual{flex:0 0 116px}
+.bot-card-head{flex:0 0 auto}
+.bot-card-summary{min-height:58px!important}
+.bot-stats{flex:0 0 auto}
+.bot-compatible{flex:0 0 auto}
+.bot-card-more{min-height:66px}
+.bot-card .full{min-height:46px;height:46px;margin-top:auto;display:flex;align-items:center;justify-content:center;padding:10px 16px;font-size:14px;line-height:1;white-space:nowrap}
+@media(max-width:1100px){.bot-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(610px,1fr)}.bot-card{min-height:610px}}
+@media(max-width:700px){.bot-comparison-wrap{overflow:visible}.bot-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:16px}.bot-card{min-height:0;height:auto}.bot-card .full{width:100%;margin-left:0;margin-right:0}.bot-plan-actions .btn{min-height:44px}}
