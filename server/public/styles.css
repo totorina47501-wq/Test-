@@ -1271,3 +1271,7 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
   .bot-count{font-size:28px}
   .hero-product-footer{gap:8px}
 }
+
+
+/* Funding + KYC demo */
+.wallet-funding-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.wallet-kyc-status{font-size:11px;color:#9cafa5;margin-top:8px}.funding-modal-box{max-width:520px}.funding-kyc-gate{padding:18px;border:1px solid rgba(200,255,69,.2);background:rgba(200,255,69,.05);border-radius:16px;margin:12px 0}.funding-kyc-gate strong{display:block;margin-bottom:6px}.funding-kyc-gate p{color:#9cafa5;font-size:13px;line-height:1.5}.funding-summary{display:grid;grid-template-columns:1fr auto;gap:9px 16px;padding:15px;margin:14px 0;border-radius:14px;background:rgba(255,255,255,.035)}.funding-summary span{color:#9cafa5;font-size:12px}.funding-summary strong{font-size:14px}.kyc-status-card{padding:18px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);margin-bottom:12px}.kyc-status-card span,.kyc-status-card small{display:block;color:#9cafa5}.kyc-status-card strong{display:block;font-size:24px;margin:5px 0}.kyc-checklist{display:grid;gap:8px;margin:16px 0}.kyc-checklist span{font-size:13px;color:#c9d3cd}@media(max-width:520px){.wallet-funding-actions{width:100%}.wallet-funding-actions .btn{flex:1}.funding-modal-box{margin:12px}.funding-summary{grid-template-columns:1fr auto}}
