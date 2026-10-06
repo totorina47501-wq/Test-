@@ -79,3 +79,14 @@ test("Pro dashboard exposes performance risk and Autopilot",()=>{
   assert.match(app,/BITGOLD AUTOPILOT/);
   assert.match(html,/href="#dashboard"/);
 });
+
+test("Dashboard analytics exposes reconstructed performance and bot statistics",()=>{
+  assert.match(server,/app\.get\("\/api\/dashboard\/analytics",auth/);
+  assert.match(server,/reconstructed:true/);
+  assert.match(server,/byBot/);
+  assert.match(app,/dashPerformanceChart/);
+  assert.match(app,/dashBotStats/);
+  assert.match(app,/\/api\/dashboard\/analytics/);
+  assert.match(html,/HISTORIQUE/);
+  assert.match(html,/BOT ANALYTICS/);
+});
