@@ -1,5 +1,7 @@
 {
-  "extends": ["stylelint-config-recommended"],
+  "extends": [
+    "stylelint-config-recommended"
+  ],
   "rules": {
     "custom-property-pattern": null,
     "selector-class-pattern": null,
@@ -7,6 +9,10 @@
     "keyframes-name-pattern": null,
     "property-no-unknown": true,
     "selector-pseudo-class-no-unknown": true,
-    "selector-pseudo-element-no-unknown": true
+    "selector-pseudo-element-no-unknown": true,
+    "no-descending-specificity": null,
+    "no-duplicate-selectors": null,
+    "declaration-property-value-keyword-no-deprecated": null,
+    "declaration-block-no-shorthand-property-overrides": null
   }
 }
