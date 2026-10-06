@@ -90,3 +90,13 @@ test("Dashboard analytics exposes reconstructed performance and bot statistics",
   assert.match(html,/HISTORIQUE/);
   assert.match(html,/BOT ANALYTICS/);
 });
+
+test("portfolio and cockpit use the connected user's holdings with live valuations",()=>{
+  assert.match(server,/app\.get\("\/api\/portfolio",auth/);
+  assert.match(server,/const market=await refreshMarket\(\)/);
+  assert.match(server,/cashPlusInvested/);
+  assert.match(server,/integrity:\{ok:integrity/);
+  assert.match(app,/marketPrices\[row\.asset\]=Number\(row\.price\)/);
+  assert.match(app,/state\.portfolio=\{/);
+  assert.match(app,/data\.integrity\?\.ok/);
+});
