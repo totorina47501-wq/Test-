@@ -319,7 +319,6 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
  .main-nav{order:3;width:100%;justify-content:space-between;overflow-x:auto;scrollbar-width:none}
  .main-nav::-webkit-scrollbar{display:none}
  .main-nav a{white-space:nowrap;padding:8px 11px}
- .main-nav .auth-only{display:none!important}
  .top-actions{margin-left:auto}
  .top-login{min-width:auto;padding:9px 12px!important}
  .pricing-page-section{padding-top:52px;padding-bottom:52px}
