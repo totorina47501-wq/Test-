@@ -47,7 +47,14 @@ app.get("/api/fx",async(req,res)=>{
 });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const secret = process.env.JWT_SECRET || "dev-only-change-me";
+const secret = String(process.env.JWT_SECRET || "").trim();
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction && secret.length < 32) {
+  throw new Error("JWT_SECRET must be configured with at least 32 characters in production.");
+}
+if (!isProduction && secret.length < 32) {
+  console.warn("[SECURITY] JWT_SECRET is not production-grade; configure a 32+ character secret before deployment.");
+}
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : undefined
@@ -111,6 +118,13 @@ app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,
 
 app.use(express.json());
 app.use(rateLimit({ windowMs: 60000, max: 120, standardHeaders: true, legacyHeaders: false }));
+const authRateLimit = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Trop de tentatives d’authentification. Réessayez plus tard." }
+});
 app.use(express.static(path.join(__dirname, "../public"), { setHeaders: (res, filePath) => { if(filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) res.setHeader("Cache-Control", "no-store, max-age=0"); } }));
 app.get(/^\/bot\/(shield|silver|gold|adaptive-ai|quant-pulse|macro-rotation)\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
 
@@ -263,7 +277,7 @@ app.post("/api/auth/signup", async (req,res) => {
   } finally { client.release(); }
 });
 
-app.post("/api/auth/login", async (req,res) => {
+app.post("/api/auth/login", authRateLimit, async (req,res) => {
   const email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
   console.log("[AUTH] login attempt", email);
   try {
@@ -287,7 +301,7 @@ app.post("/api/auth/login", async (req,res) => {
 
 app.get("/api/auth/google/config",(req,res)=>res.json({enabled:googleConfigured,clientId:googleConfigured?googleClientId:null}));
 
-app.post("/api/auth/google", async (req,res) => {
+app.post("/api/auth/google", authRateLimit, async (req,res) => {
   if(!googleConfigured) return res.status(503).json({error:"La connexion Google n'est pas encore configurée."});
   const credential=String(req.body.credential||"").trim();
   if(!credential) return res.status(400).json({error:"Jeton Google manquant."});
