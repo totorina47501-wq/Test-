@@ -578,7 +578,7 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 /* Profil utilisateur + authentification Google */
 .auth-modal-box,.profile-modal-box{width:min(720px,calc(100vw - 28px));max-height:calc(100vh - 40px);overflow:auto}
 .auth-modal-box{width:min(560px,calc(100vw - 28px))}
-.signup-fields{display:grid;gap:10px;margin-bottom:4px}
+.signup-fields{display:grid;gap:10px;margin-bottom:4px}.signup-fields[hidden]{display:none!important}
 .auth-field-grid,.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .auth-field-grid>div,.profile-grid>div{min-width:0}
 .auth-field-grid label,.profile-grid label{display:block}
