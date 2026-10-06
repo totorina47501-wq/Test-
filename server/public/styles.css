@@ -564,3 +564,12 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 @media(max-width:520px){
   .topbar{padding:0 12px}.brand-copy strong{font-size:16px}.brand-mark,.brand-mark .logo{width:34px;height:34px}.top-login span{font-size:8px}.top-actions{gap:5px}
 }
+
+/* Icône utilisateur du header */
+.top-user{position:relative;display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid #2b4438;border-radius:50%;background:#0b1812;color:#c8ff45;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.top-user svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.top-user:hover{background:#122218;border-color:#536f45;transform:translateY(-1px);box-shadow:0 7px 20px rgba(200,255,69,.10)}
+.user-status-dot{position:absolute;right:0;bottom:0;width:8px;height:8px;border:2px solid #07110d;border-radius:50%;background:#66776f}
+.top-user.is-connected{background:#152318;border-color:#506b3e}
+.top-user.is-connected .user-status-dot{background:#c8ff45;box-shadow:0 0 8px rgba(200,255,69,.45)}
+@media(max-width:520px){.top-user{width:35px;height:35px}.top-user svg{width:17px;height:17px}}
