@@ -87,3 +87,29 @@ BitGold prévoit une grille de frais indicative différente selon le niveau d'ab
 | Elite | 0,45 % + 0,20 € | 0,75 % + 0,20 € | 50 000 € |
 
 Les endpoints authentifiés `/api/transfers/fees` et `/api/transfers/quote` permettent d'obtenir la politique et de calculer un devis de frais. Dans le prototype actuel, il s'agit uniquement d'une **simulation** : aucun mouvement d'argent réel n'est exécuté. Les tarifs définitifs devront être adaptés au prestataire de paiement, au moyen de paiement, aux coûts de réseau et aux obligations réglementaires applicables.
+
+
+## Profils utilisateurs et Google Sign-In
+
+L'inscription crée désormais un profil utilisateur avec :
+- prénom et nom ;
+- email de connexion ;
+- téléphone et date de naissance (optionnels) ;
+- pays, ville et code postal ;
+- adresse (optionnelle) ;
+- devise préférée ;
+- profil de risque.
+
+Une fois connecté, l'icône utilisateur du header ouvre le profil et permet de modifier ces informations. L'email de connexion reste volontairement non modifiable depuis ce formulaire.
+
+### Google Sign-In
+
+La connexion Google utilise Google Identity Services avec vérification du jeton côté serveur. Aucun secret Google n'est stocké dans Git.
+
+Pour activer le bouton Google sur Northflank :
+1. créer un OAuth 2.0 Client ID de type Web application dans Google Cloud ;
+2. ajouter l'origine du site BitGold dans les Authorized JavaScript origins ;
+3. renseigner GOOGLE_CLIENT_ID dans les variables d'environnement Northflank ;
+4. redéployer le service.
+
+Sans GOOGLE_CLIENT_ID, le bouton Google reste automatiquement masqué et l'inscription/connexion classique continue de fonctionner.
