@@ -157,6 +157,7 @@ function currencyForCurrentUser(){
 function setCurrencyPreference(currency){
   const value=Object.prototype.hasOwnProperty.call(BITGOLD_CURRENCIES,currency)?currency:"EUR";
   safeStorageSet("bitgold-currency",value);
+  if(typeof window!=="undefined")window.dispatchEvent(new CustomEvent("bitgold:currency-ready"));
   return value;
 }
 function applyCountryCurrencyDefaults(){
@@ -706,4 +707,6 @@ handleStripeReturn();initGoogleAuth();
 window.addEventListener('DOMContentLoaded',initBitGoldI18n);
 
 window.addEventListener("DOMContentLoaded",()=>{loadFxRates()});
-window.addEventListener("bitgold:fx-ready",()=>{if(lastMarketData.length)renderMarket(lastMarketData);if(state?.portfolio)renderWallet();});
+function rerenderCurrency(){if(lastMarketData.length)renderMarket(lastMarketData);if(state?.portfolio)renderWallet();if(apiToken)loadDashboard().catch(()=>{});}
+window.addEventListener("bitgold:fx-ready",rerenderCurrency);
+window.addEventListener("bitgold:currency-ready",rerenderCurrency);
