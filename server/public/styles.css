@@ -253,3 +253,36 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
  .bot-plan-options{grid-template-columns:1fr;gap:7px}
  .bot-plan-option{min-height:68px;padding:12px 13px}
 }
+
+/* Pricings — section produit premium */
+.pricing-section{position:relative;margin:20px 0 28px;padding:26px;border:1px solid #20392d;border-radius:24px;background:linear-gradient(145deg,#0d1b14 0%,#09140f 58%,#0e1d15 100%);box-shadow:0 24px 60px rgba(0,0,0,.24);overflow:hidden}
+.pricing-section:before{content:"";position:absolute;width:360px;height:240px;right:-100px;top:-130px;background:radial-gradient(circle,rgba(200,255,69,.12),transparent 68%);pointer-events:none}
+.pricing-heading{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:20px}
+.pricing-heading h3{margin:5px 0 6px;font-size:24px;letter-spacing:-.025em}
+.pricing-heading p{max-width:680px;margin:0;color:#81958b;font-size:12px;line-height:1.55}
+.pricing-demo-badge{padding:8px 11px;border:1px solid #30483b;border-radius:999px;color:#91a69b;background:#0a1711;font-size:9px;font-weight:800;letter-spacing:.12em;white-space:nowrap}
+.pricing-grid{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pricing-card{position:relative;display:flex;flex-direction:column;min-height:350px;padding:20px;border:1px solid #20372c;border-radius:18px;background:#0a1711;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.pricing-card:hover{transform:translateY(-3px);border-color:#3c5949}
+.pricing-card.featured{border-color:#718d3e;background:linear-gradient(145deg,#122119,#0b1811);box-shadow:0 16px 38px rgba(0,0,0,.18)}
+.pricing-card.elite{border-color:#455d38;background:linear-gradient(145deg,#111f16,#0a1710)}
+.pricing-card.elite:after{content:"";position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 1px rgba(200,255,69,.06);pointer-events:none}
+.pricing-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pricing-name{font-size:18px;font-weight:800;color:#e4ebe7}
+.pricing-card.featured .pricing-name,.pricing-card.elite .pricing-name{color:#c8ff45}
+.pricing-tag{font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#82968c}
+.pricing-value{display:flex;align-items:baseline;gap:8px;margin:22px 0 8px}
+.pricing-value strong{font-size:42px;line-height:1;color:#f0f5f2;letter-spacing:-.04em}
+.pricing-value span{font-size:10px;color:#82958c;text-transform:uppercase;letter-spacing:.08em}
+.pricing-card>p{min-height:48px;margin:0 0 15px;color:#91a39a;font-size:11px;line-height:1.5}
+.pricing-card ul{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:9px}
+.pricing-card li{position:relative;padding-left:17px;color:#b7c4bd;font-size:10px;line-height:1.35}
+.pricing-card li:before{content:"✓";position:absolute;left:0;color:#a7cf45;font-weight:800}
+.pricing-select{width:100%;min-height:44px;margin-top:auto;border:1px solid #294234;border-radius:10px;background:#102119;color:#d6e0da;font-weight:700;font-size:11px;cursor:pointer;transition:all .18s ease}
+.pricing-select:hover{border-color:#8eaf48;background:#c8ff45;color:#07100a}
+.pricing-card.featured .pricing-select,.pricing-card.elite .pricing-select{background:#c8ff45;color:#07100a;border-color:#c8ff45}
+.pricing-card.featured .pricing-select:hover,.pricing-card.elite .pricing-select:hover{filter:brightness(.94)}
+.pricing-card[data-pricing-card="free"] .pricing-select{background:#13231b}
+.pricing-foot{position:relative;display:flex;flex-wrap:wrap;gap:18px;margin-top:17px;padding-top:15px;border-top:1px solid #1b3026;color:#70857b;font-size:9px}
+@media(max-width:900px){.pricing-grid{grid-template-columns:1fr}.pricing-card{min-height:0}.pricing-heading{align-items:flex-start}.pricing-card>p{min-height:0}}
+@media(max-width:700px){.pricing-section{padding:18px;border-radius:19px}.pricing-heading{display:block}.pricing-heading h3{font-size:20px}.pricing-demo-badge{display:inline-flex;margin-top:12px}.pricing-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pricing-card{padding:17px}}
