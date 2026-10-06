@@ -10,6 +10,9 @@ import jwt from "jsonwebtoken";
 import pg from "pg";
 import Stripe from "stripe";
 import { OAuth2Client } from "google-auth-library";
+import crypto from "node:crypto";
+import { generateSecret, generateURI, verifySync } from "otplib";
+import QRCode from "qrcode";
 
 const { Pool } = pg;
 const app = express();
@@ -69,6 +72,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_currency TEXT NOT NULL DEFA
 ALTER TABLE users ADD COLUMN IF NOT EXISTS risk_profile TEXT NOT NULL DEFAULT 'moderate';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub TEXT UNIQUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT 'password';
+CREATE TABLE IF NOT EXISTS user_2fa(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,secret_enc TEXT,pending_secret_enc TEXT,enabled BOOLEAN NOT NULL DEFAULT FALSE,recovery_code_hashes TEXT[] NOT NULL DEFAULT '{}',created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,enabled_at TIMESTAMPTZ);
 CREATE TABLE IF NOT EXISTS wallets(user_id INTEGER PRIMARY KEY REFERENCES users(id),cash DOUBLE PRECISION NOT NULL DEFAULT 10000);
 CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id),asset TEXT NOT NULL,quantity DOUBLE PRECISION NOT NULL DEFAULT 0,PRIMARY KEY(user_id,asset));
 CREATE TABLE IF NOT EXISTS trades(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),side TEXT NOT NULL,asset TEXT NOT NULL,amount_eur DOUBLE PRECISION NOT NULL,price_eur DOUBLE PRECISION NOT NULL,quantity DOUBLE PRECISION NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -194,7 +198,10 @@ async function refreshMarket(force=false) {
   return marketSnapshot;
 }
 refreshMarket(true).catch(()=>{});
-function token(user){ return jwt.sign({sub:user.id,email:user.email},secret,{expiresIn:"7d"}); }
+function encrypt2fa(value){const key=crypto.createHash("sha256").update(String(process.env.TWO_FACTOR_ENCRYPTION_KEY||secret)).digest(),iv=crypto.randomBytes(12),cipher=crypto.createCipheriv("aes-256-gcm",key,iv);const data=Buffer.concat([cipher.update(value,"utf8"),cipher.final()]);return [iv.toString("base64url"),cipher.getAuthTag().toString("base64url"),data.toString("base64url")].join(".")}
+function decrypt2fa(value){const key=crypto.createHash("sha256").update(String(process.env.TWO_FACTOR_ENCRYPTION_KEY||secret)).digest(),[iv,tag,data]=String(value).split("."),dec=crypto.createDecipheriv("aes-256-gcm",key,Buffer.from(iv,"base64url"));dec.setAuthTag(Buffer.from(tag,"base64url"));return Buffer.concat([dec.update(Buffer.from(data,"base64url")),dec.final()]).toString("utf8")}
+function token(user,extra={}){return jwt.sign({sub:user.id,email:user.email,...extra},secret,{expiresIn:"7d"});}
+function challengeToken(user){return jwt.sign({sub:user.id,email:user.email,purpose:"2fa_challenge"},secret,{expiresIn:"5m"});}
 function auth(req,res,next){ try { req.user=jwt.verify((req.headers.authorization||"").replace("Bearer ",""),secret); next(); } catch { res.status(401).json({error:"Non authentifié"}); } }
 
 app.get("/api/health", async (req,res) => {
@@ -287,6 +294,10 @@ app.post("/api/auth/login", async (req,res) => {
   }
 });
 
+app.get("/api/security",auth,async(req,res)=>{try{const r=await pool.query("SELECT enabled,enabled_at FROM user_2fa WHERE user_id=$1",[req.user.sub]);res.json({twoFA:{enabled:r.rows[0]?.enabled===true,enabledAt:r.rows[0]?.enabled_at||null}})}catch(e){res.status(500).json({error:"Impossible de charger la sécurité."})}});
+app.post("/api/security/2fa/setup",auth,async(req,res)=>{try{const old=(await pool.query("SELECT enabled FROM user_2fa WHERE user_id=$1",[req.user.sub])).rows[0];if(old?.enabled)return res.status(409).json({error:"Le 2FA est déjà actif."});const u=(await pool.query("SELECT email FROM users WHERE id=$1",[req.user.sub])).rows[0],sec=generateSecret();await pool.query("INSERT INTO user_2fa(user_id,pending_secret_enc) VALUES($1,$2) ON CONFLICT(user_id) DO UPDATE SET pending_secret_enc=$2",[req.user.sub,encrypt2fa(sec)]);const uri=generateURI({issuer:"BitGold",label:u.email,secret:sec}),qr=await QRCode.toDataURL(uri,{width:260,margin:1});res.json({ok:true,qr,secret:sec,email:u.email})}catch(e){res.status(500).json({error:"Impossible de préparer le 2FA."})}});
+app.post("/api/security/2fa/enable",auth,async(req,res)=>{try{const row=(await pool.query("SELECT pending_secret_enc FROM user_2fa WHERE user_id=$1",[req.user.sub])).rows[0],code=String(req.body.code||"").replace(/\\s/g,"");if(!row?.pending_secret_enc)return res.status(400).json({error:"Configuration 2FA absente."});const sec=decrypt2fa(row.pending_secret_enc);if(!verifySync({secret:sec,token:code}).valid)return res.status(400).json({error:"Code Google Authenticator invalide."});const recovery=Array.from({length:8},()=>crypto.randomBytes(5).toString("hex").toUpperCase()),hashes=await Promise.all(recovery.map(x=>bcrypt.hash(x,12)));await pool.query("UPDATE user_2fa SET secret_enc=$1,pending_secret_enc=NULL,enabled=TRUE,enabled_at=CURRENT_TIMESTAMP,recovery_code_hashes=$2 WHERE user_id=$3",[encrypt2fa(sec),hashes,req.user.sub]);res.json({ok:true,recoveryCodes:recovery})}catch(e){res.status(500).json({error:"Impossible d'activer le 2FA."})}});
+app.post("/api/auth/2fa/verify",async(req,res)=>{try{const d=jwt.verify(String(req.body.challengeToken||""),secret);if(d.purpose!=="2fa_challenge")throw Error();const row=(await pool.query("SELECT secret_enc,recovery_code_hashes FROM user_2fa WHERE user_id=$1 AND enabled=TRUE",[d.sub])).rows[0],code=String(req.body.code||"").replace(/\\s/g,"");if(!row)return res.status(400).json({error:"2FA non configuré."});let ok=/^\\d{6}$/.test(code)&&verifySync({secret:decrypt2fa(row.secret_enc),token:code}).valid;if(!ok){for(const h of row.recovery_code_hashes||[]){if(await bcrypt.compare(code,h)){ok=true;await pool.query("UPDATE user_2fa SET recovery_code_hashes=array_remove(recovery_code_hashes,$1) WHERE user_id=$2",[h,d.sub]);break}}}if(!ok)return res.status(401).json({error:"Code 2FA invalide."});const u=(await pool.query("SELECT * FROM users WHERE id=$1",[d.sub])).rows[0];res.json({token:token(u),email:u.email,profile:profileFromRow(u)})}catch(e){res.status(401).json({error:"Vérification 2FA invalide ou expirée."})}});
 app.get("/api/auth/google/config",(req,res)=>res.json({enabled:googleConfigured,clientId:googleConfigured?googleClientId:null}));
 
 app.post("/api/auth/google", async (req,res) => {
