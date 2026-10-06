@@ -378,7 +378,7 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .dashboard-activity-row .action{color:#91a39a}
 .dashboard-activity-row .message{color:#81958b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dashboard-activity-row time{color:#5e7368}
-.panel-link{color:#c8ff45;text-decoration:none;font-size:9px}
+.panel-link{color:#c8ff45;text-decoration:none;font-size:9px;background:none;border:0;padding:0;cursor:pointer;font:inherit;text-align:left}
 @media(max-width:900px){.dashboard-kpis{grid-template-columns:1fr 1fr}.dashboard-pro-grid{grid-template-columns:1fr}}
 @media(max-width:700px){.pro-dashboard{padding-top:56px;padding-bottom:54px}.dashboard-section-title{display:block}.dashboard-section-title .live{display:inline-flex;margin-top:10px}.dashboard-kpis{grid-template-columns:1fr 1fr;gap:8px}.pro-kpi{padding:15px}.pro-kpi strong{font-size:21px}.pro-panel{padding:16px;border-radius:17px}.performance-meta{display:grid;grid-template-columns:1fr 1fr}.autopilot-suggestion{align-items:flex-start;flex-direction:column}.autopilot-suggestion span:last-child{text-align:left}.dashboard-activity-row{grid-template-columns:80px 58px 1fr}.dashboard-activity-row time{display:none}}
 
