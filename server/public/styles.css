@@ -1240,3 +1240,34 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 @media(max-width:1050px){.hero{gap:35px}.hero-product-grid{grid-template-columns:1fr 1fr}.hero-product-card-wide{grid-column:1/-1}.hero-floating-top{right:0}.hero-floating-bottom{left:0}}
 @media(max-width:800px){.hero-product-visual{min-height:480px;padding:10px 0}.hero-product-shell{padding:17px;border-radius:22px}.hero-product-balance strong{font-size:30px}.hero-product-grid{grid-template-columns:1fr 1fr}.hero-product-card-wide{grid-column:1/-1}.hero-floating-card{display:none}.hero-product-footer{font-size:8px}.allocation-visual{gap:10px}}
 @media(max-width:520px){.hero-product-grid{grid-template-columns:1fr}.hero-product-card-wide{grid-column:auto}.hero-product-balance{flex-direction:column;gap:10px}.hero-product-footer{display:grid;grid-template-columns:1fr 1fr}.hero-product-footer span:last-child{display:none}}
+
+
+/* Hero mobile hardening */
+.bitgold-home-hero,
+.bitgold-home-hero *{box-sizing:border-box}
+.bitgold-home-hero{width:100%;max-width:100%;overflow-x:hidden}
+.hero-product-visual{width:100%;max-width:100%;overflow:visible}
+.hero-product-shell{max-width:100%;overflow:hidden}
+.hero-product-balance > div{min-width:0}
+.hero-product-footer span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:520px){
+  .hero-product-visual{min-height:0;padding:0;margin-top:2px}
+  .hero-product-shell{width:100%;padding:15px;border-radius:20px}
+  .hero-product-top{gap:10px;padding-bottom:14px}
+  .hero-product-brand{min-width:0}
+  .hero-product-brand b{font-size:12px}
+  .hero-product-brand small{font-size:7px}
+  .hero-product-status{font-size:8px;white-space:nowrap}
+  .hero-product-icon{width:36px;height:36px;flex:none}
+  .hero-product-balance{padding:18px 0 14px}
+  .hero-product-balance strong{font-size:27px}
+  .hero-product-grid{gap:8px}
+  .hero-product-card{min-height:130px;padding:13px;border-radius:14px}
+  .allocation-visual{justify-content:center}
+  .allocation-ring{width:76px;height:76px;flex:none}
+  .allocation-list-mini{min-width:0}
+  .allocation-list-mini span{font-size:9px}
+  .risk-level{font-size:20px}
+  .bot-count{font-size:28px}
+  .hero-product-footer{gap:8px}
+}
