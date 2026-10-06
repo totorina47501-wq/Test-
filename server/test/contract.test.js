@@ -133,7 +133,7 @@ test("authenticated portfolio is consolidated into the cockpit",()=>{
   assert.match(html,/legacy-wallet-section/);
   assert.match(html,/class="visitor-only">Pricings<\/a>/);
   assert.match(app,/document\.getElementById\("dashboard"\)\?\.scrollIntoView/);
-  assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
+  assert.match(css,/\.legacy-wallet-section[\s\S]*display:none!important/);
 });
 
 test("premium header navigation is responsive and keeps auth actions",()=>{
