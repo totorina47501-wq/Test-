@@ -20,6 +20,32 @@ const stripeConfigured=Boolean(stripeSecretKey);
 const googleClientId=String(process.env.GOOGLE_CLIENT_ID||"").trim();
 const googleClient=new OAuth2Client(googleClientId||undefined);
 const googleConfigured=Boolean(googleClientId);
+const FX_CURRENCIES=["EUR","USD","GBP","CHF","CAD","AUD","NZD","JPY","CNY","HKD","SGD","BRL","MXN","INR","SEK","NOK","DKK","PLN","CZK","HUF","RON","TRY"];
+const fxCache={rates:{EUR:1},updatedAt:0,source:"ECB"};
+const FX_URL="https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
+async function refreshFxRates(){
+  if(fxCache.updatedAt && Date.now()-fxCache.updatedAt<6*60*60*1000)return fxCache;
+  try{
+    const response=await fetch(FX_URL,{headers:{accept:"application/xml,text/xml"}});
+    if(!response.ok)throw Error("ECB HTTP "+response.status);
+    const xml=await response.text();
+    const rates={EUR:1};
+    for(const match of xml.matchAll(/currency=['"]([A-Z]{3})['"][^>]*rate=['"]([0-9.]+)['"]/g)){
+      const code=match[1],rate=Number(match[2]);
+      if(FX_CURRENCIES.includes(code)&&Number.isFinite(rate)&&rate>0)rates[code]=rate;
+    }
+    if(Object.keys(rates).length<8)throw Error("ECB feed incomplet");
+    fxCache.rates=rates;fxCache.updatedAt=Date.now();fxCache.source="European Central Bank";
+  }catch(e){
+    console.warn("[FX] ECB unavailable:",e.message);
+  }
+  return fxCache;
+}
+app.get("/api/fx",async(req,res)=>{
+  const data=await refreshFxRates();
+  res.json({base:"EUR",rates:data.rates,updatedAt:data.updatedAt,source:data.source,stale:data.updatedAt===0,disclaimer:"Taux de référence ECB indicatifs, actualisés les jours ouvrés. Les montants BitGold sont stockés en EUR et convertis à l'affichage."});
+});
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const secret = process.env.JWT_SECRET || "dev-only-change-me";
 const pool = new Pool({
