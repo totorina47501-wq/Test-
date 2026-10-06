@@ -584,11 +584,87 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .auth-field-grid label,.profile-grid label{display:block}
 .auth-field-grid label span,.profile-grid label span{color:#657a70;font-weight:500}
 .auth-field-grid input,.auth-field-grid select,.profile-grid input,.profile-grid select{width:100%;box-sizing:border-box}
-.google-auth-wrap{margin:12px 0}
-.auth-divider{display:flex;align-items:center;gap:10px;margin:10px 0;color:#566b61;font-size:8px;text-transform:uppercase;letter-spacing:.08em}
+.google-auth-wrap{
+  position:relative;
+  margin:14px 0 10px;
+  padding:14px;
+  border:1px solid #243a30;
+  border-radius:14px;
+  background:linear-gradient(145deg,#0d1b14,#09150f);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 10px 28px rgba(0,0,0,.12);
+}
+.google-auth-wrap:before{
+  content:"G";
+  display:grid;
+  place-items:center;
+  width:26px;
+  height:26px;
+  margin:0 auto 8px;
+  border:1px solid #30483d;
+  border-radius:8px;
+  background:#fff;
+  color:#4285f4;
+  font:800 14px/1 Arial,sans-serif;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);
+}
+.google-auth-wrap:after{
+  content:"Connexion sécurisée avec Google";
+  display:block;
+  margin:7px 0 10px;
+  color:#9cafA6;
+  font-size:8px;
+  font-weight:650;
+  letter-spacing:.06em;
+  text-align:center;
+  text-transform:uppercase;
+}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:#566b61;font-size:8px;text-transform:uppercase;letter-spacing:.08em}
 .auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:#1c3027}
-#googleSignInButton{display:flex;justify-content:center;min-height:40px}
-#googleSignInButton>div{max-width:100%}
+#googleSignInButton{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:42px;
+  width:100%;
+}
+#googleSignInButton>div{
+  max-width:100%;
+  width:100%;
+  display:flex;
+  justify-content:center;
+}
+#googleSignInButton iframe{
+  max-width:100%!important;
+  border-radius:10px!important;
+}
+.google-unavailable{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  box-sizing:border-box;
+  padding:11px 14px;
+  border:1px solid #263b31;
+  border-radius:10px;
+  text-align:center;
+  color:#9eb0a7;
+  background:#0a160f;
+  font-size:9px;
+  line-height:1.4;
+}
+.google-unavailable:before{
+  content:"G";
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 20px;
+  width:20px;
+  height:20px;
+  border-radius:6px;
+  background:#fff;
+  color:#4285f4;
+  font:800 11px/1 Arial,sans-serif;
+}
 .profile-heading{margin-bottom:18px}
 .profile-heading h3{margin:6px 0 0}
 .profile-grid{gap:12px}
