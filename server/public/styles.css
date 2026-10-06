@@ -289,3 +289,39 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 
 .pricing-card.current{border-color:#c8ff45!important;box-shadow:0 18px 42px rgba(0,0,0,.22),inset 0 0 0 1px rgba(200,255,69,.18)}
 .pricing-card.current .pricing-select{background:#c8ff45;color:#07100a;border-color:#c8ff45}
+
+/* Navigation principale — BitGold premium */
+.topbar{height:72px;padding:0 6%;background:rgba(6,18,12,.9);border-bottom:1px solid #1b3027;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.topbar:after{content:"";position:absolute;left:6%;right:6%;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,#c8ff4530,transparent);pointer-events:none}
+.main-nav{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid #1d342a;border-radius:14px;background:#09150f}
+.main-nav a{position:relative;padding:9px 13px;border-radius:10px!important;color:#8fa39a!important;font-size:12px;font-weight:700;transition:color .18s ease,background .18s ease}
+.main-nav a:hover{color:#e5ece8!important;background:#122219}
+.main-nav a[href="#pricings"]{color:#c8ff45!important}
+.top-actions{display:flex;align-items:center;gap:12px}
+.top-actions .live{font-size:10px;white-space:nowrap}
+.top-login{min-width:110px}
+.pricing-page-section{padding-top:72px;padding-bottom:72px}
+.pricing-page-section .pricing-section{margin:0}
+.pricing-page-section .pricing-heading{margin-bottom:24px}
+.bots-section{padding-top:82px}
+.bots-section>.section-title{margin-bottom:32px}
+.bots-section .pricing-section{display:none}
+@media(max-width:900px){
+ .topbar{padding:0 4%;gap:10px}
+ .main-nav{gap:1px}
+ .main-nav a{padding:8px 9px;font-size:11px}
+ .top-actions .live{display:none}
+}
+@media(max-width:700px){
+ .topbar{height:auto;min-height:66px;flex-wrap:wrap;padding:10px 4%}
+ .brand{font-size:19px}
+ .logo{width:32px;height:32px}
+ .main-nav{order:3;width:100%;justify-content:space-between;overflow-x:auto;scrollbar-width:none}
+ .main-nav::-webkit-scrollbar{display:none}
+ .main-nav a{white-space:nowrap;padding:8px 11px}
+ .main-nav .auth-only{display:none!important}
+ .top-actions{margin-left:auto}
+ .top-login{min-width:auto;padding:9px 12px!important}
+ .pricing-page-section{padding-top:52px;padding-bottom:52px}
+ .bots-section{padding-top:58px}
+}
