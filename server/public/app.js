@@ -1,4 +1,23 @@
 
+const VISITOR_FEE_POLICY={
+  free:{cashin:{rate:0.015,fixed:0.50},cashout:{rate:0.0199,fixed:0.50}},
+  pro:{cashin:{rate:0.009,fixed:0.35},cashout:{rate:0.0125,fixed:0.35}},
+  elite:{cashin:{rate:0.0045,fixed:0.20},cashout:{rate:0.0075,fixed:0.20}}
+};
+function simulateVisitorFees(){
+  const plan=document.getElementById("visitorFeePlan")?.value||"free";
+  const type=document.getElementById("visitorFeeType")?.value||"cashin";
+  const amount=Number(document.getElementById("visitorFeeAmount")?.value||0);
+  const result=document.getElementById("visitorFeeResult");
+  if(!result)return;
+  if(!Number.isFinite(amount)||amount<=0){result.innerHTML="<span>Montant invalide</span><strong>Entrez un montant supérieur à 0 €</strong><small>Simulation uniquement · aucun mouvement réel</small>";return}
+  const rule=VISITOR_FEE_POLICY[plan]?.[type]||VISITOR_FEE_POLICY.free.cashin;
+  const fee=Math.round((amount*rule.rate+rule.fixed)*100)/100;
+  const net=Math.round((amount-fee)*100)/100;
+  const operation=type==="cashin"?"Cash-in":"Cash-out";
+  const label=plan.charAt(0).toUpperCase()+plan.slice(1);
+  result.innerHTML="<span>Pour "+formatEuro(amount)+" en "+operation+" "+label+"</span><strong>"+formatEuro(fee)+" de frais</strong><small>Net simulé : "+formatEuro(net)+" · "+(rule.rate*100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" % + "+formatEuro(rule.fixed)+" · Aucun mouvement réel</small>";
+}
 async function submitNewsletter(event){
   event.preventDefault();
   const form=document.getElementById("newsletterForm"),input=document.getElementById("newsletterEmail"),result=document.getElementById("newsletterResult"),button=form?.querySelector("button[type=submit]");
@@ -360,7 +379,7 @@ async function loadNews(){
 }
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews();if(apiToken)renderWallet();loadNews()}
 initBotRoute();setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
-window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;
+window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;window.simulateVisitorFees=simulateVisitorFees;
 document.getElementById("newsletterForm")?.addEventListener("submit",submitNewsletter);
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
@@ -372,7 +391,7 @@ document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("i
 document.querySelectorAll(".market-periods button").forEach(button=>button.addEventListener("click",()=>setMarketPreviewRange(Number(button.dataset.days))));
 document.querySelectorAll(".crypto-detail-ranges button").forEach(button=>button.addEventListener("click",()=>loadCryptoDetailRange(button.dataset.range)));
 document.getElementById("marketGrid")?.addEventListener("click",event=>{const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
-document.getElementById("simulateButton")?.addEventListener("click",simulate);
+document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
 document.getElementById("tradeConfirm")?.addEventListener("click",executeTrade);
