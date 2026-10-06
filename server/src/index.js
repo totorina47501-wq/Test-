@@ -548,8 +548,50 @@ async function runBots(){
  try{const r=await pool.query("SELECT * FROM bot_subscriptions WHERE active=TRUE AND (last_run IS NULL OR last_run<CURRENT_TIMESTAMP-INTERVAL '15 minutes') ORDER BY id");for(const sub of r.rows){try{await executeBotDecision(sub,await botSignal(sub.bot_type))}catch(e){console.error("[BOT] signal error",sub.bot_type,e.message);await pool.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[sub.id])}}}catch(e){console.error("[BOT] scheduler error",e.message)}
 }
 async function getUserPlan(userId){const r=await pool.query("SELECT plan,pro_since FROM users WHERE id=$1",[userId]);const row=r.rows[0]||{plan:"free",pro_since:null};const plan=row.plan==="elite"?"elite":row.plan==="pro"?"pro":"free";return{plan,pro_since:row.pro_since};}
+const TRANSFER_FEE_POLICY={
+  free:{label:"Free",cashin:{rate:0.015,fixed:0.50},cashout:{rate:0.0199,fixed:0.50},dailyLimit:2000},
+  pro:{label:"Pro",cashin:{rate:0.009,fixed:0.35},cashout:{rate:0.0125,fixed:0.35},dailyLimit:10000},
+  elite:{label:"Elite",cashin:{rate:0.0045,fixed:0.20},cashout:{rate:0.0075,fixed:0.20},dailyLimit:50000}
+};
+function getTransferFeePolicy(plan){
+  const key=plan==="elite"?"elite":plan==="pro"?"pro":"free";
+  const policy=TRANSFER_FEE_POLICY[key];
+  return {
+    plan:key,label:policy.label,dailyLimit:policy.dailyLimit,
+    cashin:{rate:policy.cashin.rate,fixed:policy.cashin.fixed},
+    cashout:{rate:policy.cashout.rate,fixed:policy.cashout.fixed}
+  };
+}
+function calculateTransferQuote(plan,type,amount){
+  const policy=getTransferFeePolicy(plan),safeType=type==="cashout"?"cashout":"cashin",safeAmount=Number(amount);
+  if(!Number.isFinite(safeAmount)||safeAmount<=0)return null;
+  const rule=policy[safeType],fee=safeAmount*rule.rate+rule.fixed;
+  return {
+    type:safeType,amount:safeAmount,fee:Math.round(fee*100)/100,
+    net:safeType==="cashin"?Math.round((safeAmount-fee)*100)/100:Math.round((safeAmount-fee)*100)/100,
+    rate:rule.rate,fixed:rule.fixed,dailyLimit:policy.dailyLimit,plan:policy.plan
+  };
+}
 function botEntitlement(plan,botType){const def=botDefinition(botType);return !!def&&(def.plan==="free"||plan==="pro"&&(def.plan==="pro")||plan==="elite");}
 app.get("/api/stripe/status",(req,res)=>res.json({configured:stripeConfigured,plans:{pro:Boolean(process.env.STRIPE_PRO_PRICE_ID),elite:Boolean(process.env.STRIPE_ELITE_PRICE_ID)}}));
+app.get("/api/transfers/fees",auth,async(req,res)=>{
+  try{
+    const plan=(await getUserPlan(req.user.sub)).plan;
+    res.json({ok:true,policy:getTransferFeePolicy(plan),disclaimer:"Frais indicatifs pour le mode démo. Les frais réels dépendront du prestataire de paiement et des conditions applicables."});
+  }catch(e){res.status(500).json({error:"Impossible de charger la politique de frais."})}
+});
+app.post("/api/transfers/quote",auth,async(req,res)=>{
+  try{
+    const plan=(await getUserPlan(req.user.sub)).plan;
+    const type=String(req.body.type||"cashin").toLowerCase();
+    if(!["cashin","cashout"].includes(type))return res.status(400).json({error:"Type de transfert invalide."});
+    const amount=Number(req.body.amount);
+    const quote=calculateTransferQuote(plan,type,amount);
+    if(!quote)return res.status(400).json({error:"Montant invalide."});
+    if(amount>quote.dailyLimit)return res.status(400).json({error:"Le montant dépasse la limite quotidienne de votre formule."});
+    res.json({ok:true,quote,disclaimer:"Simulation uniquement : aucun mouvement d'argent réel n'est exécuté."});
+  }catch(e){res.status(500).json({error:"Impossible de calculer les frais."})}
+});
 app.post("/api/stripe/checkout",auth,async(req,res)=>{
   if(!stripeConfigured)return res.status(503).json({error:"Stripe n'est pas encore configuré."});
   const plan=String(req.body.plan||"").toLowerCase();
@@ -699,6 +741,7 @@ app.get("/api/dashboard",auth,async(req,res)=>{
       risk:{score:riskScore,label:riskLabel,concentration,cashPct,activeBots},
       bots:{active:activeBots,total:botRows.rows.length,items:botRows.rows},
       subscription:{plan:userPlan.plan,label:userPlan.plan==="elite"?"BitGold Elite":userPlan.plan==="pro"?"BitGold Pro":"BitGold Free",botLimit:userPlan.plan==="elite"?5:userPlan.plan==="pro"?3:1},
+      transferFees:getTransferFeePolicy(userPlan.plan),
       market:{regime,leader,weakest},
       autopilot,
       activity:botActivity.rows,
