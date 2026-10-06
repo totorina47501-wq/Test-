@@ -1,3 +1,21 @@
+
+async function submitNewsletter(event){
+  event.preventDefault();
+  const form=document.getElementById("newsletterForm"),input=document.getElementById("newsletterEmail"),result=document.getElementById("newsletterResult"),button=form?.querySelector("button[type=submit]");
+  if(!form||!input||!result)return;
+  const email=String(input.value||"").trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(email)){result.textContent="Entrez une adresse email valide.";result.className="newsletter-result error";return}
+  if(button)button.disabled=true;
+  result.textContent="Inscription en cours…";result.className="newsletter-result";
+  try{
+    const data=await apiFetch("/api/newsletter/subscribe",{method:"POST",body:JSON.stringify({email})});
+    result.textContent=data.message||"Inscription confirmée.";
+    result.className="newsletter-result success";
+    form.reset();
+  }catch(e){result.textContent=e.message||"Inscription impossible pour le moment.";result.className="newsletter-result error"}
+  finally{if(button)button.disabled=false}
+}
+
 function safeStorageGet(key){try{return localStorage.getItem(key)||""}catch{return ""}}
 function safeStorageSet(key,value){try{localStorage.setItem(key,value)}catch{}}
 function safeStorageRemove(key){try{localStorage.removeItem(key)}catch{}}
@@ -317,6 +335,7 @@ async function loadNews(){
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews();if(apiToken)renderWallet();loadNews()}
 initBotRoute();setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
 window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;
+document.getElementById("newsletterForm")?.addEventListener("submit",submitNewsletter);
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);
