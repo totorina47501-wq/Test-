@@ -599,12 +599,13 @@ app.get("/api/dashboard/analytics",auth,async(req,res)=>{
 app.get("/api/dashboard",auth,async(req,res)=>{
   try{
     const market=await refreshMarket();
-    const [wallet,holdings,tradeRows,botRows,botActivity]=await Promise.all([
+    const [wallet,holdings,tradeRows,botRows,botActivity,userPlan]=await Promise.all([
       pool.query("SELECT cash FROM wallets WHERE user_id=$1",[req.user.sub]),
       pool.query("SELECT asset,quantity FROM holdings WHERE user_id=$1",[req.user.sub]),
       pool.query("SELECT side,asset,amount_eur,price_eur,quantity,created_at FROM trades WHERE user_id=$1 ORDER BY id ASC",[req.user.sub]),
       pool.query("SELECT bot_type,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,last_run FROM bot_subscriptions WHERE user_id=$1 ORDER BY id",[req.user.sub]),
-      pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id DESC LIMIT 8",[req.user.sub])
+      pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id DESC LIMIT 8",[req.user.sub]),
+      getUserPlan(req.user.sub)
     ]);
     const cash=Number(wallet.rows[0]?.cash||0);
     const positions=holdings.rows.map(row=>{
@@ -641,6 +642,7 @@ app.get("/api/dashboard",auth,async(req,res)=>{
       performance:{label:"Depuis le début",returnEur,returnPct,trades:tradeRows.rows.length,buys:tradeRows.rows.filter(row=>row.side==="buy").length,sells:tradeRows.rows.filter(row=>row.side==="sell").length},
       risk:{score:riskScore,label:riskLabel,concentration,cashPct,activeBots},
       bots:{active:activeBots,total:botRows.rows.length,items:botRows.rows},
+      subscription:{plan:userPlan.plan,label:userPlan.plan==="elite"?"BitGold Elite":userPlan.plan==="pro"?"BitGold Pro":"BitGold Free",botLimit:userPlan.plan==="elite"?5:userPlan.plan==="pro"?3:1},
       market:{regime,leader,weakest},
       autopilot,
       activity:botActivity.rows,
