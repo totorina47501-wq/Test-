@@ -759,6 +759,7 @@ async function executeBotDecision(subscription,signal){
  const complianceCheck=()=>compliance.assertTransactionAllowed(subscription.user_id);
  const def=botDefinition(subscription.bot_type),client=await pool.connect();
  try{
+  await complianceCheck();
   await client.query("BEGIN");
   const w=await client.query("SELECT cash FROM wallets WHERE user_id=$1 FOR UPDATE",[subscription.user_id]);
   const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,signal.asset]);
