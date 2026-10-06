@@ -177,7 +177,7 @@ app.get("/api/health", async (req,res) => {
 function normalizeProfile(body={}){
   const value=(key,max=160)=>String(body[key]??"").trim().slice(0,max);
   const risk=["conservative","moderate","dynamic"].includes(value("risk_profile"))?value("risk_profile"):"moderate";
-  const currency=["EUR","USD","GBP"].includes(value("preferred_currency"))?value("preferred_currency"):"EUR";
+  const supportedCurrencies=["EUR","USD","GBP","CHF","CAD","AUD","NZD","JPY","CNY","HKD","SGD","BRL","MXN","INR","SEK","NOK","DKK","PLN","CZK","HUF","RON","TRY"];\n  const currency=supportedCurrencies.includes(value("preferred_currency"))?value("preferred_currency"):"EUR";
   const birth=value("birth_date");
   const validBirth=!birth||(!Number.isNaN(Date.parse(birth+"T00:00:00Z"))&&birth<=new Date().toISOString().slice(0,10));
   return {
