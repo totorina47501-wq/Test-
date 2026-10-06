@@ -110,7 +110,69 @@ function initBitGoldI18n(){
 }
 
 
-function formatVisitorEuro(value){return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €"}
+const BITGOLD_CURRENCIES={
+  EUR:{label:"Euro",countries:["AT","BE","CY","DE","EE","ES","FI","FR","GR","HR","IE","IT","LT","LU","LV","MC","MT","NL","PT","SI","SK"]},
+  USD:{label:"Dollar américain",countries:["US","EC","SV","PA","PR"]},
+  GBP:{label:"Livre sterling",countries:["GB","GG","IM","JE"]},
+  CHF:{label:"Franc suisse",countries:["CH","LI"]},
+  CAD:{label:"Dollar canadien",countries:["CA"]},
+  AUD:{label:"Dollar australien",countries:["AU"]},
+  NZD:{label:"Dollar néo-zélandais",countries:["NZ"]},
+  JPY:{label:"Yen japonais",countries:["JP"]},
+  CNY:{label:"Yuan chinois",countries:["CN"]},
+  HKD:{label:"Dollar de Hong Kong",countries:["HK"]},
+  SGD:{label:"Dollar de Singapour",countries:["SG"]},
+  BRL:{label:"Real brésilien",countries:["BR"]},
+  MXN:{label:"Peso mexicain",countries:["MX"]},
+  INR:{label:"Roupie indienne",countries:["IN"]},
+  SEK:{label:"Couronne suédoise",countries:["SE"]},
+  NOK:{label:"Couronne norvégienne",countries:["NO"]},
+  DKK:{label:"Couronne danoise",countries:["DK"]},
+  PLN:{label:"Zloty polonais",countries:["PL"]},
+  CZK:{label:"Couronne tchèque",countries:["CZ"]},
+  HUF:{label:"Forint hongrois",countries:["HU"]},
+  RON:{label:"Leu roumain",countries:["RO"]},
+  TRY:{label:"Livre turque",countries:["TR"]}
+};
+function countryCodeFromLocale(){
+  const locales=[...(navigator.languages||[]),navigator.language||"fr-FR"];
+  for(const locale of locales){
+    const parts=String(locale).split("-");
+    if(parts[1]&&/^[A-Za-z]{2}$/.test(parts[1])) return parts[1].toUpperCase();
+  }
+  return "FR";
+}
+function currencyForCountry(country){
+  const value=String(country||"").trim().toUpperCase();
+  if(/^[A-Z]{2}$/.test(value)){
+    for(const [currency,data] of Object.entries(BITGOLD_CURRENCIES)) if(data.countries.includes(value)) return currency;
+  }
+  const normalized=String(country||"").trim().toLowerCase();
+  const aliases={france:"EUR",germany:"EUR",espagne:"EUR",spain:"EUR",italie:"EUR",italy:"EUR",portugal:"EUR",belgique:"EUR",belgium:"EUR",suisse:"CHF",switzerland:"CHF",canada:"CAD","états-unis":"USD","united states":"USD","royaume-uni":"GBP","united kingdom":"GBP",japon:"JPY",japan:"JPY",brésil:"BRL",brazil:"BRL",mexique:"MXN",mexico:"MXN",inde:"INR",india:"INR"};
+  return aliases[normalized]||"EUR";
+}
+function currencyForCurrentUser(){
+  return safeStorageGet("bitgold-currency")||currencyForCountry(countryCodeFromLocale());
+}
+function setCurrencyPreference(currency){
+  const value=Object.prototype.hasOwnProperty.call(BITGOLD_CURRENCIES,currency)?currency:"EUR";
+  safeStorageSet("bitgold-currency",value);
+  return value;
+}
+function applyCountryCurrencyDefaults(){
+  const detected=currencyForCountry(countryCodeFromLocale());
+  const signupCurrency=document.getElementById("authCurrency");
+  const profileCurrency=document.getElementById("profileCurrency");
+  if(signupCurrency && !signupCurrency.dataset.userChanged) signupCurrency.value=currencyForCurrentUser()||detected;
+  if(profileCurrency && !profileCurrency.dataset.userChanged && !profileCurrency.value) profileCurrency.value=detected;
+}
+function syncCurrencyFromCountry(inputId,currencyId){
+  const country=document.getElementById(inputId),currency=document.getElementById(currencyId);
+  if(!country||!currency||currency.dataset.userChanged)return;
+  currency.value=currencyForCountry(country.value);
+}
+
+function formatVisitorEuro(value,currency=currencyForCurrentUser()){return new Intl.NumberFormat(document.documentElement.lang||"fr-FR",{style:"currency",currency,minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value||0))}
 const VISITOR_FEE_POLICY={
   free:{cashin:{rate:0.015,fixed:0.50},cashout:{rate:0.0199,fixed:0.50}},
   pro:{cashin:{rate:0.009,fixed:0.35},cashout:{rate:0.0125,fixed:0.35}},
@@ -342,7 +404,7 @@ function coinIcon(symbol){const icons={BTC:"btc",ETH:"eth",SOL:"sol",USDC:"usdc"
 function removeHomepageActivity(){document.querySelectorAll(".bot-activity").forEach(el=>el.remove())}
 function renderWallet(){const cash=document.getElementById("cashBalance"),holdings=document.getElementById("holdings"),totalEl=document.getElementById("portfolioTotal"),countEl=document.getElementById("holdingsCount");const cashValue=Number(state.cash)||0;if(cash)cash.textContent=cashValue.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";const assets=["BTC","ETH","SOL","USDC","LINK","AVAX"].map(symbol=>{const quantity=Number(state.holdings[symbol]||0);const price=Number(marketPrices[symbol]||0);return{symbol,quantity,price,value:quantity*price}}).sort((a,b)=>b.value-a.value);const invested=assets.reduce((sum,item)=>sum+item.value,0),total=cashValue+invested;if(totalEl)totalEl.textContent=total.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";const active=assets.filter(item=>item.quantity>0);if(countEl)countEl.textContent=active.length+" actif"+(active.length>1?"s":"");if(holdings)holdings.innerHTML=assets.map(item=>{const allocation=total?item.value/total*100:0;const quantityText=item.quantity?item.quantity.toLocaleString("fr-FR",{minimumFractionDigits:0,maximumFractionDigits:8}):"0";return `<article class="portfolio-asset ${item.quantity?"":"is-empty"}"><div class="portfolio-asset-identity">${coinIcon(item.symbol)}<div><strong>${marketNames[item.symbol]}</strong><span>${item.symbol} · ${formatPrice(item.price)}</span></div></div><div class="portfolio-asset-quantity"><strong>${quantityText}</strong><span>unités</span></div><div class="portfolio-asset-value"><strong>${item.value.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})} €</strong><span>${allocation.toFixed(1).replace(".",",")}% du portefeuille</span></div></article>`}).join("")}
 async function apiFetch(path,options={}){const headers={...(options.headers||{})};if(!headers["Content-Type"]&&options.body)headers["Content-Type"]="application/json";if(apiToken)headers.Authorization=`Bearer ${apiToken}`;let r;try{r=await fetch(API+path,{...options,headers})}catch(e){throw Error("Impossible de joindre l'API. Vérifiez que le service Northflank est démarré et que /api/health répond.")}let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||`Erreur API (${r.status})`);return data}
-function formatEuro(value){return Number(value||0).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €"}
+function formatEuro(value,currency=currencyForCurrentUser()){return new Intl.NumberFormat(document.documentElement.lang||"fr-FR",{style:"currency",currency,minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(value||0)}
 function renderDashboardAnalytics(data){
   const points=data?.performance?.points||[];
   const chart=document.getElementById("dashPerformanceChart");
@@ -447,6 +509,8 @@ function setAuthFormMode(mode){
   if(switchButton)switchButton.textContent=signup?"J'ai déjà un compte":"Créer un compte";
 }
 function collectSignupProfile(){
+  const currency=document.getElementById("authCurrency")?.value||currencyForCountry(document.getElementById("authCountry")?.value)||"EUR";
+  setCurrencyPreference(currency);
   return {
     first_name:document.getElementById("authFirstName")?.value||"",
     last_name:document.getElementById("authLastName")?.value||"",
@@ -456,13 +520,14 @@ function collectSignupProfile(){
     city:document.getElementById("authCity")?.value||"",
     postal_code:document.getElementById("authPostalCode")?.value||"",
     address:document.getElementById("authAddress")?.value||"",
-    preferred_currency:document.getElementById("authCurrency")?.value||"EUR",
+    preferred_currency:currency,
     risk_profile:document.getElementById("authRisk")?.value||"moderate"
   };
 }
 function fillProfileForm(profile){
   const map={profileFirstName:"first_name",profileLastName:"last_name",profileEmail:"email",profilePhone:"phone",profileBirthDate:"birth_date",profileCountry:"country",profileCity:"city",profilePostalCode:"postal_code",profileAddress:"address",profileCurrency:"preferred_currency",profileRisk:"risk_profile"};
   Object.entries(map).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=profile?.[key]||""});
+  const currency=document.getElementById("profileCurrency"); if(currency&&profile?.preferred_currency){currency.value=profile.preferred_currency;setCurrencyPreference(profile.preferred_currency)}
 }
 async function openProfile(){
   if(!apiToken)return openModal("connexion");
@@ -483,6 +548,8 @@ async function saveProfile(){
   const result=document.getElementById("profileResult");
   if(result){result.textContent="Enregistrement…";result.className="result"}
   try{
+    const selectedCurrency=document.getElementById("profileCurrency")?.value||"EUR";
+    setCurrencyPreference(selectedCurrency);
     const payload={
       first_name:document.getElementById("profileFirstName")?.value||"",
       last_name:document.getElementById("profileLastName")?.value||"",
@@ -492,7 +559,7 @@ async function saveProfile(){
       city:document.getElementById("profileCity")?.value||"",
       postal_code:document.getElementById("profilePostalCode")?.value||"",
       address:document.getElementById("profileAddress")?.value||"",
-      preferred_currency:document.getElementById("profileCurrency")?.value||"EUR",
+      preferred_currency:selectedCurrency,
       risk_profile:document.getElementById("profileRisk")?.value||"moderate"
     };
     const data=await apiFetch("/api/me",{method:"PUT",body:JSON.stringify(payload)});
@@ -593,9 +660,13 @@ async function loadNews(){
   }
 }
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews();if(apiToken)renderWallet();loadNews()}
-initBotRoute();setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
+initBotRoute();applyCountryCurrencyDefaults();setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
 window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openProfile=openProfile;window.closeProfile=closeProfile;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;window.simulateVisitorFees=simulateVisitorFees;
 document.getElementById("newsletterForm")?.addEventListener("submit",submitNewsletter);
+document.getElementById("authCurrency")?.addEventListener("change",e=>{e.target.dataset.userChanged="true";setCurrencyPreference(e.target.value)});
+document.getElementById("profileCurrency")?.addEventListener("change",e=>{e.target.dataset.userChanged="true";setCurrencyPreference(e.target.value)});
+document.getElementById("authCountry")?.addEventListener("change",()=>syncCurrencyFromCountry("authCountry","authCurrency"));
+document.getElementById("profileCountry")?.addEventListener("change",()=>syncCurrencyFromCountry("profileCountry","profileCurrency"));
 document.getElementById("authSubmit")?.addEventListener("click",submitAuth);
 document.getElementById("authSwitch")?.addEventListener("click",switchAuth);
 document.getElementById("authClose")?.addEventListener("click",closeModal);document.getElementById("profileClose")?.addEventListener("click",closeProfile);document.getElementById("profileSave")?.addEventListener("click",saveProfile);document.getElementById("profileLogout")?.addEventListener("click",()=>{closeProfile();logout()});
