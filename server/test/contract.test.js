@@ -136,6 +136,19 @@ test("authenticated portfolio is consolidated into the cockpit",()=>{
   assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
 });
 
+test("visitor transparency and fee simulator are public",()=>{
+  assert.match(html,/id="transparence"/);
+  assert.match(html,/TRANSPARENCE BITGOLD/);
+  assert.match(html,/id="visitorFeePlan"/);
+  assert.match(html,/id="visitorFeeType"/);
+  assert.match(html,/id="visitorFeeAmount"/);
+  assert.match(html,/id="visitorFeeSimulate"/);
+  assert.match(app,/VISITOR_FEE_POLICY/);
+  assert.match(app,/simulateVisitorFees/);
+  assert.match(css,/visitor-transparency/);
+  assert.match(css,/visitor-fee-simulator/);
+});
+
 test("transfer fee policy is tiered by plan and available server-side",()=>{
   assert.match(server,/const TRANSFER_FEE_POLICY=/);
   assert.match(server,/free:\{label:"Free",cashin:/);
