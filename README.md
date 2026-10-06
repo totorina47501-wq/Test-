@@ -74,3 +74,16 @@ L'intégration Stripe est préparée côté serveur, sans aucune clé dans Git :
 Variables Northflank : STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_PRICE_ID, STRIPE_ELITE_PRICE_ID, STRIPE_SUCCESS_URL, STRIPE_CANCEL_URL, STRIPE_PORTAL_RETURN_URL.
 
 Webhook Stripe à configurer vers /api/stripe/webhook avec les événements checkout.session.completed, customer.subscription.updated et customer.subscription.deleted.
+
+
+## Politique de frais — Cash-in / Cash-out
+
+BitGold prévoit une grille de frais indicative différente selon le niveau d'abonnement. Elle est calculée côté serveur et exposée dans le cockpit :
+
+| Formule | Cash-in | Cash-out | Limite quotidienne indicative |
+|---|---:|---:|---:|
+| Free | 1,50 % + 0,50 € | 1,99 % + 0,50 € | 2 000 € |
+| Pro | 0,90 % + 0,35 € | 1,25 % + 0,35 € | 10 000 € |
+| Elite | 0,45 % + 0,20 € | 0,75 % + 0,20 € | 50 000 € |
+
+Les endpoints authentifiés `/api/transfers/fees` et `/api/transfers/quote` permettent d'obtenir la politique et de calculer un devis de frais. Dans le prototype actuel, il s'agit uniquement d'une **simulation** : aucun mouvement d'argent réel n'est exécuté. Les tarifs définitifs devront être adaptés au prestataire de paiement, au moyen de paiement, aux coûts de réseau et aux obligations réglementaires applicables.
