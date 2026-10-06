@@ -53,59 +53,49 @@
     <p class="risk">⚠️ Mode démo : aucun dépôt, paiement ou ordre réel. Les achats et décisions des bots sont simulés.</p>
   </div>
 
-  <div class="hero-market-visual" aria-label="Aperçu d'un graphique de marché BitGold">
-    <div class="hero-chart-glow"></div>
-    <div class="hero-chart-card">
-      <div class="hero-chart-top">
-        <div>
-          <span class="hero-chart-kicker">COCKPIT · PERFORMANCE</span>
-          <strong>+18,42 %</strong>
+  <div class="hero-product-visual" aria-label="Aperçu visuel de la plateforme BitGold">
+    <div class="hero-visual-glow"></div>
+    <div class="hero-product-shell">
+      <div class="hero-product-top">
+        <div class="hero-product-brand"><span class="hero-product-icon">₿</span><div><b>BitGold Cockpit</b><small>APERÇU DE LA PLATEFORME</small></div></div>
+        <span class="hero-product-status"><i></i> Démo active</span>
+      </div>
+      <div class="hero-product-balance">
+        <div><span>Portefeuille simulé</span><strong>12 842,60 €</strong><small><b>+18,42 %</b> depuis le démarrage</small></div>
+        <span class="hero-product-period">SIMULATION</span>
+      </div>
+      <div class="hero-product-grid">
+        <div class="hero-product-card hero-product-card-wide">
+          <span class="hero-card-label">ALLOCATION</span>
+          <div class="allocation-visual">
+            <div class="allocation-ring"><span>100<small>%</small></span></div>
+            <div class="allocation-list-mini">
+              <span><i></i> BTC <b>42 %</b></span>
+              <span><i></i> ETH <b>26 %</b></span>
+              <span><i></i> SOL <b>18 %</b></span>
+              <span><i></i> Cash <b>14 %</b></span>
+            </div>
+          </div>
         </div>
-        <span class="hero-chart-live"><i></i> Marché simulé</span>
+        <div class="hero-product-card">
+          <span class="hero-card-label">RISK CENTER</span>
+          <strong class="risk-level">Modéré</strong>
+          <div class="risk-meter-mini"><span></span></div>
+          <small>Exposition maîtrisée</small>
+        </div>
+        <div class="hero-product-card">
+          <span class="hero-card-label">BOTS ACTIFS</span>
+          <strong class="bot-count">03</strong>
+          <small>Stratégies automatisées</small>
+          <div class="bot-pills"><i></i><i></i><i></i><span>+3</span></div>
+        </div>
       </div>
-      <div class="hero-chart-meta">
-        <span>Portefeuille · 30 derniers jours</span>
-        <b>12 842,60 €</b>
-      </div>
-      <div class="hero-chart-legend">
-        <span><i class="portfolio"></i>Portefeuille</span>
-        <span><i class="btc"></i>BTC</span>
-        <span><i class="eth"></i>ETH</span>
-      </div>
-      <div class="hero-chart">
-        <svg viewBox="0 0 900 350" role="img" aria-label="Courbes de performance simulées du portefeuille, du Bitcoin et de l'Ethereum">
-          <defs>
-            <linearGradient id="heroChartFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#c8ff45" stop-opacity=".2"/>
-              <stop offset="100%" stop-color="#c8ff45" stop-opacity="0"/>
-            </linearGradient>
-            <filter id="heroChartGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="6" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <g class="hero-chart-grid">
-            <line x1="0" y1="55" x2="900" y2="55"/><line x1="0" y1="135" x2="900" y2="135"/>
-            <line x1="0" y1="215" x2="900" y2="215"/><line x1="0" y1="295" x2="900" y2="295"/>
-            <line x1="90" y1="0" x2="90" y2="350"/><line x1="270" y1="0" x2="270" y2="350"/>
-            <line x1="450" y1="0" x2="450" y2="350"/><line x1="630" y1="0" x2="630" y2="350"/><line x1="810" y1="0" x2="810" y2="350"/>
-          </g>
-          <path class="hero-chart-area" d="M0 278 C58 265 92 281 132 246 S208 229 254 242 S318 197 365 208 S438 160 482 181 S548 130 596 151 S666 119 710 134 S786 91 900 62 L900 350 L0 350 Z"/>
-          <path class="hero-chart-line portfolio" d="M0 278 C58 265 92 281 132 246 S208 229 254 242 S318 197 365 208 S438 160 482 181 S548 130 596 151 S666 119 710 134 S786 91 900 62" filter="url(#heroChartGlow)"/>
-          <path class="hero-chart-line btc" d="M0 300 C70 286 92 310 145 275 S220 270 270 286 S338 214 385 230 S456 188 510 207 S568 154 620 178 S694 145 748 164 S820 104 900 116"/>
-          <path class="hero-chart-line eth" d="M0 315 C65 302 108 319 155 297 S235 306 286 280 S354 264 405 278 S470 226 520 246 S592 205 642 221 S708 183 760 202 S835 161 900 175"/>
-          <circle class="hero-chart-point portfolio" cx="900" cy="62" r="7"/>
-          <circle class="hero-chart-point btc" cx="900" cy="116" r="5"/>
-          <circle class="hero-chart-point eth" cx="900" cy="175" r="5"/>
-        </svg>
-      </div>
-      <div class="hero-chart-axis"><span>J-30</span><span>J-21</span><span>J-14</span><span>J-7</span><span>Aujourd’hui</span></div>
-      <div class="hero-chart-footer">
-        <span><b>Risque</b> Modéré</span>
-        <span><b>Cash</b> 32,8 %</span>
-        <span><b>Stratégie</b> Adaptive AI</span>
+      <div class="hero-product-footer">
+        <span><i></i> Cours de marché</span><span>6 actifs suivis</span><span>Garde-fous actifs</span>
       </div>
     </div>
+    <div class="hero-floating-card hero-floating-top"><span>AUTOPILOT</span><strong>Adaptive AI</strong><small>Orientation : équilibrée</small></div>
+    <div class="hero-floating-card hero-floating-bottom"><span>TRANSPARENCE</span><strong>Frais visibles</strong><small>Avant chaque simulation</small></div>
   </div>
 
   <div class="home-explorer">
