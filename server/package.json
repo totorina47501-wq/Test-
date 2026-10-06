@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "check:html": "html-validate public/**/*.html",
+    "check:css": "stylelint \"public/**/*.css\"",
+    "check:js": "node --check src/index.js && node --check public/app.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -20,5 +23,10 @@
     "google-auth-library": "^10.3.0",
     "otplib": "^13.0.1",
     "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "html-validate": "^11.16.1",
+    "stylelint": "^17.16.0",
+    "stylelint-config-recommended": "^18.0.0"
   }
 }
