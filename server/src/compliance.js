@@ -132,11 +132,16 @@ export function createCompliance(pool,{isProduction=false,enforcement=false,webh
     }
   }
 
-  async function assertTransactionAllowed(userId){
+  async function assertTransactionAllowed(userId,amount=null){
     if(!enforcement)return;
     const status=await getUserStatus(userId);
+    status.user_id=Number(userId);
     if(!status.transaction_clear){
       const error=new Error(denialReason(status)); error.code="COMPLIANCE_REQUIRED"; error.statusCode=403; throw error;
+    }
+    const limits=await checkTransactionLimits(status,amount);
+    if(!limits.allowed){
+      const error=new Error(limits.reason); error.code="COMPLIANCE_REVIEW_REQUIRED"; error.statusCode=403; throw error;
     }
   }
 
