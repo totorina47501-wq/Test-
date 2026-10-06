@@ -101,3 +101,14 @@ test("site completion exposes About FAQ newsletter and footer",()=>{
   assert.match(server,/newsletter_subscribers/);
   assert.match(server,/app\.post\("\/api\/newsletter\/subscribe"/);
 });
+
+
+test("portfolio and cockpit use the connected user's holdings with live valuations",()=>{
+  assert.match(server,/app\.get\("\/api\/portfolio",auth/);
+  assert.match(server,/const market=await refreshMarket\(\)/);
+  assert.match(server,/cashPlusInvested/);
+  assert.match(server,/integrity:\{ok:integrity/);
+  assert.match(app,/marketPrices\[row\.asset\]=Number\(row\.price\)/);
+  assert.match(app,/state\.portfolio=\{/);
+  assert.match(app,/data\.integrity\?\.ok/);
+});
