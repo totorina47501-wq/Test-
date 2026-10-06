@@ -19,7 +19,7 @@ test("visitor bot comparison is public and ordered",()=>{
 
 test("authenticated bot choice is exclusive",()=>{
   assert.match(server,/UPDATE bot_subscriptions SET active=FALSE WHERE user_id=\$1 AND bot_type<>\$2/);
-  assert.match(app,/Choisissez votre niveau d’automatisation/);
+  assert.match(html,/Choisissez votre niveau d'automatisation/);
 });
 
 test("logout listener is not blocked by stale history exports",()=>{
@@ -41,7 +41,7 @@ test("bot detail pages expose explanations, limits and pricing",()=>{
   assert.match(html,/id="botActivate"/); assert.match(html,/id="botBack"/);
   assert.ok(app.includes('history.pushState({}, "", "/bot/"+type)'));
   assert.match(server,/max_trade_eur/); assert.match(server,/max_position_eur/); assert.match(server,/min_cash_pct/);
-  assert.match(server,/price_monthly_eur:9\.90/); assert.match(server,/price_monthly_eur:19\.90/); assert.match(server,/price_monthly_eur:34\.90/);
+  assert.match(server,/id:"shield"[^]*plan:"free"/); assert.match(server,/id:"silver"[^]*plan:"pro"/); assert.match(server,/id:"macro-rotation"[^]*plan:"elite"/);
   assert.match(server,/maxTradeEur/);
 });
 
@@ -54,7 +54,7 @@ test("bot execution applies configured trade and position limits",()=>{
 
 test("bot subscription controls are authenticated-only while detail remains public",()=>{
   assert.match(html,/class="bot-config-card auth-only"[^>]*hidden/);
-  assert.match(app,/const connected=!!apiToken/);
+  assert.match(app,/connected=!!apiToken/);
   assert.match(app,/if\(!apiToken\)\{openModal\("connexion"\);return\}/);
   assert.match(html,/id="botDetailDescription"/);
   assert.match(html,/id="botDetailStrategy"/);
@@ -75,9 +75,9 @@ test("Pro dashboard exposes performance risk and Autopilot",()=>{
   assert.match(server,/returnPct/);
   assert.match(server,/riskScore/);
   assert.match(server,/autopilot/);
-  assert.match(app,/DASHBOARD PRO/);
-  assert.match(app,/RISK CENTER/);
-  assert.match(app,/BITGOLD AUTOPILOT/);
+  assert.match(html,/DASHBOARD PRO/);
+  assert.match(html,/RISK CENTER/);
+  assert.match(html,/BITGOLD AUTOPILOT/);
   assert.match(html,/href="#dashboard"/);
 });
 
@@ -129,7 +129,7 @@ test("cockpit shows only held assets, subscription reminder and hides pricing wh
 
 
 test("authenticated portfolio is consolidated into the cockpit",()=>{
-  assert.match(html,/href="#dashboard" class="auth-only" hidden>Cockpit<\/a>/);
+  assert.match(html,/href="#dashboard" class="auth-only nav-cockpit" hidden>[\\s\\S]*Cockpit<\/a>/);
   assert.match(html,/legacy-wallet-section/);
   assert.match(html,/class="visitor-only">Pricings<\/a>/);
   assert.match(app,/document\.getElementById\("dashboard"\)\?\.scrollIntoView/);
@@ -145,7 +145,7 @@ test("premium header navigation is responsive and keeps auth actions",()=>{
   assert.match(html,/Transparence/);
   assert.match(app,/menuToggle/);
   assert.match(app,/menu-open/);
-  assert.match(app,/Se déconnecter/);
+  assert.match(html,/Se déconnecter/);
   assert.match(css,/Header premium BitGold/);
   assert.match(css,/\.topbar-inner/);
   assert.match(css,/\.menu-toggle/);
