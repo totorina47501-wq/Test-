@@ -112,3 +112,16 @@ test("portfolio and cockpit use the connected user's holdings with live valuatio
   assert.match(app,/state\.portfolio=\{/);
   assert.match(app,/data\.integrity\?\.ok/);
 });
+
+
+test("cockpit shows only held assets, subscription reminder and hides pricing when authenticated",()=>{
+  assert.match(server,/subscription:\{plan:userPlan\.plan/);
+  assert.match(server,/getUserPlan\(req\.user\.sub\)/);
+  assert.match(html,/id="dashHeldAssets"/);
+  assert.match(html,/id="dashPlanName"/);
+  assert.match(html,/id="dashPlanBadge"/);
+  assert.match(app,/\(p\.positions\|\|\[\]\)\.filter\(row=>Number\(row\.quantity\|\|0\)>0\)/);
+  assert.match(app,/querySelectorAll\("\.visitor-only"\)/);
+  assert.match(html,/href="#pricings" class="visitor-only"/);
+  assert.match(html,/id="pricings" class="section pricing-page-section visitor-only"/);
+});

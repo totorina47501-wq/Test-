@@ -6,7 +6,7 @@
 </head>
 <body>
 <header class="topbar"><a class="brand" href="#"><span class="logo">₿</span><span>BitGold</span></a><nav class="main-nav" aria-label="Navigation principale">
-<a href="#" class="nav-home active">Accueil</a><a href="#marches">Marchés</a><a href="#pricings">Pricings</a><a href="#bots">Bots</a><a href="#securite">Sécurité</a><a href="#a-propos">À propos</a><a href="#faq">FAQ</a>
+<a href="#" class="nav-home active">Accueil</a><a href="#marches">Marchés</a><a href="#pricings" class="visitor-only">Pricings</a><a href="#bots">Bots</a><a href="#securite">Sécurité</a><a href="#a-propos">À propos</a><a href="#faq">FAQ</a>
 <a href="#dashboard" class="auth-only" hidden>Dashboard</a><a href="#compte" class="auth-only" hidden>Portefeuille</a><a href="/activite" class="auth-only" hidden id="activityNav">Activité</a>
 </nav><div class="top-actions"><span id="authState" class="live">Mode démo</span><button class="btn btn-outline top-login" id="topLogin">Se connecter</button></div></header>
 <main>
@@ -21,6 +21,18 @@
     <article class="pro-kpi"><span>Performance</span><strong id="dashPerformance">—</strong><small>Depuis le début</small></article>
     <article class="pro-kpi"><span>Risque</span><strong id="dashRisk">—</strong><small id="dashRiskMeta">—</small></article>
     <article class="pro-kpi"><span>Bots actifs</span><strong id="dashBots">—</strong><small>Sur votre niveau actuel</small></article>
+  </div>
+  <div class="dashboard-cockpit-strip">
+    <article class="pro-panel dashboard-membership-panel">
+      <div class="pro-panel-head"><div><span class="eyebrow">ABONNEMENT</span><h3>Votre niveau BitGold</h3></div><span id="dashPlanBadge" class="status-pill">FREE</span></div>
+      <div class="dashboard-membership-main"><strong id="dashPlanName">BitGold Free</strong><span id="dashPlanMeta">1 bot actif maximum</span></div>
+      <p id="dashPlanReminder">Votre niveau détermine les stratégies et le nombre de bots disponibles.</p>
+      <a id="dashPlanAction" class="panel-link" href="#bots">Voir les bots disponibles →</a>
+    </article>
+    <article class="pro-panel dashboard-held-assets-panel">
+      <div class="pro-panel-head"><div><span class="eyebrow">ACTIFS DÉTENUS</span><h3>Vos positions actuelles</h3></div><span id="dashHeldCount" class="status-pill">0 actif</span></div>
+      <div id="dashHeldAssets" class="held-assets-list"><div class="empty-state">Aucun actif détenu.</div></div>
+    </article>
   </div>
   <div class="dashboard-pro-grid">
     <article class="pro-panel performance-panel">
@@ -86,7 +98,7 @@
   <p class="news-disclaimer">Sources externes · BitGold n’édite pas les articles.</p>
 </aside>
 
-<section class="visitor-how section" aria-label="Comment fonctionne BitGold"><div class="section-title"><div><span class="eyebrow">L’EXPÉRIENCE BITGOLD</span><h2>Un parcours simple, du marché à la stratégie.</h2><p class="section-subtitle">Commencez gratuitement, observez les actifs, puis découvrez l’automatisation quand vous êtes prêt.</p></div></div><div class="visitor-steps"><article><span>01</span><h3>Explorez</h3><p>Consultez les actifs populaires, leurs variations et leurs tendances.</p></article><article><span>02</span><h3>Simulez</h3><p>Visualisez votre portefeuille et testez des opérations sans risque financier.</p></article><article><span>03</span><h3>Automatisez</h3><p>Comparez les six stratégies BitGold avant de choisir votre niveau d’automatisation.</p></article></div></section><section id="pricings" class="section pricing-page-section"><div class="pricing-section" aria-label="Pricings BitGold">
+<section class="visitor-how section" aria-label="Comment fonctionne BitGold"><div class="section-title"><div><span class="eyebrow">L’EXPÉRIENCE BITGOLD</span><h2>Un parcours simple, du marché à la stratégie.</h2><p class="section-subtitle">Commencez gratuitement, observez les actifs, puis découvrez l’automatisation quand vous êtes prêt.</p></div></div><div class="visitor-steps"><article><span>01</span><h3>Explorez</h3><p>Consultez les actifs populaires, leurs variations et leurs tendances.</p></article><article><span>02</span><h3>Simulez</h3><p>Visualisez votre portefeuille et testez des opérations sans risque financier.</p></article><article><span>03</span><h3>Automatisez</h3><p>Comparez les six stratégies BitGold avant de choisir votre niveau d’automatisation.</p></article></div></section><section id="pricings" class="section pricing-page-section visitor-only"><div class="pricing-section" aria-label="Pricings BitGold">
   <div class="pricing-heading">
     <div>
       <span class="eyebrow">PRICINGS</span>
