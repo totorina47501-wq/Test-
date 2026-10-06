@@ -519,6 +519,61 @@ app.get("/api/portfolio",auth,async(req,res)=>{
   } catch(e) { console.error("[PORTFOLIO] error", e.message); res.status(500).json({error:"Erreur serveur."}); }
 });
 
+app.get("/api/dashboard",auth,async(req,res)=>{
+  try{
+    const market=await refreshMarket();
+    const [wallet,holdings,tradeRows,botRows,botActivity]=await Promise.all([
+      pool.query("SELECT cash FROM wallets WHERE user_id=$1",[req.user.sub]),
+      pool.query("SELECT asset,quantity FROM holdings WHERE user_id=$1",[req.user.sub]),
+      pool.query("SELECT side,asset,amount_eur,price_eur,quantity,created_at FROM trades WHERE user_id=$1 ORDER BY id ASC",[req.user.sub]),
+      pool.query("SELECT bot_type,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,last_run FROM bot_subscriptions WHERE user_id=$1 ORDER BY id",[req.user.sub]),
+      pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id DESC LIMIT 8",[req.user.sub])
+    ]);
+    const cash=Number(wallet.rows[0]?.cash||0);
+    const positions=holdings.rows.map(row=>{
+      const symbol=String(row.asset||"").toUpperCase();
+      const quantity=Number(row.quantity||0);
+      const price=Number(prices[symbol]||0);
+      return {asset:symbol,quantity,price,value:quantity*price};
+    }).filter(row=>row.quantity>0&&row.price>0);
+    const invested=positions.reduce((sum,row)=>sum+row.value,0);
+    const total=cash+invested;
+    const initialCapital=10000;
+    const returnEur=total-initialCapital;
+    const returnPct=initialCapital?returnEur/initialCapital*100:0;
+    const cashPct=total?cash/total*100:100;
+    const allocations=positions.map(row=>({...row,allocation:total?row.value/total*100:0})).sort((a,b)=>b.allocation-a.allocation);
+    const concentration=allocations[0]?.allocation||0;
+    const activeBots=botRows.rows.filter(row=>row.active!==false).length;
+    const riskScore=Math.min(100,Math.round(18+concentration*.58+(cashPct<15?18:cashPct<25?10:0)+activeBots*4));
+    const riskLabel=riskScore>=70?"Élevé":riskScore>=45?"Modéré":"Maîtrisé";
+    const momentum=market.map(row=>({symbol:row.symbol,change24h:Number(row.change24h||0)})).sort((a,b)=>b.change24h-a.change24h);
+    const leader=momentum[0]||{symbol:"BTC",change24h:0};
+    const weakest=momentum[momentum.length-1]||{symbol:"BTC",change24h:0};
+    const btcChange=Number(market.find(row=>row.symbol==="BTC")?.change24h||0);
+    const ethChange=Number(market.find(row=>row.symbol==="ETH")?.change24h||0);
+    const regime=btcChange>=2&&ethChange>=0?"Risk-On":btcChange<=-3?"Risk-Off":"Neutre";
+    const autopilot=regime==="Risk-On"
+      ? {status:"Opportuniste",bot:"adaptive-ai",title:"Marché favorable à une approche dynamique",reason:"Momentum positif : "+leader.symbol+" mène le marché avec "+leader.change24h.toFixed(2)+" %.",allocation:Math.min(45,Math.max(20,100-cashPct))}
+      : regime==="Risk-Off"
+      ? {status:"Défensif",bot:"shield",title:"Réduire l’exposition et préserver le cash",reason:"BTC affiche "+btcChange.toFixed(2)+" % sur 24 h.",allocation:Math.max(10,Math.min(35,cashPct))}
+      : {status:"Équilibré",bot:"quant-pulse",title:"Attendre des écarts de prix plus nets",reason:"Régime neutre : "+leader.symbol+" est leader et "+weakest.symbol+" ferme la marche.",allocation:Math.min(40,Math.max(15,100-cashPct))};
+    res.json({
+      updatedAt:Date.now(),
+      portfolio:{cash,invested,total,initialCapital,returnEur,returnPct,cashPct,positions:allocations},
+      performance:{label:"Depuis le début",returnEur,returnPct,trades:tradeRows.rows.length,wins:tradeRows.rows.filter(row=>row.side==="sell").length},
+      risk:{score:riskScore,label:riskLabel,concentration,cashPct,activeBots},
+      bots:{active:activeBots,total:botRows.rows.length,items:botRows.rows},
+      market:{regime,leader,weakest},
+      autopilot,
+      activity:botActivity.rows
+    });
+  }catch(e){
+    console.error("[DASHBOARD] error",e.message);
+    res.status(500).json({error:"Impossible de charger le dashboard."});
+  }
+});
+
 app.post("/api/trades",auth,async(req,res)=>{
   await refreshMarket();
   const side=req.body.side, asset=req.body.asset, amount=Number(req.body.amount);

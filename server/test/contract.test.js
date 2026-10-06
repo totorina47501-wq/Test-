@@ -68,3 +68,14 @@ test("Elite mode unlocks macro rotation and five active bots",()=>{
   assert.match(app,/macro-rotation/);
   assert.match(html,/data-plan-demo="elite"/);
 });
+
+test("Pro dashboard exposes performance risk and Autopilot",()=>{
+  assert.match(server,/app\.get\("\/api\/dashboard",auth/);
+  assert.match(server,/returnPct/);
+  assert.match(server,/riskScore/);
+  assert.match(server,/autopilot/);
+  assert.match(app,/DASHBOARD PRO/);
+  assert.match(app,/RISK CENTER/);
+  assert.match(app,/BITGOLD AUTOPILOT/);
+  assert.match(html,/href="#dashboard"/);
+});

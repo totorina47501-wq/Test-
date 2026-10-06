@@ -193,7 +193,48 @@ function coinIcon(symbol){const icons={BTC:"btc",ETH:"eth",SOL:"sol",USDC:"usdc"
 function removeHomepageActivity(){document.querySelectorAll(".bot-activity").forEach(el=>el.remove())}
 function renderWallet(){const cash=document.getElementById("cashBalance"),holdings=document.getElementById("holdings"),totalEl=document.getElementById("portfolioTotal"),countEl=document.getElementById("holdingsCount");const cashValue=Number(state.cash)||0;if(cash)cash.textContent=cashValue.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";const assets=["BTC","ETH","SOL","USDC","LINK","AVAX"].map(symbol=>{const quantity=Number(state.holdings[symbol]||0);const price=Number(marketPrices[symbol]||0);return{symbol,quantity,price,value:quantity*price}}).sort((a,b)=>b.value-a.value);const invested=assets.reduce((sum,item)=>sum+item.value,0),total=cashValue+invested;if(totalEl)totalEl.textContent=total.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";const active=assets.filter(item=>item.quantity>0);if(countEl)countEl.textContent=active.length+" actif"+(active.length>1?"s":"");if(holdings)holdings.innerHTML=assets.map(item=>{const allocation=total?item.value/total*100:0;const quantityText=item.quantity?item.quantity.toLocaleString("fr-FR",{minimumFractionDigits:0,maximumFractionDigits:8}):"0";return `<article class="portfolio-asset ${item.quantity?"":"is-empty"}"><div class="portfolio-asset-identity">${coinIcon(item.symbol)}<div><strong>${marketNames[item.symbol]}</strong><span>${item.symbol} · ${formatPrice(item.price)}</span></div></div><div class="portfolio-asset-quantity"><strong>${quantityText}</strong><span>unités</span></div><div class="portfolio-asset-value"><strong>${item.value.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})} €</strong><span>${allocation.toFixed(1).replace(".",",")}% du portefeuille</span></div></article>`}).join("")}
 async function apiFetch(path,options={}){const headers={...(options.headers||{})};if(!headers["Content-Type"]&&options.body)headers["Content-Type"]="application/json";if(apiToken)headers.Authorization=`Bearer ${apiToken}`;let r;try{r=await fetch(API+path,{...options,headers})}catch(e){throw Error("Impossible de joindre l'API. Vérifiez que le service Northflank est démarré et que /api/health répond.")}let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||`Erreur API (${r.status})`);return data}
-async function loadPortfolio(){if(!apiToken){setConnected(false);renderWallet();return}try{const data=await apiFetch("/api/portfolio");state.cash=Number(data.cash||0);state.holdings={BTC:0,ETH:0,SOL:0,USDC:0,LINK:0,AVAX:0};for(const row of data.holdings||[])if(row.asset in state.holdings)state.holdings[row.asset]=Number(row.quantity||0);renderWallet();setConnected(true)}catch(e){if(/authentifié|401/i.test(e.message)){apiToken="";safeStorageRemove("bitgold-token");setConnected(false);renderWallet()}throw e}}
+function formatEuro(value){return Number(value||0).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €"}
+function renderDashboard(data){
+  const p=data?.portfolio||{}, perf=data?.performance||{}, risk=data?.risk||{}, auto=data?.autopilot||{}, market=data?.market||{};
+  const total=document.getElementById("dashTotal"), ret=document.getElementById("dashReturn"), perfEl=document.getElementById("dashPerformance"), riskEl=document.getElementById("dashRisk"), botsEl=document.getElementById("dashBots");
+  if(total)total.textContent=formatEuro(p.total);
+  if(ret)ret.textContent=(Number(p.returnPct)>=0?"+":"")+Number(p.returnPct||0).toFixed(2).replace(".",",")+" % depuis le début";
+  if(perfEl)perfEl.textContent=(Number(perf.returnPct)>=0?"+":"")+Number(perf.returnPct||0).toFixed(2).replace(".",",")+" %";
+  if(riskEl)riskEl.textContent=risk.label||"—";
+  if(botsEl)botsEl.textContent=Number(data?.bots?.active||0)+" / "+Number(data?.bots?.total||0);
+  const returnEur=document.getElementById("dashReturnEur");if(returnEur)returnEur.textContent=(Number(perf.returnEur)>=0?"+":"")+formatEuro(perf.returnEur);
+  const initial=document.getElementById("dashInitial");if(initial)initial.textContent=formatEuro(p.initialCapital||10000);
+  const cash=document.getElementById("dashCash");if(cash)cash.textContent=formatEuro(p.cash);
+  const trades=document.getElementById("dashTrades");if(trades)trades.textContent=String(perf.trades||0);
+  const bar=document.getElementById("dashPerformanceBar");if(bar)bar.style.width=Math.max(3,Math.min(100,50+Number(perf.returnPct||0)*4))+"%";
+  const riskScore=document.getElementById("dashRiskScore");if(riskScore)riskScore.textContent=Number(risk.score||0)+"/100";
+  const riskMeter=document.getElementById("dashRiskMeter");if(riskMeter)riskMeter.style.width=Math.max(3,Number(risk.score||0))+"%";
+  const riskText=document.getElementById("dashRiskText");if(riskText)riskText.textContent=risk.label==="Élevé"?"Exposition élevée : surveillez la concentration et gardez une réserve de liquidités.":risk.label==="Modéré"?"Exposition modérée : la structure reste surveillable, mais la concentration mérite attention.":"Exposition maîtrisée : la liquidité et la diversification restent dans une zone prudente.";
+  const concentration=document.getElementById("dashConcentration");if(concentration)concentration.textContent=Number(risk.concentration||0).toFixed(1).replace(".",",")+" %";
+  const cashPct=document.getElementById("dashCashPct");if(cashPct)cashPct.textContent=Number(risk.cashPct||0).toFixed(1).replace(".",",")+" %";
+  const riskMeta=document.getElementById("dashRiskMeta");if(riskMeta)riskMeta.textContent="Score "+Number(risk.score||0)+"/100";
+  const updated=document.getElementById("dashboardUpdated");if(updated)updated.textContent="Mis à jour à "+new Date(data.updatedAt||Date.now()).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  const regime=document.getElementById("dashRegime");if(regime)regime.textContent=market.regime||"Neutre";
+  const allocations=document.getElementById("dashAllocations");
+  if(allocations){
+    const rows=p.positions||[];
+    allocations.innerHTML=rows.length?rows.slice(0,5).map(row=>`<div class="allocation-row"><strong>${escapeHtml(row.asset)}</strong><div class="allocation-track"><span style="width:${Math.min(100,Number(row.allocation||0))}%"></span></div><em>${Number(row.allocation||0).toFixed(1).replace(".",",")}%</em></div>`).join(""):'<div class="empty-state">Aucun actif détenu pour le moment.</div>';
+  }
+  const status=document.getElementById("autopilotStatus");if(status)status.textContent=auto.status||"—";
+  const title=document.getElementById("autopilotTitle");if(title)title.textContent=auto.title||"Analyse du marché";
+  const reason=document.getElementById("autopilotReason");if(reason)reason.textContent=auto.reason||"Aucune recommandation disponible.";
+  const botNames={"shield":"Shield","silver":"Silver","gold":"Gold","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse","macro-rotation":"Macro Rotation"};
+  const bot=document.getElementById("autopilotBot");if(bot)bot.textContent=botNames[auto.bot]||auto.bot||"—";
+  const alloc=document.getElementById("autopilotAllocation");if(alloc)alloc.textContent=Number(auto.allocation||0).toFixed(0)+" %";
+  const action=document.getElementById("autopilotAction");if(action){action.onclick=()=>auto.bot&&openBotDetail(auto.bot)}
+  const activity=document.getElementById("dashActivity");
+  if(activity){
+    const rows=data.activity||[];
+    activity.innerHTML=rows.length?rows.slice(0,6).map(row=>`<div class="dashboard-activity-row"><span class="bot">${escapeHtml(botNames[row.bot_type]||row.bot_type||"Bot")}</span><span class="action">${escapeHtml(row.action||"signal")}</span><span class="message">${escapeHtml(row.message||row.asset||"Signal enregistré")}</span><time>${escapeHtml(formatNewsAge(row.created_at))}</time></div>`).join(""):'<div class="empty-state">Aucun signal récent.</div>';
+  }
+}
+async function loadDashboard(){if(!apiToken)return;try{const data=await apiFetch("/api/dashboard");renderDashboard(data)}catch(e){console.warn("Dashboard:",e.message)}}
+async function loadPortfolio(){if(!apiToken){setConnected(false);renderWallet();return}try{const data=await apiFetch("/api/portfolio");state.cash=Number(data.cash||0);state.holdings={BTC:0,ETH:0,SOL:0,USDC:0,LINK:0,AVAX:0};for(const row of data.holdings||[])if(row.asset in state.holdings)state.holdings[row.asset]=Number(row.quantity||0);renderWallet();setConnected(true);await loadDashboard()}catch(e){if(/authentifié|401/i.test(e.message)){apiToken="";safeStorageRemove("bitgold-token");setConnected(false);renderWallet()}throw e}}
 function simulate(){const amount=Number(document.getElementById("amount").value||0);const asset=document.getElementById("asset").value;const rates={"Bitcoin (BTC)":1.2842,"Ethereum (ETH)":1.192,"Solana (SOL)":1.431};const gain=amount*(rates[asset]-1);document.getElementById("result").textContent=`Simulation : ${amount.toLocaleString("fr-FR")} € en ${asset} → estimation théorique ${(amount+gain).toLocaleString("fr-FR",{maximumFractionDigits:2})} €. Gain/perte : ${gain.toLocaleString("fr-FR",{maximumFractionDigits:2})} €.`}
 function openTrade(side,asset="BTC"){tradeSide=side;document.getElementById("tradeTitle").textContent=side==="buy"?"Acheter des cryptos":"Vendre des cryptos";document.getElementById("tradeAsset").value=asset;document.getElementById("tradeAmount").value=100;document.getElementById("tradeResult").textContent=apiToken?"":"Connectez-vous pour effectuer une opération démo.";document.getElementById("tradeModal").hidden=false;document.body.classList.add("modal-open")}
 function closeTrade(){document.getElementById("tradeModal").hidden=true;document.body.classList.remove("modal-open")}
