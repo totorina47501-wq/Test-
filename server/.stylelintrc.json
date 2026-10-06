@@ -1,0 +1,12 @@
+{
+  "extends": ["stylelint-config-recommended"],
+  "rules": {
+    "custom-property-pattern": null,
+    "selector-class-pattern": null,
+    "selector-id-pattern": null,
+    "keyframes-name-pattern": null,
+    "property-no-unknown": true,
+    "selector-pseudo-class-no-unknown": true,
+    "selector-pseudo-element-no-unknown": true
+  }
+}
