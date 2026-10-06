@@ -1140,3 +1140,78 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 @media(prefers-reduced-motion:reduce){
   .hero-chart-point.pulse{animation:none}
 }
+
+
+/* Hero — lecture verticale : introduction puis graphique */
+.bitgold-home-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:30px;
+  align-items:start;
+}
+.bitgold-home-hero .hero-copy{
+  width:100%;
+  max-width:1120px;
+  margin:0 auto;
+}
+.bitgold-home-hero .hero-market-visual{
+  order:2;
+  width:100%;
+  max-width:1120px;
+  margin:0 auto;
+}
+.bitgold-home-hero .home-explorer{
+  order:3;
+}
+.bitgold-home-hero .hero-copy>p:not(.risk){
+  max-width:900px;
+  font-size:clamp(16px,1.6vw,19px);
+}
+.hero-chart-legend{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  margin:17px 0 2px;
+  color:#73867d;
+  font-size:9px;
+  font-weight:800;
+}
+.hero-chart-legend span{display:flex;align-items:center;gap:6px}
+.hero-chart-legend i{
+  width:20px;
+  height:3px;
+  border-radius:99px;
+  display:inline-block;
+  background:#c8ff45;
+}
+.hero-chart-legend i.btc{background:#79dca5}
+.hero-chart-legend i.eth{background:#71877e}
+.hero-chart-line.btc{
+  stroke:#79dca5;
+  stroke-width:2.4;
+  opacity:.9;
+  stroke-dasharray:8 6;
+}
+.hero-chart-line.eth{
+  stroke:#71877e;
+  stroke-width:2.2;
+  opacity:.8;
+  stroke-dasharray:3 7;
+}
+.hero-chart-point.btc{
+  stroke:#79dca5;
+  stroke-width:3;
+}
+.hero-chart-point.eth{
+  stroke:#71877e;
+  stroke-width:3;
+}
+.hero-chart-line.portfolio{
+  stroke:#c8ff45;
+}
+@media(max-width:600px){
+  .bitgold-home-hero{gap:24px}
+  .hero-chart-legend{gap:12px;flex-wrap:wrap}
+}
