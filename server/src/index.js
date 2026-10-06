@@ -14,6 +14,7 @@ import crypto from "node:crypto";
 import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
 import { createCompliance } from "./compliance.js";
+import { createAgentPayments } from "./agent-payment-policy.js";
 
 const { Pool } = pg;
 const app = express();
@@ -109,6 +110,14 @@ const compliance = createCompliance(pool, {
   webhookSecret: String(process.env.COMPLIANCE_WEBHOOK_SECRET || "").trim()
 });
 await compliance.init();
+const agentPayments = createAgentPayments(pool, {
+  compliance,
+  isProduction,
+  enforcement: String(process.env.AGENT_PAYMENT_ENFORCEMENT || (isProduction ? "true" : "false")).toLowerCase() === "true",
+  secret: String(process.env.AGENT_PAYMENT_MANDATE_SECRET || "").trim(),
+  railMode: String(process.env.PAYMENT_RAIL_MODE || "simulation").trim().toLowerCase()
+});
+await agentPayments.init();
 
 app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
@@ -258,6 +267,16 @@ function auth(req,res,next){ try { req.user=jwt.verify((req.headers.authorizatio
 app.get("/api/compliance/status",auth,async(req,res)=>{
   try{res.json(await compliance.getUserStatus(req.user.sub));}catch(e){console.error("[COMPLIANCE] status error",e.message);res.status(500).json({error:"Impossible de charger le statut de conformité."})}
 });
+app.post("/api/agent-payments/mandate",auth,async(req,res)=>{
+  try{const result=await agentPayments.createMandate(req.user.sub,req.body||{});res.status(201).json(result)}catch(e){res.status(e.statusCode||400).json({error:e.message||"Mandat agent invalide.",code:e.code})}
+});
+app.get("/api/agent-payments/mandate",auth,async(req,res)=>{
+  try{res.json(await agentPayments.status(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de charger les mandats agent."})}
+});
+app.delete("/api/agent-payments/mandate/:botType",auth,async(req,res)=>{
+  try{res.json(await agentPayments.revokeMandate(req.user.sub,req.params.botType))}catch(e){res.status(500).json({error:"Impossible de révoquer le mandat agent."})}
+});
+
 app.post("/api/compliance/provider/webhook",async(req,res)=>{
   try{const result=await compliance.handleProviderWebhook(req);res.json(result)}catch(e){console.error("[COMPLIANCE] webhook error",e.message);res.status(e.statusCode||400).json({error:e.message||"Webhook conformité invalide."})}
 });
@@ -766,7 +785,7 @@ async function executeBotDecision(subscription,signal){
   let amount=0,quantity=0;
   if(signal.action==="buy"){const maxTrade=Number(subscription.max_trade_eur||250);const maxPosition=Number(subscription.max_position_eur||1000);const currentPosition=qty*price;const remaining=Math.max(0,maxPosition-currentPosition);const reserve=Math.max(0,Math.min(90,Number(subscription.min_cash_pct||20)))/100;const spendable=Math.max(0,cash*(1-reserve));amount=Math.min(cash*signal.fraction,cash*def.allocation/100,maxTrade,remaining,spendable);quantity=price?amount/price:0}
   if(signal.action==="sell"){amount=Math.min(qty*price,(qty*price)*signal.fraction);quantity=price?amount/price:0}
-  if(signal.action!=="hold"&&amount>0&&quantity>0)await complianceCheck(amount);
+  if(signal.action!=="hold"&&amount>0&&quantity>0){await complianceCheck(amount);await agentPayments.authorize({userId:subscription.user_id,botType:subscription.bot_type,asset:signal.asset,amountEur:amount});}
   if(signal.action==="hold"||amount<=0||quantity<=0){await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",signal.asset,signal.message]);await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");return}
   await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2",[signal.action==="buy"?-amount:amount,subscription.user_id]);
   await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3",[signal.action==="buy"?quantity:-quantity,subscription.user_id,signal.asset]);
