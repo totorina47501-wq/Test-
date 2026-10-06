@@ -136,6 +136,24 @@ test("authenticated portfolio is consolidated into the cockpit",()=>{
   assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
 });
 
+test("transfer fee policy is tiered by plan and available server-side",()=>{
+  assert.match(server,/const TRANSFER_FEE_POLICY=/);
+  assert.match(server,/free:\{label:"Free",cashin:/);
+  assert.match(server,/pro:\{label:"Pro",cashin:/);
+  assert.match(server,/elite:\{label:"Elite",cashin:/);
+  assert.match(server,/app\.get\("\/api\/transfers\/fees",auth/);
+  assert.match(server,/app\.post\("\/api\/transfers\/quote",auth/);
+  assert.match(server,/dailyLimit/);
+  assert.match(server,/Simulation uniquement/);
+  assert.match(html,/id="dashCashinFee"/);
+  assert.match(html,/id="dashCashoutFee"/);
+  assert.match(html,/id="dashTransferLimit"/);
+  assert.match(html,/Quels sont les frais de cash-in et cash-out/);
+  assert.match(app,/dashCashinFee/);
+  assert.match(app,/dashCashoutFee/);
+  assert.match(css,/transfer-fee-panel/);
+});
+
 test("Stripe subscription configuration is server-side and webhook-ready",()=>{
   const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
   const env=fs.readFileSync(path.join(root,".env.example"),"utf8");
