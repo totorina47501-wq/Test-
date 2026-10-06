@@ -44,3 +44,16 @@ Configurer dans le gestionnaire de secrets (jamais dans Git) :
 - AML_PROVIDER_URL
 
 Il faut ensuite connecter un prestataire KYC/AML adapté aux pays ciblés, définir les règles de sanctions/PEP, la revue manuelle, la conservation des données, les obligations RGPD et le dispositif de conformité interne. Tant que ce branchement n'est pas effectué, le système reste en attente et bloque les opérations en production.
+
+
+## Adaptation par abonnement
+
+La conformité ne supprime jamais le KYC/AML pour les comptes Free, Pro ou Elite.
+
+- **Free** : KYC standard + AML, opération maximale 2 000 €, plafond quotidien 2 000 €.
+- **Pro** : KYC standard + AML, opération maximale 10 000 €, plafond quotidien 10 000 €.
+- **Elite** : KYC renforcé + AML, opération maximale 50 000 €, plafond quotidien 50 000 €.
+- Des seuils de montant déclenchent une revue AML manuelle avant exécution.
+- Les limites sont appliquées aux trades manuels **et** aux exécutions automatiques des bots.
+
+Les niveaux et plafonds doivent rester cohérents avec les règles du prestataire réglementé, la juridiction et la politique de risque réelle de BitGold.
