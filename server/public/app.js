@@ -672,7 +672,8 @@ async function handleGoogleCredential(response){
   const result=document.getElementById("authResult");
   if(result){result.textContent="Connexion Google…";result.className="result"}
   try{
-    const data=await apiFetch("/api/auth/google",{method:"POST",body:JSON.stringify({credential:response.credential})});\n    if(data.requires2FA){const verified=await requestBitGold2FA(data.challengeToken);if(!verified||!verified.token)return;Object.assign(data,verified)}
+    const data=await apiFetch("/api/auth/google",{method:"POST",body:JSON.stringify({credential:response.credential})});
+    if(data.requires2FA){const verified=await requestBitGold2FA(data.challengeToken);if(!verified||!verified.token)return;Object.assign(data,verified)}
     apiToken=data.token;safeStorageSet("bitgold-token",apiToken);setConnected(true);closeModal();
     await loadProfileAfterAuth(data.profile);
     document.getElementById("dashboard")?.scrollIntoView({behavior:"smooth",block:"start"});
