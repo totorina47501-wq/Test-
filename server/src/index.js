@@ -8,9 +8,14 @@ import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pg from "pg";
+import Stripe from "stripe";
 
 const { Pool } = pg;
 const app = express();
+const stripeSecretKey=String(process.env.STRIPE_SECRET_KEY||"").trim();
+const stripeWebhookSecret=String(process.env.STRIPE_WEBHOOK_SECRET||"").trim();
+const stripe=new Stripe(stripeSecretKey||"sk_test_not_configured");
+const stripeConfigured=Boolean(stripeSecretKey);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const secret = process.env.JWT_SECRET || "dev-only-change-me";
 const pool = new Pool({
@@ -32,10 +37,35 @@ ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS stop_loss_pct DOUBLE PREC
 ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS min_cash_pct DOUBLE PRECISION NOT NULL DEFAULT 20;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'free';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_since TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
 `);
 
 app.use(helmet({contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
+app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,res)=>{
+  if(!stripeConfigured||!stripeWebhookSecret)return res.status(503).json({error:"Stripe webhook non configuré."});
+  let event;
+  try{event=stripe.webhooks.constructEvent(req.body,req.headers["stripe-signature"],stripeWebhookSecret)}catch(e){console.error("[STRIPE] webhook signature error",e.message);return res.status(400).json({error:"Signature Stripe invalide."})}
+  try{
+    if(event.type==="checkout.session.completed"){
+      const session=event.data.object;
+      const userId=Number(session.metadata?.userId);
+      const plan=session.metadata?.plan==="elite"?"elite":session.metadata?.plan==="pro"?"pro":null;
+      if(userId&&plan)await pool.query("UPDATE users SET plan=$1,pro_since=COALESCE(pro_since,CURRENT_TIMESTAMP),stripe_customer_id=COALESCE($2,stripe_customer_id),stripe_subscription_id=COALESCE($3,stripe_subscription_id) WHERE id=$4",[plan,session.customer||null,session.subscription||null,userId]);
+    }
+    if(event.type==="customer.subscription.updated"||event.type==="customer.subscription.deleted"){
+      const subscription=event.data.object;
+      const userId=Number(subscription.metadata?.userId);
+      const plan=subscription.metadata?.plan==="elite"?"elite":subscription.metadata?.plan==="pro"?"pro":null;
+      const active=event.type==="customer.subscription.updated"&&["active","trialing","past_due"].includes(subscription.status);
+      if(userId)await pool.query("UPDATE users SET plan=$1,stripe_customer_id=COALESCE($2,stripe_customer_id),stripe_subscription_id=$3 WHERE id=$4",[active&&plan?plan:"free",subscription.customer||null,event.type==="customer.subscription.deleted"?null:subscription.id,userId]);
+      else if(subscription.customer)await pool.query("UPDATE users SET plan=$1,stripe_subscription_id=$2 WHERE stripe_customer_id=$3",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,subscription.customer]);
+    }
+    res.json({received:true});
+  }catch(e){console.error("[STRIPE] webhook handler error",e.message);res.status(500).json({error:"Erreur webhook Stripe."})}
+});
+
 app.use(express.json());
 app.use(rateLimit({ windowMs: 60000, max: 120, standardHeaders: true, legacyHeaders: false }));
 app.use(express.static(path.join(__dirname, "../public"), { setHeaders: (res, filePath) => { if(filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) res.setHeader("Cache-Control", "no-store, max-age=0"); } }));
@@ -519,6 +549,32 @@ async function runBots(){
 }
 async function getUserPlan(userId){const r=await pool.query("SELECT plan,pro_since FROM users WHERE id=$1",[userId]);const row=r.rows[0]||{plan:"free",pro_since:null};const plan=row.plan==="elite"?"elite":row.plan==="pro"?"pro":"free";return{plan,pro_since:row.pro_since};}
 function botEntitlement(plan,botType){const def=botDefinition(botType);return !!def&&(def.plan==="free"||plan==="pro"&&(def.plan==="pro")||plan==="elite");}
+app.get("/api/stripe/status",(req,res)=>res.json({configured:stripeConfigured,plans:{pro:Boolean(process.env.STRIPE_PRO_PRICE_ID),elite:Boolean(process.env.STRIPE_ELITE_PRICE_ID)}}));
+app.post("/api/stripe/checkout",auth,async(req,res)=>{
+  if(!stripeConfigured)return res.status(503).json({error:"Stripe n'est pas encore configuré."});
+  const plan=String(req.body.plan||"").toLowerCase();
+  if(!["pro","elite"].includes(plan))return res.status(400).json({error:"Plan Stripe invalide."});
+  const priceId=plan==="pro"?String(process.env.STRIPE_PRO_PRICE_ID||"").trim():String(process.env.STRIPE_ELITE_PRICE_ID||"").trim();
+  if(!priceId)return res.status(503).json({error:"Le Price ID Stripe de ce plan n'est pas configuré."});
+  const user=(await pool.query("SELECT id,email,stripe_customer_id FROM users WHERE id=$1",[req.user.sub])).rows[0];
+  if(!user)return res.status(404).json({error:"Compte introuvable."});
+  try{
+    const customer=user.stripe_customer_id||((await stripe.customers.create({email:user.email,metadata:{userId:String(user.id)}})).id);
+    if(!user.stripe_customer_id)await pool.query("UPDATE users SET stripe_customer_id=$1 WHERE id=$2",[customer,user.id]);
+    const session=await stripe.checkout.sessions.create({mode:"subscription",customer,client_reference_id:String(user.id),metadata:{userId:String(user.id),plan},subscription_data:{metadata:{userId:String(user.id),plan}},line_items:[{price:priceId,quantity:1}],success_url:String(process.env.STRIPE_SUCCESS_URL||"").trim()||"http://localhost:3000/?stripe=success",cancel_url:String(process.env.STRIPE_CANCEL_URL||"").trim()||"http://localhost:3000/?stripe=cancel",allow_promotion_codes:true});
+    res.json({ok:true,url:session.url,sessionId:session.id});
+  }catch(e){console.error("[STRIPE] checkout error",e.message);res.status(500).json({error:"Impossible de créer la session Stripe."})}
+});
+app.post("/api/stripe/portal",auth,async(req,res)=>{
+  if(!stripeConfigured)return res.status(503).json({error:"Stripe n'est pas encore configuré."});
+  const user=(await pool.query("SELECT stripe_customer_id FROM users WHERE id=$1",[req.user.sub])).rows[0];
+  if(!user?.stripe_customer_id)return res.status(400).json({error:"Aucun abonnement Stripe associé à ce compte."});
+  try{
+    const session=await stripe.billingPortal.sessions.create({customer:user.stripe_customer_id,return_url:String(process.env.STRIPE_PORTAL_RETURN_URL||"").trim()||"http://localhost:3000/#dashboard"});
+    res.json({ok:true,url:session.url});
+  }catch(e){console.error("[STRIPE] portal error",e.message);res.status(500).json({error:"Impossible d'ouvrir le portail Stripe."})}
+});
+
 app.get("/api/plan",auth,async(req,res)=>{try{res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de charger le plan."})}});
 app.post("/api/plan/demo",auth,async(req,res)=>{try{const plan=String(req.body.plan||"free").toLowerCase();if(!["free","pro","elite"].includes(plan))return res.status(400).json({error:"Plan invalide."});await pool.query("UPDATE users SET plan=$1,pro_since=CASE WHEN $1='pro' THEN COALESCE(pro_since,CURRENT_TIMESTAMP) ELSE NULL END WHERE id=$2",[plan,req.user.sub]);res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de modifier le plan de démonstration."})}});
 app.get("/api/bots/catalog",(req,res)=>res.json({catalog:BOT_CATALOG}));
