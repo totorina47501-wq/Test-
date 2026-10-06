@@ -10,7 +10,7 @@ const env=fs.readFileSync(path.join(root,".env.example"),"utf8");
 
 test("KYC/AML compliance is fail-closed in production",()=>{
   assert.match(server,/COMPLIANCE_ENFORCEMENT/);
-  assert.match(server,/isProduction ? "true" : "false"/);
+  assert.match(server,/isProduction \? "true" : "false"/);
   assert.match(server,/app\.post\("\/api\/trades",auth,compliance\.requireTransactionClearance/);
   assert.match(compliance,/kyc_status==="verified"/);
   assert.match(compliance,/aml_status==="clear"/);
