@@ -58,7 +58,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
 `);
 
-app.use(helmet({contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
+app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
 app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,res)=>{
   if(!stripeConfigured||!stripeWebhookSecret)return res.status(503).json({error:"Stripe webhook non configuré."});
