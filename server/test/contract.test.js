@@ -135,3 +135,21 @@ test("authenticated portfolio is consolidated into the cockpit",()=>{
   assert.match(app,/document\.getElementById\("dashboard"\)\?\.scrollIntoView/);
   assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
 });
+
+test("Stripe subscription configuration is server-side and webhook-ready",()=>{
+  const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
+  const env=fs.readFileSync(path.join(root,".env.example"),"utf8");
+  assert.equal(pkg.dependencies.stripe,"^23.0.0");
+  assert.match(env,/STRIPE_SECRET_KEY=/);
+  assert.match(env,/STRIPE_WEBHOOK_SECRET=/);
+  assert.match(env,/STRIPE_PRO_PRICE_ID=/);
+  assert.match(env,/STRIPE_ELITE_PRICE_ID=/);
+  assert.match(server,/stripe\.checkout\.sessions\.create/);
+  assert.match(server,/stripe\.billingPortal\.sessions\.create/);
+  assert.match(server,/stripe\.webhooks\.constructEvent/);
+  assert.match(server,/stripe_customer_id/);
+  assert.match(server,/stripe_subscription_id/);
+  assert.match(server,/app\.post\("\/api\/stripe\/checkout",auth/);
+  assert.match(server,/app\.post\("\/api\/stripe\/portal",auth/);
+  assert.match(server,/app\.post\("\/api\/stripe\/webhook"/);
+});

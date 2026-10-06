@@ -61,3 +61,16 @@ Pour un déploiement frontend + API dans le même service Northflank, cette surc
 - **Adaptive AI** : moteur déterministe et explicable combinant momentum, RSI, position dans le range et volatilité, sans API IA externe.
 - Les ordres des bots restent **100 % simulés** dans le portefeuille démo.
 - Le changement Free/Pro présent dans cette version est un **mode de démonstration** ; un vrai paiement devra être relié à un prestataire de paiement avant commercialisation.
+
+
+## Stripe — configuration prête
+
+L'intégration Stripe est préparée côté serveur, sans aucune clé dans Git :
+- Checkout abonnement **Pro** et **Elite** via les Price IDs Stripe.
+- Customer Portal pour gérer l'abonnement.
+- Webhook signé pour synchroniser automatiquement Free / Pro / Elite dans PostgreSQL.
+- Les clés et Price IDs sont à renseigner dans **Northflank** uniquement.
+
+Variables Northflank : STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_PRICE_ID, STRIPE_ELITE_PRICE_ID, STRIPE_SUCCESS_URL, STRIPE_CANCEL_URL, STRIPE_PORTAL_RETURN_URL.
+
+Webhook Stripe à configurer vers /api/stripe/webhook avec les événements checkout.session.completed, customer.subscription.updated et customer.subscription.deleted.
