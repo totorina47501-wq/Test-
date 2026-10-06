@@ -19,7 +19,7 @@ test("visitor bot comparison is public and ordered",()=>{
 
 test("authenticated bot choice is exclusive",()=>{
   assert.match(server,/UPDATE bot_subscriptions SET active=FALSE WHERE user_id=\$1 AND bot_type<>\$2/);
-  assert.match(app,/Choisissez votre niveau d’automatisation/);
+  assert.match(html,/Choisissez votre niveau d'automatisation/);
 });
 
 test("logout listener is not blocked by stale history exports",()=>{
@@ -41,7 +41,7 @@ test("bot detail pages expose explanations, limits and pricing",()=>{
   assert.match(html,/id="botActivate"/); assert.match(html,/id="botBack"/);
   assert.ok(app.includes('history.pushState({}, "", "/bot/"+type)'));
   assert.match(server,/max_trade_eur/); assert.match(server,/max_position_eur/); assert.match(server,/min_cash_pct/);
-  assert.match(server,/price_monthly_eur:9\.90/); assert.match(server,/price_monthly_eur:19\.90/); assert.match(server,/price_monthly_eur:34\.90/);
+  assert.match(server,/id:"shield"[^]*plan:"free"/); assert.match(server,/id:"silver"[^]*plan:"pro"/); assert.match(server,/id:"macro-rotation"[^]*plan:"elite"/);
   assert.match(server,/maxTradeEur/);
 });
 
@@ -54,7 +54,7 @@ test("bot execution applies configured trade and position limits",()=>{
 
 test("bot subscription controls are authenticated-only while detail remains public",()=>{
   assert.match(html,/class="bot-config-card auth-only"[^>]*hidden/);
-  assert.match(app,/const connected=!!apiToken/);
+  assert.match(app,/connected=!!apiToken/);
   assert.match(app,/if\(!apiToken\)\{openModal\("connexion"\);return\}/);
   assert.match(html,/id="botDetailDescription"/);
   assert.match(html,/id="botDetailStrategy"/);
@@ -75,9 +75,9 @@ test("Pro dashboard exposes performance risk and Autopilot",()=>{
   assert.match(server,/returnPct/);
   assert.match(server,/riskScore/);
   assert.match(server,/autopilot/);
-  assert.match(app,/DASHBOARD PRO/);
-  assert.match(app,/RISK CENTER/);
-  assert.match(app,/BITGOLD AUTOPILOT/);
+  assert.match(html,/DASHBOARD PRO/);
+  assert.match(html,/RISK CENTER/);
+  assert.match(html,/BITGOLD AUTOPILOT/);
   assert.match(html,/href="#dashboard"/);
 });
 
@@ -129,11 +129,11 @@ test("cockpit shows only held assets, subscription reminder and hides pricing wh
 
 
 test("authenticated portfolio is consolidated into the cockpit",()=>{
-  assert.match(html,/href="#dashboard" class="auth-only" hidden>Cockpit<\/a>/);
+  assert.match(html,/href="#dashboard" class="auth-only nav-cockpit" hidden>[\s\S]*Cockpit[\s\S]*<\/a>/);
   assert.match(html,/legacy-wallet-section/);
   assert.match(html,/class="visitor-only">Pricings<\/a>/);
   assert.match(app,/document\.getElementById\("dashboard"\)\?\.scrollIntoView/);
-  assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
+  assert.match(css,/\.legacy-wallet-section[\s\S]*display:none!important/);
 });
 
 test("premium header navigation is responsive and keeps auth actions",()=>{
@@ -145,7 +145,7 @@ test("premium header navigation is responsive and keeps auth actions",()=>{
   assert.match(html,/Transparence/);
   assert.match(app,/menuToggle/);
   assert.match(app,/menu-open/);
-  assert.match(app,/Se déconnecter/);
+  assert.match(html,/Se déconnecter/);
   assert.match(css,/Header premium BitGold/);
   assert.match(css,/\.topbar-inner/);
   assert.match(css,/\.menu-toggle/);
@@ -222,4 +222,36 @@ test("user profile and Google authentication are implemented end-to-end",()=>{
   assert.match(app,/function openProfile/);
   assert.match(app,/apiFetch\("\/api\/me",{method:"PUT"/);
   assert.match(css,/Profil utilisateur \+ authentification Google/);
+});
+
+
+test("authentication security baseline is enforced",()=>{
+  assert.match(server,/const secret = String\(process\.env\.JWT_SECRET \|\| ""\)\.trim\(\)/);
+  assert.match(server,/JWT_SECRET must be configured with at least 32 characters in production/);
+  assert.match(server,/const authRateLimit = rateLimit\(\{/);
+  assert.match(server,/windowMs: 10 \* 60 \* 1000/);
+  assert.match(server,/max: 10/);
+  assert.match(server,/app\.post\("\/api\/auth\/login", authRateLimit/);
+  assert.match(server,/app\.post\("\/api\/auth\/google", authRateLimit/);
+});
+
+test("2FA security flow is wired for password and Google authentication",()=>{
+  const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
+  const env=fs.readFileSync(path.join(root,".env.example"),"utf8");
+  assert.equal(pkg.dependencies.otplib,"^13.0.1");
+  assert.equal(pkg.dependencies.qrcode,"^1.5.4");
+  assert.match(env,/TWO_FACTOR_ENCRYPTION_KEY=/);
+  assert.match(server,/CREATE TABLE IF NOT EXISTS user_2fa/);
+  assert.match(server,/aes-256-gcm/);
+  assert.match(server,/challenge_jti/);
+  assert.match(server,/challenge_used_at/);
+  assert.match(server,/twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/auth\/2fa\/verify",twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/security\/2fa\/setup",auth,twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/security\/2fa\/enable",auth,twoFactorRateLimit/);
+  assert.match(server,/app\.post\("\/api\/security\/2fa\/disable",auth,twoFactorRateLimit/);
+  assert.match(server,/requires2FA/);
+  assert.match(server,/await verify\(\{secret:sec,token:code\}\)/);
+  assert.match(app,/requestBitGold2FA/);
+  assert.match(app,/\/api\/auth\/2fa\/verify/);
 });
