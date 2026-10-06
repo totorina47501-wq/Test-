@@ -245,7 +245,9 @@ let marketPrices={BTC:67420.10,ETH:3248.70,SOL:154.20,USDC:0.92,LINK:17.84,AVAX:
 const fallbackMarkets=[["Bitcoin","BTC",67420.10,0],["Ethereum","ETH",3248.70,0],["Solana","SOL",154.20,0],["USD Coin","USDC",0.92,0],["Chainlink","LINK",17.84,0],["Avalanche","AVAX",28.16,0]];
 let marketPreviewDays=1;
 let botState={catalog:[],items:[],activity:[],plan:{plan:"free"}};
+let lastMarketData=[];
 function renderMarket(markets){
+  lastMarketData=markets||[];
   document.getElementById("marketGrid").innerHTML=markets.map(({symbol,price,change24h,marketCap})=>{
     const name=marketNames[symbol]||symbol;
     const change=Number(change24h||0);
@@ -259,7 +261,7 @@ function renderMarket(markets){
         <span class="market-live"><i></i> Live</span>
       </div>
       <div class="market-price-row"><div class="price">${priceText}</div><span class="market-change ${change>=0?"up":"down"}">${changeText}</span></div>
-      <div class="market-chart-head"><span>Évolution <b>${marketPreviewDays===1?"24h":marketPreviewDays+"j"}</b></span><span>EUR</span></div>
+      <div class="market-chart-head"><span>Évolution <b>${marketPreviewDays===1?"24h":marketPreviewDays+"j"}</b></span><span>${currentCurrency()}</span></div>
       <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement…</span></div>
       <div class="market-card-foot"><span class="market-meta">${marketCap?formatCompactMoney(marketCap)+" cap.": "Marché crypto"}</span><span class="market-arrow">Voir le détail →</span></div>
       <div class="market-indicators" data-indicators="${symbol}" aria-label="Indicateurs techniques"><span class="market-indicator muted">Analyse…</span></div>
@@ -366,13 +368,7 @@ async function setMarketPreviewRange(days){
   document.querySelectorAll(".market-periods button").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===marketPreviewDays));
   await loadMarketHistoryPreviews();
 }
-function formatCompactEuro(value){
-  const n=Number(value);
-  if(!Number.isFinite(n)) return "—";
-  if(n>=1e9) return (n/1e9).toLocaleString("fr-FR",{maximumFractionDigits:2})+" Md €";
-  if(n>=1e6) return (n/1e6).toLocaleString("fr-FR",{maximumFractionDigits:2})+" M €";
-  return n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
-}
+function formatCompactEuro(value){return formatCompactMoney(value)}
 function setDetailText(id,value){const el=document.getElementById(id);if(el)el.textContent=value}
 async function loadCryptoDetailRange(range){
   if(!historyState.symbol)return;
@@ -408,7 +404,7 @@ async function openCryptoDetail(symbol){
     setDetailText("cryptoDetailRank",data.marketCapRank?"Classement #"+data.marketCapRank:"Classement indisponible");
     setDetailText("detailCurrentPrice",price); setDetailText("detail24h",(change>=0?"+":"")+change.toFixed(2).replace(".",",")+"%");
     setDetailText("detailPeriodMin",data.history?.min!=null?formatPrice(data.history.min):"—"); setDetailText("detailPeriodMax",data.history?.max!=null?formatPrice(data.history.max):"—");
-    setDetailText("detailMarketCap",formatCompactEuro(data.marketCap)); setDetailText("detailVolume",formatCompactEuro(data.volume24h));
+    setDetailText("detailMarketCap",formatCompactMoney(data.marketCap)); setDetailText("detailVolume",formatCompactMoney(data.volume24h));
     document.getElementById("cryptoDetailChart").innerHTML=(data.history?.points||[]).length?buildHistoryChart(data.history.points,symbol,"24h"):"<div class=\"history-empty\">Historique indisponible.</div>";
     setDetailText("cryptoDetailSource","Source : CoinGecko · données mises à jour automatiquement");
     document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
@@ -421,7 +417,7 @@ function coinIcon(symbol){const icons={BTC:"btc",ETH:"eth",SOL:"sol",USDC:"usdc"
 function removeHomepageActivity(){document.querySelectorAll(".bot-activity").forEach(el=>el.remove())}
 function renderWallet(){const cash=document.getElementById("cashBalance"),holdings=document.getElementById("holdings"),totalEl=document.getElementById("portfolioTotal"),countEl=document.getElementById("holdingsCount");const cashValue=Number(state.cash)||0;if(cash)cash.textContent=cashValue.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";const assets=["BTC","ETH","SOL","USDC","LINK","AVAX"].map(symbol=>{const quantity=Number(state.holdings[symbol]||0);const price=Number(marketPrices[symbol]||0);return{symbol,quantity,price,value:quantity*price}}).sort((a,b)=>b.value-a.value);const invested=assets.reduce((sum,item)=>sum+item.value,0),total=cashValue+invested;if(totalEl)totalEl.textContent=total.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";const active=assets.filter(item=>item.quantity>0);if(countEl)countEl.textContent=active.length+" actif"+(active.length>1?"s":"");if(holdings)holdings.innerHTML=assets.map(item=>{const allocation=total?item.value/total*100:0;const quantityText=item.quantity?item.quantity.toLocaleString("fr-FR",{minimumFractionDigits:0,maximumFractionDigits:8}):"0";return `<article class="portfolio-asset ${item.quantity?"":"is-empty"}"><div class="portfolio-asset-identity">${coinIcon(item.symbol)}<div><strong>${marketNames[item.symbol]}</strong><span>${item.symbol} · ${formatPrice(item.price)}</span></div></div><div class="portfolio-asset-quantity"><strong>${quantityText}</strong><span>unités</span></div><div class="portfolio-asset-value"><strong>${item.value.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})} €</strong><span>${allocation.toFixed(1).replace(".",",")}% du portefeuille</span></div></article>`}).join("")}
 async function apiFetch(path,options={}){const headers={...(options.headers||{})};if(!headers["Content-Type"]&&options.body)headers["Content-Type"]="application/json";if(apiToken)headers.Authorization=`Bearer ${apiToken}`;let r;try{r=await fetch(API+path,{...options,headers})}catch(e){throw Error("Impossible de joindre l'API. Vérifiez que le service Northflank est démarré et que /api/health répond.")}let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||`Erreur API (${r.status})`);return data}
-function formatEuro(value){return Number(value||0).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €"}
+function formatEuro(value){return formatMoney(value)}
 function renderDashboardAnalytics(data){
   const points=data?.performance?.points||[];
   const chart=document.getElementById("dashPerformanceChart");
@@ -710,3 +706,4 @@ handleStripeReturn();initGoogleAuth();
 window.addEventListener('DOMContentLoaded',initBitGoldI18n);
 
 window.addEventListener("DOMContentLoaded",()=>{loadFxRates()});
+window.addEventListener("bitgold:fx-ready",()=>{if(lastMarketData.length)renderMarket(lastMarketData);if(state?.portfolio)renderWallet();});
