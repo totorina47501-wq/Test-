@@ -90,3 +90,14 @@ test("Dashboard analytics exposes reconstructed performance and bot statistics",
   assert.match(html,/HISTORIQUE/);
   assert.match(html,/BOT ANALYTICS/);
 });
+
+test("site completion exposes About FAQ newsletter and footer",()=>{
+  assert.match(html,/id="a-propos"/);
+  assert.match(html,/id="faq"/);
+  assert.match(html,/id="newsletter"/);
+  assert.match(html,/id="newsletterForm"/);
+  assert.match(html,/class="site-footer"/);
+  assert.match(app,/\/api\/newsletter\/subscribe/);
+  assert.match(server,/newsletter_subscribers/);
+  assert.match(server,/app\.post\("\/api\/newsletter\/subscribe"/);
+});
