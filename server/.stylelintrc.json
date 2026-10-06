@@ -13,6 +13,7 @@
     "no-descending-specificity": null,
     "no-duplicate-selectors": null,
     "declaration-property-value-keyword-no-deprecated": null,
-    "declaration-block-no-shorthand-property-overrides": null
+    "declaration-block-no-shorthand-property-overrides": null,
+    "declaration-property-value-no-unknown": null
   }
 }
