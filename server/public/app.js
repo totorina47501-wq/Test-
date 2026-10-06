@@ -395,7 +395,7 @@ async function initGoogleAuth(){
   try{
     const config=await apiFetch("/api/auth/google/config");
     const wrap=document.getElementById("googleAuthWrap");
-    if(!config.enabled||!config.clientId){if(wrap)wrap.hidden=true;return}
+    if(!config.enabled||!config.clientId){if(wrap){wrap.hidden=false;const target=document.getElementById("googleSignInButton");if(target)target.innerHTML="<span class=\"google-unavailable\">Connexion Google bientôt disponible — configuration requise</span>"}return}
     const render=()=>{
       if(!window.google?.accounts?.id)return false;
       window.google.accounts.id.initialize({client_id:config.clientId,callback:handleGoogleCredential,ux_mode:"popup"});
