@@ -215,6 +215,74 @@ function simulateVisitorFees(){
   const label=plan.charAt(0).toUpperCase()+plan.slice(1);
   result.innerHTML="<span>Pour "+formatVisitorEuro(amount)+" en "+operation+" "+label+"</span><strong>"+formatVisitorEuro(fee)+" de frais</strong><small>Net simulé : "+formatVisitorEuro(net)+" · "+(rule.rate*100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" % + "+formatVisitorEuro(rule.fixed)+" · Aucun mouvement réel</small>";
 }
+const DEMO_BOTS={
+  shield:{name:"Shield Bot",asset:"BTC",amount:180,message:"Protection d'abord : petite exposition BTC avec une réserve de cash élevée."},
+  silver:{name:"Silver Bot",asset:"BTC",amount:300,message:"Équilibre tendance et diversification : renforcement progressif du leader."},
+  gold:{name:"Gold Bot",asset:"BTC",amount:450,message:"Approche offensive : renforcement du leader dans la simulation."},
+  "adaptive-ai":{name:"Adaptive AI Bot",asset:"ETH",amount:400,message:"Score adaptatif simulé : allocation vers l'actif présentant le meilleur signal."},
+  "quant-pulse":{name:"Quant Pulse Bot",asset:"SOL",amount:350,message:"Mean-reversion simulée : recherche d'un excès de prix avant entrée."},
+  "macro-rotation":{name:"Macro Rotation Bot",asset:"BTC",amount:500,message:"Rotation macro simulée : privilégie le leader en régime risk-on."}
+};
+const demoState={cash:10000,holdings:{BTC:0,ETH:0,SOL:0},activity:[]};
+function demoPortfolioTotal(){
+  return demoState.cash+Object.entries(demoState.holdings).reduce((sum,[asset,qty])=>sum+(Number(qty)||0)*(Number(marketPrices[asset])||0),0);
+}
+function renderDemoLab(){
+  const cash=document.getElementById("demoCash"),qty=document.getElementById("demoBtcQty"),total=document.getElementById("demoTotal"),price=document.getElementById("demoBtcPrice"),log=document.getElementById("demoActivity");
+  if(!cash)return;
+  const btc=Number(demoState.holdings.BTC||0);
+  cash.textContent=formatMoney(demoState.cash,{currency:"EUR"});
+  qty.textContent=btc.toFixed(8)+" BTC";
+  total.textContent=formatMoney(demoPortfolioTotal(),{currency:"EUR"});
+  if(price)price.textContent="BTC · "+formatMoney(marketPrices.BTC,{currency:"EUR"});
+  if(log)log.innerHTML=demoState.activity.length?demoState.activity.slice().reverse().map(item=>"<div class=\"demo-activity-row\"><span>"+item.icon+"</span><div><strong>"+escapeHtml(item.title)+"</strong><small>"+escapeHtml(item.text)+"</small></div></div>").join(""):'<div class="demo-empty">Aucune opération simulée.</div>';
+}
+function openDemoLab(){
+  const modal=document.getElementById("demoModal");if(!modal)return;
+  document.body.classList.add("modal-open");modal.hidden=false;renderDemoLab();
+}
+function closeDemoLab(){const modal=document.getElementById("demoModal");if(modal){modal.hidden=true;document.body.classList.remove("modal-open")}}
+function demoBuyBitcoin(){
+  const amount=Number(document.getElementById("demoBuyAmount")?.value||0),price=Number(marketPrices.BTC||0),maxTrade=250;
+  if(!Number.isFinite(amount)||amount<10)return setDemoResult("demoTradeResult","Montant invalide. Choisissez au moins 10 €.","error");
+  if(amount>maxTrade)return setDemoResult("demoTradeResult","Le garde-fou démo limite cette opération à 250 €.","error");
+  if(amount>demoState.cash)return setDemoResult("demoTradeResult","Solde démo insuffisant.","error");
+  const qty=amount/price;demoState.cash-=amount;demoState.holdings.BTC+=qty;
+  demoState.activity.push({icon:"↗",title:"Achat BTC simulé",text:formatMoney(amount,{currency:"EUR"})+" · "+qty.toFixed(8)+" BTC"});
+  setDemoResult("demoTradeResult","Achat simulé confirmé : "+qty.toFixed(8)+" BTC pour "+formatMoney(amount,{currency:"EUR"})+".","success");renderDemoLab();
+}
+function demoApplyBot(){
+  const type=document.getElementById("demoBotSelect")?.value||"shield",bot=DEMO_BOTS[type],price=Number(marketPrices[bot.asset]||0),amount=Math.min(bot.amount,250,demoState.cash*.7);
+  if(!bot||!price||amount<10)return setDemoResult("demoBotResult","Le bot ne peut pas agir dans ces conditions de simulation.","error");
+  const qty=amount/price;demoState.cash-=amount;demoState.holdings[bot.asset]=(demoState.holdings[bot.asset]||0)+qty;
+  demoState.activity.push({icon:"⚙",title:bot.name+" · achat simulé",text:bot.message+" "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+"."});
+  setDemoResult("demoBotResult",bot.name+" a appliqué son scénario démo : achat de "+qty.toFixed(8)+" "+bot.asset+" pour "+formatMoney(amount,{currency:"EUR"})+".","success");renderDemoLab();
+}
+function resetDemoLab(){
+  demoState.cash=10000;demoState.holdings={BTC:0,ETH:0,SOL:0};demoState.activity=[];
+  setDemoResult("demoTradeResult","Portefeuille démo réinitialisé.","success");setDemoResult("demoBotResult","Prêt pour une nouvelle simulation.","success");renderDemoLab();
+}
+function setDemoResult(id,message,type=""){const el=document.getElementById(id);if(el){el.textContent=message;el.className="demo-result"+(type?" "+type:"")}}
+function initHomeExplorer(){
+  const topics={
+    demo:{eyebrow:"MODE DÉMO",title:"Achetez votre premier Bitcoin en quelques secondes.",text:"Commencez avec 10 000 € virtuels, choisissez un montant en BTC et voyez immédiatement l'impact sur votre portefeuille.",bullets:["✓ Prix de marché","✓ Solde simulé","✓ Historique des opérations"],action:"Tester maintenant",link:"#marches",linkText:"Explorer les marchés →",handler:openDemoLab},
+    cockpit:{eyebrow:"COCKPIT",title:"Une vue unique pour piloter votre portefeuille.",text:"Performance, risque, positions, activité et recommandation Autopilot réunis dans un espace clair.",bullets:["✓ Valeur & performance","✓ Risk Center","✓ Autopilot"],action:"Voir le cockpit",link:"#dashboard",linkText:"Découvrir le cockpit →"},
+    bots:{eyebrow:"BOTS",title:"Choisissez une stratégie et voyez ses garde-fous.",text:"Shield, Silver, Gold, Adaptive AI, Quant Pulse et Macro Rotation : chaque bot expose son profil et ses limites.",bullets:["✓ 6 stratégies","✓ Plans Free / Pro / Elite","✓ Paramètres de risque"],action:"Voir les bots",link:"#bots",linkText:"Comparer les stratégies →"},
+    fees:{eyebrow:"TRANSPARENCE",title:"Connaissez le coût avant toute opération.",text:"Les taux cash-in et cash-out sont affichés par formule, avec un simulateur de frais accessible sans compte.",bullets:["✓ Grille Free / Pro / Elite","✓ Simulateur public","✓ Aucun mouvement réel"],action:"Simuler les frais",link:"#transparence",linkText:"Voir la transparence →"},
+    guardrails:{eyebrow:"GARDE-FOUS",title:"La stratégie vient avec ses limites.",text:"Montant maximum, position maximum, stop de protection et réserve de cash encadrent les décisions simulées des bots.",bullets:["✓ Max trade","✓ Max position","✓ Stop-loss & cash minimum"],action:"Voir les protections",link:"#bots",linkText:"Voir les paramètres →"}
+  };
+  const buttons=[...document.querySelectorAll("[data-home-topic]")],stage=document.querySelector(".home-topic-stage");
+  const render=(key)=>{
+    const topic=topics[key]||topics.demo;buttons.forEach(b=>b.classList.toggle("active",b.dataset.homeTopic===key));
+    const eyebrow=document.getElementById("homeTopicEyebrow"),title=document.getElementById("homeTopicTitle"),text=document.getElementById("homeTopicText"),bullets=document.getElementById("homeTopicBullets"),action=document.getElementById("homeTopicAction"),link=document.getElementById("homeTopicLink");
+    if(eyebrow)eyebrow.textContent=topic.eyebrow;if(title)title.textContent=topic.title;if(text)text.textContent=topic.text;if(bullets)bullets.innerHTML=topic.bullets.map(x=>"<span>"+x+"</span>").join("");if(action){action.textContent=topic.action;action.onclick=topic.handler||(()=>document.querySelector(topic.link)?.scrollIntoView({behavior:"smooth",block:"start"}))}if(link){link.href=topic.link;link.textContent=topic.linkText}
+    const value=document.getElementById("homeStageValue"),meta=document.getElementById("homeStageMeta");
+    const values={demo:["10 000 €","Capital démo disponible"],cockpit:["100 %","Pilotage du portefeuille"],bots:["6 bots","6 philosophies"],fees:["3 formules","Frais affichés avant validation"],guardrails:["4 limites","Risque encadré"]}[key]||["10 000 €","Capital démo disponible"];
+    if(value)value.textContent=values[0];if(meta)meta.textContent=values[1];
+    if(stage){stage.dataset.topic=key}
+  };
+  buttons.forEach(b=>b.addEventListener("click",()=>render(b.dataset.homeTopic)));render("demo");
+}
 async function submitNewsletter(event){
   event.preventDefault();
   const form=document.getElementById("newsletterForm"),input=document.getElementById("newsletterEmail"),result=document.getElementById("newsletterResult"),button=form?.querySelector("button[type=submit]");
@@ -675,7 +743,7 @@ async function loadNews(){
 }
 async function refreshMarketView(){await loadMarket();await loadMarketHistoryPreviews();if(apiToken)renderWallet();loadNews()}
 initBotRoute();applyCountryCurrencyDefaults();setConnected(!!apiToken);if(apiToken)loadPortfolio().catch(e=>console.warn("Portfolio API:",e.message));else loadNews();refreshMarketView();setInterval(refreshMarketView,60000);
-window.openModal=openModal;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openProfile=openProfile;window.closeProfile=closeProfile;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;window.simulateVisitorFees=simulateVisitorFees;
+window.openModal=openModal;window.openDemoLab=openDemoLab;window.closeDemoLab=closeDemoLab;window.openBotDetail=openBotDetail;window.saveBotConfiguration=saveBotConfiguration;window.unsubscribeBot=unsubscribeBot;window.openActivity=openActivity;window.closeActivity=closeActivity;window.logout=logout;window.setMarketPreviewRange=setMarketPreviewRange;window.loadBots=loadBots;window.switchAuth=switchAuth;window.submitAuth=submitAuth;window.closeModal=closeModal;window.openProfile=openProfile;window.closeProfile=closeProfile;window.openTrade=openTrade;window.executeTrade=executeTrade;window.closeTrade=closeTrade;window.simulate=simulate;window.openCryptoDetail=openCryptoDetail;window.closeCryptoDetail=closeCryptoDetail;window.loadCryptoDetailRange=loadCryptoDetailRange;window.simulateVisitorFees=simulateVisitorFees;
 document.getElementById("newsletterForm")?.addEventListener("submit",submitNewsletter);
 document.getElementById("authCurrency")?.addEventListener("change",e=>{e.target.dataset.userChanged="true";setCurrencyPreference(e.target.value)});
 document.getElementById("profileCurrency")?.addEventListener("change",e=>{e.target.dataset.userChanged="true";setCurrencyPreference(e.target.value)});
@@ -691,13 +759,13 @@ document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("i
 document.querySelectorAll(".market-periods button").forEach(button=>button.addEventListener("click",()=>setMarketPreviewRange(Number(button.dataset.days))));
 document.querySelectorAll(".crypto-detail-ranges button").forEach(button=>button.addEventListener("click",()=>loadCryptoDetailRange(button.dataset.range)));
 document.getElementById("marketGrid")?.addEventListener("click",event=>{const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
-document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
+document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("heroDemo")?.addEventListener("click",openDemoLab);document.getElementById("demoBuyButton")?.addEventListener("click",demoBuyBitcoin);document.getElementById("demoApplyBot")?.addEventListener("click",demoApplyBot);document.getElementById("demoReset")?.addEventListener("click",resetDemoLab);document.getElementById("demoClose")?.addEventListener("click",closeDemoLab);initHomeExplorer();document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
 document.getElementById("tradeConfirm")?.addEventListener("click",executeTrade);
 document.getElementById("botGrid")?.addEventListener("click",event=>{const button=event.target.closest("[data-bot-open]");if(!button)return;event.stopPropagation();openBotDetail(button.dataset.botOpen)});document.querySelectorAll("[data-plan-demo]").forEach(button=>button.addEventListener("click",()=>{const plan=button.dataset.planDemo;if(plan==="pro"||plan==="elite")startStripeCheckout(plan);else setDemoPlan(plan)}));document.getElementById("stripePortalButton")?.addEventListener("click",openStripePortal);document.getElementById("transferFeeQuote")?.addEventListener("click",simulateTransferFee);document.getElementById("botActivate")?.addEventListener("click",saveBotConfiguration);document.getElementById("botUnsubscribe")?.addEventListener("click",unsubscribeBot);document.getElementById("botBack")?.addEventListener("click",closeBotDetail);document.getElementById("activityBack")?.addEventListener("click",closeActivity);document.querySelectorAll("[data-activity-filter]").forEach(button=>button.addEventListener("click",()=>renderActivity(button.dataset.activityFilter)));document.getElementById("activityNav")?.addEventListener("click",event=>{if(apiToken){event.preventDefault();openActivity()}});
-document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="cryptoDetailModal")closeCryptoDetail();else if(modal?.id==="modal")closeModal();else if(modal?.id==="profileModal")closeProfile()}));
-document.querySelectorAll(".modal").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal){if(modal.id==="tradeModal")closeTrade();else if(modal.id==="cryptoDetailModal")closeCryptoDetail();else if(modal.id==="modal")closeModal();else if(modal.id==="profileModal")closeProfile()}}));
+document.querySelectorAll(".modal .close").forEach(button=>button.addEventListener("click",()=>{const modal=button.closest(".modal");if(modal?.id==="tradeModal")closeTrade();else if(modal?.id==="cryptoDetailModal")closeCryptoDetail();else if(modal?.id==="demoModal")closeDemoLab();else if(modal?.id==="modal")closeModal();else if(modal?.id==="profileModal")closeProfile()}));
+document.querySelectorAll(".modal").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal){if(modal.id==="tradeModal")closeTrade();else if(modal.id==="cryptoDetailModal")closeCryptoDetail();else if(modal.id==="demoModal")closeDemoLab();else if(modal.id==="modal")closeModal();else if(modal.id==="profileModal")closeProfile()}}));
 document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;const open=document.querySelector(".modal:not([hidden])");if(!open)return;if(open.id==="tradeModal")closeTrade();else if(open.id==="cryptoDetailModal")closeCryptoDetail();else if(open.id==="profileModal")closeProfile();else closeModal()});
 window.addEventListener("error",e=>{const el=document.getElementById("authResult");if(el)el.textContent="Erreur JavaScript : "+e.message;});
 

@@ -30,7 +30,52 @@
   </div>
 </header>
 <main>
-<section class="hero visitor-hero"><div class="hero-copy"><div class="badge">● Marchés crypto · données en direct</div><h1>La crypto, <span>plus claire.</span><br>Plus simple. Plus maîtrisée.</h1><p>BitGold réunit suivi des marchés, portefeuille démo et automatisation dans une expérience pensée pour comprendre avant d’agir.</p><div class="actions"><button class="btn btn-primary" id="heroSignup">Commencer gratuitement</button><a class="btn btn-ghost" href="#marches">Explorer les marchés →</a></div><div class="hero-proof"><span><b>6</b> actifs suivis</span><span><b>6</b> stratégies automatisées</span><span><b>24/7</b> suivi du marché</span></div><p class="risk">⚠️ Mode démo : aucun dépôt, aucun paiement et aucune transaction réelle.</p></div><div class="dashboard-card visitor-dashboard"><div class="dashboard-glow"></div><div class="card-head"><span><i class="status-dot"></i> Portefeuille démo</span><span class="positive">+8,42%</span></div><div class="balance">12 480,50 €</div><div class="dashboard-meta"><span>Performance simulée</span><span>Sur 30 jours</span></div><div class="chart"><svg viewBox="0 0 500 180" preserveAspectRatio="none" aria-label="Graphique de démonstration"><defs><linearGradient id="visitorChartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-opacity=".22"/><stop offset="100%" stop-opacity="0"/></linearGradient></defs><path d="M0 145 L45 138 L80 150 L125 112 L165 125 L205 90 L250 105 L300 70 L345 82 L390 45 L430 60 L500 20 L500 180 L0 180 Z" fill="url(#visitorChartFill)"/><polyline points="0,145 45,138 80,150 125,112 165,125 205,90 250,105 300,70 345,82 390,45 430,60 500,20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="mini-row"><span>BTC <strong>+5,21%</strong></span><span>ETH <strong>+3,74%</strong></span><span>SOL <strong>+6,18%</strong></span></div><div class="dashboard-foot"><span>● Données de démonstration</span><a href="#marches">Voir les marchés →</a></div></div></section>
+<section class="hero visitor-hero bitgold-home-hero">
+  <div class="hero-copy">
+    <div class="badge">● BitGold · plateforme crypto en mode démo</div>
+    <h1>Comprenez. <span>Simulez.</span><br>Pilotez votre stratégie.</h1>
+    <p>Une expérience unique pour explorer les marchés, tester un achat de Bitcoin, appliquer un bot, contrôler les frais et visualiser votre cockpit — sans argent réel.</p>
+    <div class="actions hero-actions">
+      <button class="btn btn-primary" id="heroDemo" type="button">Lancer la démo interactive →</button>
+      <button class="btn btn-ghost" id="heroSignup" type="button">Créer mon compte</button>
+    </div>
+    <div class="hero-proof">
+      <span><b>6</b> actifs suivis</span>
+      <span><b>6</b> stratégies</span>
+      <span><b>100 %</b> simulé</span>
+    </div>
+    <p class="risk">⚠️ Aucun dépôt, paiement ou ordre réel. Les achats et décisions des bots sont simulés.</p>
+  </div>
+  <div class="home-explorer">
+    <div class="home-explorer-head">
+      <div><span class="eyebrow">PARCOURS BITGOLD</span><strong>Choisissez ce que vous voulez découvrir.</strong></div>
+      <span class="home-explorer-live"><i></i> Démo active</span>
+    </div>
+    <div class="home-topic-tabs" role="tablist" aria-label="Découvrir BitGold">
+      <button class="home-topic active" type="button" data-home-topic="demo"><span>01</span><strong>Mode démo</strong><small>Acheter du BTC</small></button>
+      <button class="home-topic" type="button" data-home-topic="cockpit"><span>02</span><strong>Cockpit</strong><small>Suivre & piloter</small></button>
+      <button class="home-topic" type="button" data-home-topic="bots"><span>03</span><strong>Bots</strong><small>Automatiser</small></button>
+      <button class="home-topic" type="button" data-home-topic="fees"><span>04</span><strong>Transparence</strong><small>Voir les frais</small></button>
+      <button class="home-topic" type="button" data-home-topic="guardrails"><span>05</span><strong>Garde-fous</strong><small>Limiter le risque</small></button>
+    </div>
+    <div class="home-topic-stage">
+      <div class="home-topic-visual">
+        <div class="home-orbit"><span class="orbit-core">₿</span><i></i><i></i><i></i></div>
+        <span class="home-stage-kicker">SIMULATION</span>
+        <strong id="homeStageValue">10 000 €</strong>
+        <small id="homeStageMeta">Capital démo disponible</small>
+      </div>
+      <div class="home-topic-content">
+        <span id="homeTopicEyebrow" class="eyebrow">MODE DÉMO</span>
+        <h3 id="homeTopicTitle">Achetez votre premier Bitcoin en quelques secondes.</h3>
+        <p id="homeTopicText">Commencez avec 10 000 € virtuels, choisissez un montant en BTC et voyez immédiatement l'impact sur votre portefeuille.</p>
+        <div id="homeTopicBullets" class="home-topic-bullets"><span>✓ Prix de marché</span><span>✓ Solde simulé</span><span>✓ Historique des opérations</span></div>
+        <div class="home-topic-actions"><button id="homeTopicAction" class="btn btn-primary" type="button">Tester maintenant</button><a id="homeTopicLink" class="panel-link" href="#marches">Explorer les marchés →</a></div>
+      </div>
+    </div>
+    <div class="home-explorer-footer"><span>Un parcours guidé, sans vous imposer un ordre.</span><span>Vous choisissez votre sujet.</span></div>
+  </div>
+</section>
 <section id="compte" class="section account-section auth-only legacy-wallet-section" hidden aria-hidden="true"><div class="portfolio-hero"><div class="portfolio-heading"><div><span class="eyebrow">MON PORTEFEUILLE</span><h2>Vos actifs, en un coup d’œil.</h2><p>Valeur totale, solde disponible et détail de chaque crypto détenue.</p></div><span class="live" id="accountStatus">Compte connecté</span></div><div class="portfolio-overview"><div class="portfolio-total"><span>Valeur totale</span><strong id="portfolioTotal">10 000,00 €</strong><small id="portfolioChange">Portefeuille démo · valorisation en EUR</small></div><div class="portfolio-cash"><span>Disponible</span><strong id="cashBalance">10 000,00 €</strong><div class="wallet-actions"><button class="btn btn-primary" id="walletBuy">Acheter</button><button class="btn btn-ghost" id="walletSell">Vendre</button></div></div></div><div class="holdings-card portfolio-holdings"><div class="holdings-head"><div><span class="eyebrow">ACTIFS DÉTENUS</span><h3>Répartition du portefeuille</h3></div><span id="holdingsCount" class="live">0 actifs</span></div><div id="holdings" class="portfolio-assets"></div></div></div></section><section id="dashboard" class="section pro-dashboard auth-only" hidden>
   <div class="section-title dashboard-section-title">
     <div><span class="eyebrow">DASHBOARD PRO</span><h2>Votre cockpit BitGold.</h2><p class="section-subtitle">Performance, risque, bots actifs et recommandation Autopilot réunis au même endroit.</p></div>
@@ -259,7 +304,28 @@
 </footer>
 </main>
 <footer><span>© 2026 BitGold</span><span>Prototype — aucun investissement réel</span></footer>
-<div id="cryptoDetailModal" class="modal" hidden><div class="modal-box crypto-detail-box"><button class="close" type="button" aria-label="Fermer">×</button><div class="eyebrow">DÉTAIL DE L'ACTIF</div><div class="crypto-detail-head"><div><h3 id="cryptoDetailTitle">Bitcoin (BTC)</h3><span id="cryptoDetailRank" class="symbol">Classement #1</span></div><div class="crypto-detail-price"><strong id="cryptoDetailPrice">—</strong><span id="cryptoDetailChange" class="positive">—</span></div></div><div class="crypto-detail-ranges" role="tablist" aria-label="Période du graphique"><button type="button" class="active" data-range="24h">24 h</button><button type="button" data-range="5m">5 min</button><button type="button" data-range="1h">1 h</button><button type="button" data-range="7d">7 jours</button><button type="button" data-range="30d">30 jours</button><button type="button" data-range="1y">1 an</button><button type="button" data-range="5y">5 ans</button></div><div id="cryptoDetailChart" class="crypto-detail-chart"><div class="history-loading">Chargement des données…</div></div><div class="crypto-detail-grid"><div><span>Cours actuel</span><strong id="detailCurrentPrice">—</strong></div><div><span>Variation 24h</span><strong id="detail24h">—</strong></div><div><span id="detailPeriodLabel">Min / Max · 24 h</span><strong><span id="detailPeriodMin">—</span> / <span id="detailPeriodMax">—</span></strong></div><div><span>Capitalisation</span><strong id="detailMarketCap">—</strong></div><div><span>Volume 24h</span><strong id="detailVolume">—</strong></div></div><div class="crypto-detail-actions"><button class="btn btn-primary" id="detailBuy" type="button">Acheter</button></div><p class="modal-note" id="cryptoDetailSource">Source : CoinGecko</p></div></div>
+<div id="demoModal" class="modal" hidden>
+  <div class="modal-box demo-modal-box">
+    <button class="close" id="demoClose" type="button" aria-label="Fermer">×</button>
+    <div class="demo-modal-head"><div><span class="eyebrow">BITGOLD DEMO LAB</span><h3>Testez la plateforme sans argent réel.</h3><p>Un portefeuille local de démonstration, réinitialisable à tout moment. Aucun achat réel n'est exécuté.</p></div><span class="demo-pill">SIMULATION</span></div>
+    <div class="demo-kpis"><div><span>Cash disponible</span><strong id="demoCash">10 000,00 €</strong></div><div><span>Bitcoin détenu</span><strong id="demoBtcQty">0 BTC</strong></div><div><span>Valeur du portefeuille</span><strong id="demoTotal">10 000,00 €</strong></div></div>
+    <div class="demo-lab-grid">
+      <section class="demo-panel"><div class="demo-panel-head"><div><span class="eyebrow">01 · ACHAT SIMULÉ</span><h4>Acheter du Bitcoin</h4></div><span id="demoBtcPrice" class="demo-market-price">Cours live</span></div>
+        <label>Montant en €<input id="demoBuyAmount" type="number" min="10" step="10" value="500"></label>
+        <button id="demoBuyButton" class="btn btn-primary full" type="button">Acheter du BTC en démo</button>
+        <div id="demoTradeResult" class="demo-result">Votre opération apparaîtra ici.</div>
+      </section>
+      <section class="demo-panel"><div class="demo-panel-head"><div><span class="eyebrow">02 · BOTS</span><h4>Appliquer une stratégie</h4></div><span class="demo-market-price">Garde-fous actifs</span></div>
+        <label>Bot<select id="demoBotSelect"><option value="shield">Shield Bot · prudent</option><option value="silver">Silver Bot · équilibré</option><option value="gold">Gold Bot · offensif</option><option value="adaptive-ai">Adaptive AI · adaptatif</option><option value="quant-pulse">Quant Pulse · quantitatif</option><option value="macro-rotation">Macro Rotation · institutionnel</option></select></label>
+        <button id="demoApplyBot" class="btn btn-primary full" type="button">Appliquer au portefeuille démo</button>
+        <div id="demoBotResult" class="demo-result">Le bot proposera une action simulée et l'appliquera uniquement à ce portefeuille local.</div>
+      </section>
+    </div>
+    <div class="demo-guardrails"><span>🛡️ Limite par opération</span><strong>250 €</strong><span>Réserve cash</span><strong>30 %</strong><span>Stop de protection</span><strong>8 %</strong><button id="demoReset" class="btn btn-ghost" type="button">Réinitialiser</button></div>
+    <div class="demo-activity"><div class="demo-panel-head"><div><span class="eyebrow">03 · JOURNAL</span><h4>Ce qui vient de se passer</h4></div></div><div id="demoActivity" class="demo-activity-list"><div class="demo-empty">Aucune opération simulée.</div></div></div>
+    <p class="modal-note">Mode démo uniquement. Les cours sont indicatifs, les bots n'exécutent aucune transaction réelle et les performances ne préjugent pas des résultats futurs.</p>
+  </div>
+</div><div id="cryptoDetailModal" class="modal" hidden><div class="modal-box crypto-detail-box"><button class="close" type="button" aria-label="Fermer">×</button><div class="eyebrow">DÉTAIL DE L'ACTIF</div><div class="crypto-detail-head"><div><h3 id="cryptoDetailTitle">Bitcoin (BTC)</h3><span id="cryptoDetailRank" class="symbol">Classement #1</span></div><div class="crypto-detail-price"><strong id="cryptoDetailPrice">—</strong><span id="cryptoDetailChange" class="positive">—</span></div></div><div class="crypto-detail-ranges" role="tablist" aria-label="Période du graphique"><button type="button" class="active" data-range="24h">24 h</button><button type="button" data-range="5m">5 min</button><button type="button" data-range="1h">1 h</button><button type="button" data-range="7d">7 jours</button><button type="button" data-range="30d">30 jours</button><button type="button" data-range="1y">1 an</button><button type="button" data-range="5y">5 ans</button></div><div id="cryptoDetailChart" class="crypto-detail-chart"><div class="history-loading">Chargement des données…</div></div><div class="crypto-detail-grid"><div><span>Cours actuel</span><strong id="detailCurrentPrice">—</strong></div><div><span>Variation 24h</span><strong id="detail24h">—</strong></div><div><span id="detailPeriodLabel">Min / Max · 24 h</span><strong><span id="detailPeriodMin">—</span> / <span id="detailPeriodMax">—</span></strong></div><div><span>Capitalisation</span><strong id="detailMarketCap">—</strong></div><div><span>Volume 24h</span><strong id="detailVolume">—</strong></div></div><div class="crypto-detail-actions"><button class="btn btn-primary" id="detailBuy" type="button">Acheter</button></div><p class="modal-note" id="cryptoDetailSource">Source : CoinGecko</p></div></div>
 <div id="tradeModal" class="modal" hidden><div class="modal-box"><button class="close" type="button" aria-label="Fermer">×</button><h3 id="tradeTitle">Acheter</h3><p class="modal-note">Mode démo : aucune transaction réelle n'est exécutée.</p><label>Actif</label><select id="tradeAsset"><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="SOL">Solana (SOL)</option><option value="USDC">USD Coin (USDC)</option><option value="LINK">Chainlink (LINK)</option><option value="AVAX">Avalanche (AVAX)</option></select><label>Montant (€)</label><input id="tradeAmount" type="number" min="1" step="1" value="100"><button class="btn btn-primary full" id="tradeConfirm" type="button">Confirmer</button><div id="tradeResult" class="result"></div></div></div>
 <div id="modal" class="modal" hidden><div class="modal-box auth-modal-box"><button class="close" id="authClose">×</button><h3 id="modalTitle">Connexion BitGold</h3><p class="modal-note">Créez un profil BitGold complet pour retrouver vos préférences sur tous vos appareils.</p>
 <div id="signupFields" class="signup-fields" hidden>
