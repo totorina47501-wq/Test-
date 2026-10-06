@@ -317,14 +317,19 @@ let botState={catalog:[],items:[],activity:[],plan:{plan:"free"}};
 let lastMarketData=[];
 function renderMarket(markets){
   lastMarketData=markets||[];
-  document.getElementById("marketGrid").innerHTML=markets.map(({symbol,price,change24h,marketCap})=>{
+  const grid=document.getElementById("marketGrid");
+  if(!grid)return;
+  grid.innerHTML=lastMarketData.map(({symbol,price,change24h,marketCap,volume24h,marketCapRank})=>{
     const name=marketNames[symbol]||symbol;
     const change=Number(change24h||0);
     marketPrices[symbol]=Number(price)||marketPrices[symbol];
     const priceText=formatMoney(marketPrices[symbol]);
     const changeText=(change>0?"+":"")+change.toFixed(2).replace(".",",")+"%";
     const canTrade=["BTC","ETH","SOL","USDC","LINK","AVAX"].includes(symbol);
-    return `<article class="market market-clickable" data-crypto="${symbol}">
+    const capText=Number.isFinite(Number(marketCap))?formatCompactMoney(marketCap):"—";
+    const volumeText=Number.isFinite(Number(volume24h))?formatCompactMoney(volume24h):"—";
+    const rankText=Number.isFinite(Number(marketCapRank))?"#"+marketCapRank:"—";
+    return `<article class="market market-clickable" data-crypto="${symbol}" tabindex="0" role="button" aria-label="Voir le détail de ${name}">
       <div class="market-card-head">
         <div class="market-identity"><span class="coin-mark coin-${symbol.toLowerCase()}">${coinIcon(symbol)}</span><div><strong>${name}</strong><span class="symbol">${symbol}</span></div></div>
         <span class="market-live"><i></i> Live</span>
@@ -332,9 +337,14 @@ function renderMarket(markets){
       <div class="market-price-row"><div class="price">${priceText}</div><span class="market-change ${change>=0?"up":"down"}">${changeText}</span></div>
       <div class="market-chart-head"><span>Évolution <b>${marketPreviewDays===1?"24h":marketPreviewDays+"j"}</b></span><span>${currentCurrency()}</span></div>
       <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement…</span></div>
-      <div class="market-card-foot"><span class="market-meta">${marketCap?formatCompactMoney(marketCap)+" cap.": "Marché crypto"}</span><span class="market-arrow">Voir le détail →</span></div>
+      <div class="market-stats-grid">
+        <div><span>Capitalisation</span><strong>${capText}</strong></div>
+        <div><span>Volume 24h</span><strong>${volumeText}</strong></div>
+        <div><span>Classement</span><strong>${rankText}</strong></div>
+      </div>
+      <div class="market-card-foot"><span class="market-meta">Variation 24h</span><span class="market-arrow">Voir le détail →</span></div>
       <div class="market-indicators" data-indicators="${symbol}" aria-label="Indicateurs techniques"><span class="market-indicator muted">Analyse…</span></div>
-      <div class="market-actions">${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter</button>`:""}</div>
+      <div class="market-actions">${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter ${symbol}</button>`:""}</div>
     </article>`;
   }).join("");
 }
