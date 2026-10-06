@@ -13,6 +13,7 @@ import { OAuth2Client } from "google-auth-library";
 import crypto from "node:crypto";
 import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
+import { createCompliance } from "./compliance.js";
 
 const { Pool } = pg;
 const app = express();
@@ -101,6 +102,13 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_since TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
 `);
+
+const compliance = createCompliance(pool, {
+  isProduction,
+  enforcement: String(process.env.COMPLIANCE_ENFORCEMENT || (isProduction ? "true" : "false")).toLowerCase() === "true",
+  webhookSecret: String(process.env.COMPLIANCE_WEBHOOK_SECRET || "").trim()
+});
+await compliance.init();
 
 app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
@@ -246,6 +254,13 @@ async function challengeToken(user){
 }
 function token(user){ return jwt.sign({sub:user.id,email:user.email},secret,{expiresIn:"7d"}); }
 function auth(req,res,next){ try { req.user=jwt.verify((req.headers.authorization||"").replace("Bearer ",""),secret); next(); } catch { res.status(401).json({error:"Non authentifié"}); } }
+
+app.get("/api/compliance/status",auth,async(req,res)=>{
+  try{res.json(await compliance.getUserStatus(req.user.sub));}catch(e){console.error("[COMPLIANCE] status error",e.message);res.status(500).json({error:"Impossible de charger le statut de conformité."})}
+});
+app.post("/api/compliance/provider/webhook",async(req,res)=>{
+  try{const result=await compliance.handleProviderWebhook(req);res.json(result)}catch(e){console.error("[COMPLIANCE] webhook error",e.message);res.status(e.statusCode||400).json({error:e.message||"Webhook conformité invalide."})}
+});
 
 app.get("/api/health", async (req,res) => {
   try { await pool.query("SELECT 1"); res.json({ok:true,service:"BitGold API"}); }
@@ -967,7 +982,7 @@ app.get("/api/dashboard",auth,async(req,res)=>{
   }
 });
 
-app.post("/api/trades",auth,async(req,res)=>{
+app.post("/api/trades",auth,compliance.requireTransactionClearance,async(req,res)=>{
   await refreshMarket();
   const side=req.body.side, asset=req.body.asset, amount=Number(req.body.amount);
   if(!["buy","sell"].includes(side)||!prices[asset]||!Number.isFinite(amount)||amount<=0) return res.status(400).json({error:"Ordre invalide."});
