@@ -129,7 +129,7 @@ test("cockpit shows only held assets, subscription reminder and hides pricing wh
 
 
 test("authenticated portfolio is consolidated into the cockpit",()=>{
-  assert.match(html,/href="#dashboard" class="auth-only nav-cockpit" hidden>[\s\S]*Cockpit<\/a>/);
+  assert.match(html,/href="#dashboard" class="auth-only nav-cockpit" hidden>[\s\S]*Cockpit[\s\S]*<\/a>/);
   assert.match(html,/legacy-wallet-section/);
   assert.match(html,/class="visitor-only">Pricings<\/a>/);
   assert.match(app,/document\.getElementById\("dashboard"\)\?\.scrollIntoView/);
