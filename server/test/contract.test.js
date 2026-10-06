@@ -136,6 +136,22 @@ test("authenticated portfolio is consolidated into the cockpit",()=>{
   assert.match(css,/\.legacy-wallet-section[\\s\\S]*display:none!important/);
 });
 
+test("premium header navigation is responsive and keeps auth actions",()=>{
+  assert.match(html,/class="topbar-inner"/);
+  assert.match(html,/class="brand-mark"/);
+  assert.match(html,/id="mainNav"/);
+  assert.match(html,/id="menuToggle"/);
+  assert.match(html,/Tarifs/);
+  assert.match(html,/Transparence/);
+  assert.match(app,/menuToggle/);
+  assert.match(app,/menu-open/);
+  assert.match(app,/Se déconnecter/);
+  assert.match(css,/Header premium BitGold/);
+  assert.match(css,/\.topbar-inner/);
+  assert.match(css,/\.menu-toggle/);
+  assert.match(css,/max-width:850px/);
+});
+
 test("visitor transparency and fee simulator are public",()=>{
   assert.match(html,/id="transparence"/);
   assert.match(html,/TRANSPARENCE BITGOLD/);
