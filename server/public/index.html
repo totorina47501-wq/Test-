@@ -41,7 +41,7 @@
       <div class="transfer-fee-card"><span>Cash-out</span><strong id="dashCashoutFee">—</strong><small id="dashCashoutFixed">—</small><p>Le montant reçu est diminué des frais.</p></div>
       <div class="transfer-fee-card"><span>Limite quotidienne</span><strong id="dashTransferLimit">—</strong><small>Selon votre formule</small><p>Limite indicative de transfert en mode démo.</p></div>
     </div>
-    <div class="transfer-fee-note">Tarifs indicatifs : aucun mouvement d'argent réel n'est exécuté dans cette version. Les frais réels pourront évoluer selon le prestataire de paiement, le moyen de paiement et la réglementation.</div>
+    <div class="transfer-fee-simulator"><div><span class="eyebrow">SIMULATEUR DE FRAIS</span><p>Contrôlez le coût avant toute opération.</p></div><div class="transfer-fee-controls"><select id="transferFeeType" aria-label="Type de transfert"><option value="cashin">Cash-in · dépôt</option><option value="cashout">Cash-out · retrait</option></select><input id="transferFeeAmount" type="number" min="1" step="1" value="1000" aria-label="Montant du transfert en euros"><button id="transferFeeQuote" class="btn btn-primary" type="button">Calculer</button></div><div id="transferFeeResult" class="transfer-fee-result" role="status" aria-live="polite">Simulation uniquement · aucun mouvement d'argent réel.</div></div>
   </div>
   <div class="dashboard-pro-grid">
     <article class="pro-panel performance-panel">
