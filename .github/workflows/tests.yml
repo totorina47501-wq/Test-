@@ -23,6 +23,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bitgold_test
+      DATABASE_SSL: "false"
       NODE_ENV: test
       JWT_SECRET: test-jwt-secret-32-characters-minimum-0001
       TWO_FACTOR_ENCRYPTION_KEY: test-two-factor-encryption-key-32chars
