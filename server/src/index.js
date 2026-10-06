@@ -538,12 +538,19 @@ app.delete("/api/bots/subscriptions/:botType",auth,async(req,res)=>{const botTyp
 setInterval(runBots,60000);runBots().catch(()=>{});
 app.get("/api/portfolio",auth,async(req,res)=>{
   try {
+    const market=await refreshMarket();
     const [w,h,t]=await Promise.all([
       pool.query("SELECT cash FROM wallets WHERE user_id=$1",[req.user.sub]),
       pool.query("SELECT asset,quantity FROM holdings WHERE user_id=$1",[req.user.sub]),
       pool.query("SELECT side,asset,amount_eur,price_eur,quantity,created_at FROM trades WHERE user_id=$1 ORDER BY id DESC LIMIT 50",[req.user.sub])
     ]);
-    res.json({cash:w.rows[0]?.cash??0,holdings:h.rows,trades:t.rows});
+    const cash=Number(w.rows[0]?.cash??0);
+    const holdings=h.rows.map(row=>{const asset=String(row.asset||"").toUpperCase();const quantity=Number(row.quantity||0);const price=Number(market.find(item=>item.symbol===asset)?.price||prices[asset]||0);return {asset,quantity,price,value:quantity*price};});
+    const invested=holdings.reduce((sum,row)=>sum+Math.max(0,row.value),0);
+    const total=cash+invested;
+    const positions=holdings.filter(row=>row.quantity>0&&row.price>0).map(row=>({...row,allocation:total?row.value/total*100:0}));
+    const integrity=Math.abs(total-(cash+invested))<0.01&&holdings.every(row=>row.quantity>=-1e-12);
+    res.json({updatedAt:Date.now(),source:"wallets + holdings + CoinGecko",cash,invested,total,initialCapital:10000,holdings,positions,trades:t.rows,integrity:{ok:integrity,cashPlusInvested:cash+invested,difference:total-(cash+invested)}});
   } catch(e) { console.error("[PORTFOLIO] error", e.message); res.status(500).json({error:"Erreur serveur."}); }
 });
 
@@ -581,8 +588,8 @@ app.get("/api/dashboard/analytics",auth,async(req,res)=>{
       timeline.push({date,total:Number(snapshot.cash)+invested,invested,cash:Number(snapshot.cash)});
     }
     if(!timeline.length) timeline.push({date:new Date().toISOString().slice(0,10),total:initialCapital,invested:0,cash:initialCapital});
-    const first=timeline[0].total,last=timeline[timeline.length-1].total;
-    res.json({updatedAt:Date.now(),performance:{initialCapital,reconstructed:true,returnPct:first?((last-first)/first)*100:0,points:timeline},bots:[...byBot.values()]});
+    const last=timeline[timeline.length-1].total;
+    res.json({updatedAt:Date.now(),performance:{initialCapital,reconstructed:true,returnPct:initialCapital?((last-initialCapital)/initialCapital)*100:0,points:timeline},bots:[...byBot.values()]});
   }catch(e){
     console.error("[DASHBOARD ANALYTICS] error",e.message);
     res.status(500).json({error:"Impossible de charger les analytics."});
@@ -631,12 +638,13 @@ app.get("/api/dashboard",auth,async(req,res)=>{
     res.json({
       updatedAt:Date.now(),
       portfolio:{cash,invested,total,initialCapital,returnEur,returnPct,cashPct,positions:allocations},
-      performance:{label:"Depuis le début",returnEur,returnPct,trades:tradeRows.rows.length,wins:tradeRows.rows.filter(row=>row.side==="sell").length},
+      performance:{label:"Depuis le début",returnEur,returnPct,trades:tradeRows.rows.length,buys:tradeRows.rows.filter(row=>row.side==="buy").length,sells:tradeRows.rows.filter(row=>row.side==="sell").length},
       risk:{score:riskScore,label:riskLabel,concentration,cashPct,activeBots},
       bots:{active:activeBots,total:botRows.rows.length,items:botRows.rows},
       market:{regime,leader,weakest},
       autopilot,
-      activity:botActivity.rows
+      activity:botActivity.rows,
+      integrity:{ok:Math.abs(total-(cash+invested))<0.01&&positions.every(row=>row.quantity>=-1e-12),cashPlusInvested:cash+invested,difference:total-(cash+invested),source:"wallets + holdings + live market prices"}
     });
   }catch(e){
     console.error("[DASHBOARD] error",e.message);
