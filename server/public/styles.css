@@ -442,3 +442,20 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
 .footer-bottom{display:flex;justify-content:space-between;gap:20px;padding-top:18px;border-top:1px solid #172b22;color:#52675d;font-size:8px}
 @media(max-width:900px){.about-grid{grid-template-columns:1fr}.faq-grid{grid-template-columns:1fr}.newsletter-card{grid-template-columns:1fr}.footer-main{grid-template-columns:1.2fr 1fr 1fr}}
 @media(max-width:700px){.about-card{min-height:0;padding:19px}.faq-grid details{padding:0 13px}.newsletter-section{padding-top:50px;padding-bottom:50px}.newsletter-card{padding:20px;border-radius:19px}.newsletter-card h2{font-size:25px}.newsletter-input-row{display:grid;grid-template-columns:1fr}.newsletter-input-row button{width:100%}.footer-main{grid-template-columns:1fr 1fr;gap:25px}.footer-bottom{display:grid;gap:7px}}
+
+/* Cockpit — abonnement et actifs réellement détenus */
+.visitor-only[hidden]{display:none!important}
+.dashboard-cockpit-strip{display:grid;grid-template-columns:.78fr 1.22fr;gap:12px;margin:12px 0}
+.dashboard-membership-panel,.dashboard-held-assets-panel{min-height:190px}
+.dashboard-membership-main{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:25px 0 8px}
+.dashboard-membership-main strong{font-size:25px;color:#eef4f0;letter-spacing:-.03em}
+.dashboard-membership-main span{color:#c8ff45;font-size:9px;text-align:right}
+.dashboard-membership-panel p{color:#81958b;font-size:10px;line-height:1.55;margin:0 0 13px}
+.held-assets-list{display:grid;gap:0;margin-top:12px}
+.held-asset-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid #172b22}
+.held-asset-row:last-child{border-bottom:0}
+.held-asset-name strong,.held-asset-price strong{display:block;font-size:11px;color:#dce6e0}
+.held-asset-name span,.held-asset-price span{display:block;margin-top:3px;color:#687d72;font-size:8px}
+.held-asset-price{text-align:right}
+@media(max-width:900px){.dashboard-cockpit-strip{grid-template-columns:1fr}}
+@media(max-width:700px){.dashboard-membership-main{display:block}.dashboard-membership-main span{display:block;text-align:left;margin-top:5px}.held-asset-row{gap:8px}.held-asset-price{min-width:120px}}
