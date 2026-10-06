@@ -223,3 +223,14 @@ test("user profile and Google authentication are implemented end-to-end",()=>{
   assert.match(app,/apiFetch\("\/api\/me",{method:"PUT"/);
   assert.match(css,/Profil utilisateur \+ authentification Google/);
 });
+
+
+test("authentication security baseline is enforced",()=>{
+  assert.match(server,/const secret = String\(process\.env\.JWT_SECRET \|\| ""\)\.trim\(\)/);
+  assert.match(server,/JWT_SECRET must be configured with at least 32 characters in production/);
+  assert.match(server,/const authRateLimit = rateLimit\(\{/);
+  assert.match(server,/windowMs: 10 \* 60 \* 1000/);
+  assert.match(server,/max: 10/);
+  assert.match(server,/app\.post\("\/api\/auth\/login", authRateLimit/);
+  assert.match(server,/app\.post\("\/api\/auth\/google", authRateLimit/);
+});
