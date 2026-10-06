@@ -39,4 +39,5 @@ jobs:
           cache-dependency-path: server/package.json
       - run: npm install
       - run: node --check src/index.js
+      - run: node --check public/app.js
       - run: npm test
