@@ -24,7 +24,7 @@ const API=configuredApi||window.location.origin;
 let apiToken=safeStorageGet("bitgold-token");
 let authMode="login";
 let tradeSide="buy";
-let state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0,USDC:0,LINK:0,AVAX:0}};
+let state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0,USDC:0,LINK:0,AVAX:0},portfolio:null};
 const marketNames={BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"};
 let marketPrices={BTC:67420.10,ETH:3248.70,SOL:154.20,USDC:0.92,LINK:17.84,AVAX:28.16};
 const fallbackMarkets=[["Bitcoin","BTC",67420.10,0],["Ethereum","ETH",3248.70,0],["Solana","SOL",154.20,0],["USD Coin","USDC",0.92,0],["Chainlink","LINK",17.84,0],["Avalanche","AVAX",28.16,0]];
@@ -251,7 +251,7 @@ function renderDashboard(data){
   const concentration=document.getElementById("dashConcentration");if(concentration)concentration.textContent=Number(risk.concentration||0).toFixed(1).replace(".",",")+" %";
   const cashPct=document.getElementById("dashCashPct");if(cashPct)cashPct.textContent=Number(risk.cashPct||0).toFixed(1).replace(".",",")+" %";
   const riskMeta=document.getElementById("dashRiskMeta");if(riskMeta)riskMeta.textContent="Score "+Number(risk.score||0)+"/100";
-  const updated=document.getElementById("dashboardUpdated");if(updated)updated.textContent="Mis à jour à "+new Date(data.updatedAt||Date.now()).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  const updated=document.getElementById("dashboardUpdated");if(updated){const integrity=data.integrity?.ok!==false?"Données cohérentes":"Vérification requise";updated.textContent="Mis à jour à "+new Date(data.updatedAt||Date.now()).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+" · "+integrity}
   const regime=document.getElementById("dashRegime");if(regime)regime.textContent=market.regime||"Neutre";
   const allocations=document.getElementById("dashAllocations");
   if(allocations){
@@ -272,7 +272,7 @@ function renderDashboard(data){
   }
 }
 async function loadDashboard(){if(!apiToken)return;try{const [data,analytics]=await Promise.all([apiFetch("/api/dashboard"),apiFetch("/api/dashboard/analytics")]);renderDashboard(data);renderDashboardAnalytics(analytics)}catch(e){console.warn("Dashboard:",e.message)}}
-async function loadPortfolio(){if(!apiToken){setConnected(false);renderWallet();return}try{const data=await apiFetch("/api/portfolio");state.cash=Number(data.cash||0);state.holdings={BTC:0,ETH:0,SOL:0,USDC:0,LINK:0,AVAX:0};for(const row of data.holdings||[])if(row.asset in state.holdings)state.holdings[row.asset]=Number(row.quantity||0);renderWallet();setConnected(true);await loadDashboard()}catch(e){if(/authentifié|401/i.test(e.message)){apiToken="";safeStorageRemove("bitgold-token");setConnected(false);renderWallet()}throw e}}
+async function loadPortfolio(){if(!apiToken){setConnected(false);renderWallet();return}try{const data=await apiFetch("/api/portfolio");state.cash=Number(data.cash||0);state.holdings={BTC:0,ETH:0,SOL:0,USDC:0,LINK:0,AVAX:0};for(const row of data.holdings||[]){if(row.asset in state.holdings)state.holdings[row.asset]=Number(row.quantity||0);if(Number(row.price)>0)marketPrices[row.asset]=Number(row.price)}state.portfolio={invested:Number(data.invested||0),total:Number(data.total||0),integrity:data.integrity||null,updatedAt:data.updatedAt||Date.now()};renderWallet();setConnected(true);await loadDashboard()}catch(e){if(/authentifié|401/i.test(e.message)){apiToken="";safeStorageRemove("bitgold-token");setConnected(false);renderWallet()}throw e}}
 function simulate(){const amount=Number(document.getElementById("amount").value||0);const asset=document.getElementById("asset").value;const rates={"Bitcoin (BTC)":1.2842,"Ethereum (ETH)":1.192,"Solana (SOL)":1.431};const gain=amount*(rates[asset]-1);document.getElementById("result").textContent=`Simulation : ${amount.toLocaleString("fr-FR")} € en ${asset} → estimation théorique ${(amount+gain).toLocaleString("fr-FR",{maximumFractionDigits:2})} €. Gain/perte : ${gain.toLocaleString("fr-FR",{maximumFractionDigits:2})} €.`}
 function openTrade(side,asset="BTC"){tradeSide=side;document.getElementById("tradeTitle").textContent=side==="buy"?"Acheter des cryptos":"Vendre des cryptos";document.getElementById("tradeAsset").value=asset;document.getElementById("tradeAmount").value=100;document.getElementById("tradeResult").textContent=apiToken?"":"Connectez-vous pour effectuer une opération démo.";document.getElementById("tradeModal").hidden=false;document.body.classList.add("modal-open")}
 function closeTrade(){document.getElementById("tradeModal").hidden=true;document.body.classList.remove("modal-open")}
