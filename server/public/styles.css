@@ -604,3 +604,7 @@ body.is-authenticated .account-section{padding-top:54px;background:radial-gradie
   .profile-actions{display:grid}.profile-actions .btn{width:100%}
   #googleSignInButton>div{width:100%!important}
 }
+
+.signup-fields[hidden]{display:none!important}
+
+.google-unavailable{display:block;width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #263b31;border-radius:8px;text-align:center;color:#a5b8ad;font-size:12px}
