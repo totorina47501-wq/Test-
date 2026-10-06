@@ -12,7 +12,7 @@ test("visitor bot comparison is public and ordered",()=>{
   assert.doesNotMatch(html,/id="bots"[^>]*auth-only/);
   assert.ok(app.includes("/api/bots/catalog"));
   assert.match(server,/app\.get\("\/api\/bots\/catalog"/);
-  assert.match(server,/id:"gold"/); assert.match(server,/id:"silver"/); assert.match(server,/id:"shield"/);
+  assert.match(server,/id:"gold"/); assert.match(server,/id:"silver"/); assert.match(server,/id:"shield"/); assert.match(server,/id:"quant-pulse"/); assert.match(server,/id:"macro-rotation"/);
   assert.ok(app.includes("Niveau '+(index+1)"));
 });
 
@@ -57,4 +57,14 @@ test("bot subscription controls are authenticated-only while detail remains publ
   assert.match(app,/if\(!apiToken\)\{openModal\("connexion"\);return\}/);
   assert.match(html,/id="botDetailDescription"/);
   assert.match(html,/id="botDetailStrategy"/);
+});
+
+
+test("Elite mode unlocks macro rotation and five active bots",()=>{
+  assert.match(server,/plan==="elite"/);
+  assert.match(server,/activeCount>=5/);
+  assert.match(server,/maxTrade:2500/);
+  assert.match(app,/BitGold Elite/);
+  assert.match(app,/macro-rotation/);
+  assert.match(html,/data-plan-demo="elite"/);
 });
