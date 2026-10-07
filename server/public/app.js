@@ -1073,7 +1073,7 @@ window.openSecurityCenter=openSecurityCenter;
 window.addEventListener("DOMContentLoaded",()=>{if(apiToken){const b=document.createElement("button");b.type="button";b.textContent="Sécurité / 2FA";b.className="btn btn-ghost";b.style.position="fixed";b.style.right="18px";b.style.bottom="18px";b.style.zIndex="9990";b.onclick=openSecurityCenter;document.body.appendChild(b)}});
 
 /* BitGold AI comparator — simulation only. */
-const comparatorBotNames={shield:"Shield",adaptive-ai:"Adaptive AI",quant-pulse:"Quant Pulse",silver:"Silver",gold:"Gold","macro-rotation":"Macro Rotation"};
+const comparatorBotNames={shield:"Shield","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse",silver:"Silver",gold:"Gold","macro-rotation":"Macro Rotation"};
 function comparatorNumber(value,fallback=0){return Number.isFinite(Number(value))?Number(value):fallback}
 function comparatorPct(value){return Number.isFinite(Number(value))?((Number(value)>0?"+":"")+Number(value).toFixed(2)+" %"):"—"}
 function comparatorScore(row,sort){
@@ -1095,12 +1095,13 @@ function renderBotComparator(rows){
   const sort=document.getElementById("botComparatorSort")?.value||"return";
   const ranked=rows.slice().sort((a,b)=>comparatorScore(b,sort)-comparatorScore(a,sort));
   const best=ranked[0];
-  const robustValues=ranked.map(row=>comparatorNumber(row.robustness?.confidence?.p50)).filter(Number.isFinite);
+  const robustValues=ranked.map(row=>comparatorNumber(row.robustness?.confidence?.p50)).filter(Number.isFinite).sort((a,b)=>a-b);
   const avgReturn=ranked.reduce((sum,row)=>sum+comparatorNumber(row.totalReturn),0)/ranked.length;
   const avgDrawdown=ranked.reduce((sum,row)=>sum+comparatorNumber(row.maxDrawdown),0)/ranked.length;
   if(summary){
     summary.hidden=false;
-    summary.innerHTML="<div><span>Leader selon le tri</span><strong>"+escapeHtml(comparatorBotNames[best.botType]||best.botType)+"</strong></div><div><span>Rendement moyen</span><strong>"+comparatorPct(avgReturn)+"</strong></div><div><span>Drawdown moyen</span><strong>"+comparatorPct(-avgDrawdown)+"</strong></div><div><span>Robustesse médiane</span><strong>"+(robustValues.length?comparatorPct(robustValues.reduce((a,b)=>a+b,0)/robustValues.length):"—")+"</strong></div>";
+    const medianRobustness=robustValues.length?robustValues[Math.floor(robustValues.length/2)]:null;
+    summary.innerHTML="<div><span>Leader selon le tri</span><strong>"+escapeHtml(comparatorBotNames[best.botType]||best.botType)+"</strong></div><div><span>Rendement moyen</span><strong>"+comparatorPct(avgReturn)+"</strong></div><div><span>Drawdown moyen</span><strong>−"+avgDrawdown.toFixed(2)+" %</strong></div><div><span>Robustesse médiane</span><strong>"+(medianRobustness!==null?comparatorPct(medianRobustness):"—")+"</strong></div>";
   }
   body.innerHTML=ranked.map((row,index)=>{
     const robust=row.robustness||{},conf=robust.confidence||{};
