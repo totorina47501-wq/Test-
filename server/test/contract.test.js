@@ -46,16 +46,22 @@ test("bot detail pages expose explanations, limits and pricing",()=>{
 });
 
 test("advanced bot sheets expose quantitative simulation metrics",()=>{
-  assert.match(html,/class="bot-analytics-card auth-only"/);
-  assert.match(html,/id="botMetricReturn"/); assert.match(html,/id="botMetricSharpe"/);
-  assert.match(html,/id="botMetricSortino"/); assert.match(html,/id="botMetricVolatility"/);
-  assert.match(html,/id="botMetricTrades"/); assert.match(html,/id="botMetricFees"/);
-  assert.match(html,/id="botMetricTurnover"/);
-  assert.match(app,/\/api\/bots\/\+encodeURIComponent\(type\)\+"\/backtest\?days=/);
-  assert.match(server,/app\.get\("\/api\/bots\/:botType\/backtest",auth/);
-  assert.match(server,/sharpe/); assert.match(server,/sortino/); assert.match(server,/volatility/);
-  assert.match(server,/turnover/); assert.match(server,/fees/);
-  assert.match(css,/bot-analytics-grid/);
+  assert.ok(html.includes('class="bot-analytics-card auth-only"'));
+  assert.ok(html.includes('id="botMetricReturn"'));
+  assert.ok(html.includes('id="botMetricSharpe"'));
+  assert.ok(html.includes('id="botMetricSortino"'));
+  assert.ok(html.includes('id="botMetricVolatility"'));
+  assert.ok(html.includes('id="botMetricTrades"'));
+  assert.ok(html.includes('id="botMetricFees"'));
+  assert.ok(html.includes('id="botMetricTurnover"'));
+  assert.ok(app.includes('/api/bots/"+encodeURIComponent(type)+"/backtest?days='));
+  assert.ok(server.includes('app.get("/api/bots/:botType/backtest",auth'));
+  assert.ok(server.includes('sharpe'));
+  assert.ok(server.includes('sortino'));
+  assert.ok(server.includes('volatility'));
+  assert.ok(server.includes('turnover'));
+  assert.ok(server.includes('fees'));
+  assert.ok(css.includes('.bot-analytics-grid'));
 });
 
 test("bot execution applies configured trade and position limits",()=>{
