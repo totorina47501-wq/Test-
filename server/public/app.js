@@ -816,25 +816,24 @@ function renderBots(){
   if(aiStatus){const ai=botState.ai||{enabled:false,provider:"none"};aiStatus.classList.toggle("active",!!ai.enabled);aiStatus.innerHTML="<i></i> "+(ai.enabled?"IA active · "+String(ai.provider||"fournisseur").toUpperCase():"Ensemble quantitatif · IA LLM optionnelle")}
   renderPlan();
   const meta={
-    shield:{initials:"L",name:"Léon",family:"Gardien",role:"Protection & discipline",tone:"defensif",quote:"Je préfère manquer une opportunité que perdre du capital.",temperament:"Calme · patient",playbook:"Filtre les signaux faibles · réduit l’exposition · protège le cash"},
-    silver:{initials:"I",name:"Iris",family:"Stratège",role:"Tendance & équilibre",tone:"equilibre",quote:"Je cherche la tendance avant de chercher le rendement.",temperament:"Posée · méthodique",playbook:"Confirme le momentum · diversifie · renforce progressivement"},
-    gold:{initials:"M",name:"Milo",family:"Chasseur",role:"Opportunités de marché",tone:"dynamique",quote:"Quand le marché accélère, je veux être déjà positionné.",temperament:"Réactif · offensif",playbook:"Détecte les impulsions · entre tôt · sécurise les gains"},
-    "adaptive-ai":{initials:"N",name:"Nova",family:"Caméléon",role:"Adaptation au régime",tone:"intelligent",quote:"Je change de posture quand le régime change.",temperament:"Flexible · contextuel",playbook:"Lit le régime · croise les signaux · ajuste l’allocation"},
-    "quant-pulse":{initials:"S",name:"Sacha",family:"Statisticien",role:"Facteurs quantitatifs",tone:"quant",quote:"Je ne crois pas au feeling. Je mesure.",temperament:"Précis · rationnel",playbook:"Score les facteurs · compare les écarts · filtre le bruit"},
-    "macro-rotation":{initials:"A",name:"Atlas",family:"Navigateur",role:"Rotation multi-actifs",tone:"macro",quote:"Je regarde le terrain avant de choisir la direction.",temperament:"Visionnaire · prudent",playbook:"Suit les régimes · arbitre les expositions · protège en phase défensive"}
+    shield:{icon:"🛡️",family:"Gardien",tagline:"Préserve le capital",tone:"defensif",focus:"Protection & discipline"},
+    silver:{icon:"◈",family:"Analyste",tagline:"Cherche les tendances propres",tone:"equilibre",focus:"Momentum modéré"},
+    gold:{icon:"✦",family:"Chasseur",tagline:"Capture les mouvements",tone:"dynamique",focus:"Opportunités marché"},
+    "adaptive-ai":{icon:"✧",family:"Intelligence",tagline:"S'adapte au régime",tone:"intelligent",focus:"Signaux + contexte"},
+    "quant-pulse":{icon:"◌",family:"Quant",tagline:"Mesure avant d'agir",tone:"quant",focus:"Facteurs quantitatifs"},
+    "macro-rotation":{icon:"◎",family:"Macro",tagline:"Change de terrain",tone:"macro",focus:"Rotation multi-actifs"}
   };
   grid.innerHTML=catalog.map((bot,index)=>{
     const subscribed=active.has(bot.id),planRank={free:0,pro:1,elite:2},locked=planRank[plan]<planRank[bot.plan],m=meta[bot.id]||meta.silver;
     const assets=(bot.compatible_assets||[]).slice(0,4).join(" · ");
     const access=locked?"Réservé "+(bot.plan==="elite"?"Elite":"Pro"):subscribed?"Actif":"Disponible";
     const action=subscribed?"Gérer":locked?"Voir les conditions":"Découvrir";
-    return '<article class="bot-persona bot-'+bot.id+(locked?" bot-locked":"")+'" data-bot-tone="'+m.tone+'">'+
-      '<div class="bot-persona-top"><span class="bot-card-rank">Niveau '+(index+1)+'</span><div class="bot-avatar" aria-hidden="true"><span>'+m.initials+'</span><i></i></div><div class="bot-persona-identity"><span class="bot-persona-family">'+escapeHtml(m.family)+'</span><h3>'+escapeHtml(m.name)+'</h3><p>'+escapeHtml(m.role)+'</p></div><span class="bot-access '+(subscribed?"active":locked?"locked":"")+'">'+access+'</span></div>'+
-      '<blockquote class="bot-persona-quote">“'+escapeHtml(m.quote)+'”</blockquote>'+
-      '<div class="bot-persona-tags"><span>'+escapeHtml(m.temperament)+'</span><span>'+escapeHtml(bot.tier)+'</span><span>'+String(bot.plan||"free").toUpperCase()+'</span></div>'+
-      '<div class="bot-persona-playbook"><b>SON STYLE</b><span>'+escapeHtml(m.playbook)+'</span></div>'+
-      '<div class="bot-persona-metrics"><span><b>Risque</b>'+escapeHtml(bot.risk)+'</span><span><b>Max</b>'+bot.allocation+'%</span><span><b>Rythme</b>'+escapeHtml(bot.frequency)+'</span></div>'+
-      '<div class="bot-persona-assets"><b>Terrain</b><span>'+escapeHtml(assets||"Multi-actifs")+'</span></div>'+
+    return '<article class="bot-card bot-'+bot.id+(locked?" bot-locked":"")+'" data-bot-tone="'+m.tone+'">'+'<div class="bot-card-rank">Niveau '+(index+1)+'</div>'+
+      '<div class="bot-card-hero"><div class="bot-portrait"><span>'+m.icon+'</span></div><div class="bot-card-identity"><span class="bot-kicker">'+escapeHtml(m.family)+'</span><h3>'+escapeHtml(bot.name.replace(/ Bot$/,""))+'</h3><p>'+escapeHtml(m.tagline)+'</p></div><span class="bot-access '+(subscribed?"active":locked?"locked":"")+'">'+access+'</span></div>'+
+      '<div class="bot-card-focus"><span>'+escapeHtml(m.focus)+'</span><span>'+escapeHtml(bot.tier)+'</span><span>'+String(bot.plan||"free").toUpperCase()+'</span></div>'+
+      '<p class="bot-card-summary">'+escapeHtml(bot.summary||bot.description)+'</p>'+
+      '<div class="bot-stats"><span><b>Risque</b>'+escapeHtml(bot.risk)+'</span><span><b>Allocation max</b>'+bot.allocation+'%</span><span><b>Rythme</b>'+escapeHtml(bot.frequency)+'</span></div>'+
+      '<div class="bot-compatible"><b>ACTIFS</b><span>'+escapeHtml(assets||"Multi-actifs")+'</span></div>'+
       '<div class="bot-card-footer"><span class="bot-card-note">'+(locked?"Débloquez ce profil pour le tester.":"Simulation uniquement · aucun ordre réel.")+'</span><button class="btn '+(locked?"btn-ghost":subscribed?"btn-ghost":"btn-primary")+'" data-bot-open="'+bot.id+'">'+action+' →</button></div>'+
     '</article>';
   }).join("");
