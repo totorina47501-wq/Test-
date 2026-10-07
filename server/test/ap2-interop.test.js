@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AP2_INTEROP_STATUS,mapBitGoldMandateToAp2,validateAp2Boundary } from "../src/ap2-interop.js";
+import { AP2_INTEROP_STATUS,mapBitGoldMandateToAp2,signAp2Boundary,validateAp2Boundary } from "../src/ap2-interop.js";
 
 const mandate={
   vct:"bitgold.agent-payment-mandate.0.2",user_id:7,bot_id:"dca",allowed_assets:["USDC"],
@@ -32,4 +32,14 @@ test("AP2 mapping keeps compliance owned by BitGold",()=>{
 test("current integration explicitly does not claim complete AP2 compliance",()=>{
   assert.equal(AP2_INTEROP_STATUS.completeImplementation,false);
   assert.match(AP2_INTEROP_STATUS.note,/aucune revendication/i);
+});
+
+
+test("signed AP2 boundary detects tampering when signature verification is required",()=>{
+  const secret="test-only-secret-with-at-least-32-characters";
+  const mapped=mapBitGoldMandateToAp2(mandate);
+  const signature=signAp2Boundary(mapped,secret);
+  assert.equal(validateAp2Boundary({...mapped,signature},{requireSignature:true,secret}).valid,true);
+  const tampered={...mapped,paymentMandate:{...mapped.paymentMandate,rail:{type:"simulation",protocol:"internal"}}};
+  assert.deepEqual(validateAp2Boundary({...tampered,signature},{requireSignature:true,secret}),{valid:false,reason:"AP2_SIGNATURE_INVALID"});
 });
