@@ -382,7 +382,7 @@ function renderMarket(markets){
       <div class="market-indicators" data-indicators="${symbol}" aria-label="Indicateurs techniques"><span class="market-indicator muted">Analyse…</span></div>
       <div class="market-actions">${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Simuler</button>`:""}</div>
     </article>`;
-  }).join("");
+  }).join(""):"";
 }
 async function loadMarket(){
   try{
