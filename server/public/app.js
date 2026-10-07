@@ -816,12 +816,12 @@ function renderBots(){
   if(aiStatus){const ai=botState.ai||{enabled:false,provider:"none"};aiStatus.classList.toggle("active",!!ai.enabled);aiStatus.innerHTML="<i></i> "+(ai.enabled?"IA active · "+String(ai.provider||"fournisseur").toUpperCase():"Ensemble quantitatif · IA LLM optionnelle")}
   renderPlan();
   const meta={
-    shield:{icon:"🛡️",family:"Gardien",tagline:"Préserve le capital",tone:"defensif",focus:"Protection & discipline"},
-    silver:{icon:"◈",family:"Analyste",tagline:"Cherche les tendances propres",tone:"equilibre",focus:"Momentum modéré"},
-    gold:{icon:"✦",family:"Chasseur",tagline:"Capture les mouvements",tone:"dynamique",focus:"Opportunités marché"},
-    "adaptive-ai":{icon:"✧",family:"Intelligence",tagline:"S'adapte au régime",tone:"intelligent",focus:"Signaux + contexte"},
-    "quant-pulse":{icon:"◌",family:"Quant",tagline:"Mesure avant d'agir",tone:"quant",focus:"Facteurs quantitatifs"},
-    "macro-rotation":{icon:"◎",family:"Macro",tagline:"Change de terrain",tone:"macro",focus:"Rotation multi-actifs"}
+    shield:{icon:"🛡️",family:"Traditionnel",tagline:"Vous gardez la main",tone:"defensif",focus:"Protection & discipline",engine:"Contrôle utilisateur",engineKind:"traditional"},
+    silver:{icon:"◈",family:"Traditionnel",tagline:"Vous gardez la main",tone:"equilibre",focus:"Momentum modéré",engine:"Règles de stratégie",engineKind:"traditional"},
+    gold:{icon:"✦",family:"Traditionnel",tagline:"Vous gardez la main",tone:"dynamique",focus:"Opportunités marché",engine:"Règles de stratégie",engineKind:"traditional"},
+    "adaptive-ai":{icon:"✧",family:"IA autonome",tagline:"Son moteur travaille avec vous",tone:"intelligent",focus:"Signaux + contexte",engine:"Moteur IA autonome",engineKind:"ai"},
+    "quant-pulse":{icon:"◌",family:"IA autonome",tagline:"Son moteur travaille avec vous",tone:"quant",focus:"Facteurs quantitatifs",engine:"Moteur IA quantitatif",engineKind:"ai"},
+    "macro-rotation":{icon:"◎",family:"IA autonome",tagline:"Son moteur travaille avec vous",tone:"macro",focus:"Rotation multi-actifs",engine:"Moteur IA macro",engineKind:"ai"}
   };
   grid.innerHTML=catalog.map((bot,index)=>{
     const subscribed=active.has(bot.id),planRank={free:0,pro:1,elite:2},locked=planRank[plan]<planRank[bot.plan],m=meta[bot.id]||meta.silver;
@@ -831,8 +831,10 @@ function renderBots(){
     return '<article class="bot-card bot-'+bot.id+(locked?" bot-locked":"")+'" data-bot-tone="'+m.tone+'" data-bot-open="'+bot.id+'" tabindex="0" role="button" aria-label="Ouvrir la fiche '+escapeHtml(bot.name.replace(/ Bot$/,""))+'">'+
       '<div class="bot-card-rank">Niveau '+(index+1)+'</div>'+
       '<div class="bot-card-hero"><div class="bot-portrait"><span>'+m.icon+'</span></div><div class="bot-card-identity"><span class="bot-kicker">'+escapeHtml(m.family)+'</span><h3>'+escapeHtml(bot.name.replace(/ Bot$/,""))+'</h3><p>'+escapeHtml(m.tagline)+'</p></div><span class="bot-access '+(subscribed?"active":locked?"locked":"")+'">'+access+'</span></div>'+
+      '<div class="bot-card-engine '+m.engineKind+'"><span class="bot-engine-badge">'+(m.engineKind==="ai"?"IA":"TRADITIONNEL")+'</span><span>'+escapeHtml(m.engine)+'</span></div>'+
       '<div class="bot-card-focus"><span>'+escapeHtml(m.focus)+'</span><span>'+escapeHtml(bot.tier)+'</span><span>'+String(bot.plan||"free").toUpperCase()+'</span></div>'+
       '<p class="bot-card-summary">'+escapeHtml(bot.summary||bot.description)+'</p>'+
+      '<div class="bot-control-line '+m.engineKind+'"><b>'+(m.engineKind==="ai"?"AUTONOMIE":"CONTRÔLE")+'</b><span>'+(m.engineKind==="ai"?"Le moteur analyse et ajuste la stratégie.":"Vous définissez et pilotez les règles.")+'</span></div>'+
       '<div class="bot-stats"><span><b>Risque</b>'+escapeHtml(bot.risk)+'</span><span><b>Allocation max</b>'+bot.allocation+'%</span><span><b>Rythme</b>'+escapeHtml(bot.frequency)+'</span></div>'+
       '<div class="bot-compatible"><b>ACTIFS</b><span>'+escapeHtml(assets||"Multi-actifs")+'</span></div>'+
       '<div class="bot-card-footer"><span class="bot-card-note">'+(locked?"Profil verrouillé · voir les conditions.":"Simulation uniquement · aucun ordre réel.")+'</span><span class="bot-card-open-label">'+(subscribed?"Gérer la stratégie":"Ouvrir la fiche")+' <b>→</b></span></div>'+
