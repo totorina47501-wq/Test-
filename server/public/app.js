@@ -564,7 +564,7 @@ async function loadCryptoDetailRange(range,options={}){
     setDetailText("detailPeriodMin",data.history?.min!=null?formatPrice(data.history.min):"—");
     setDetailText("detailPeriodMax",data.history?.max!=null?formatPrice(data.history.max):"—");
     if(chart){
-      chart.innerHTML=points.length?buildHistoryChart(points,historyState.symbol,safeRange):"<div class="history-empty">Historique indisponible.</div>";
+      chart.innerHTML=points.length?buildHistoryChart(points,historyState.symbol,safeRange):"<div class=\"history-empty\">Historique indisponible.</div>";
       bindEliteChartTools();
     }
     syncCryptoDetailRefresh();
@@ -588,7 +588,7 @@ async function openCryptoDetail(symbol){
     setDetailText("detailCurrentPrice",price); setDetailText("detail24h",(change>=0?"+":"")+change.toFixed(2).replace(".",",")+"%");
     setDetailText("detailPeriodMin",data.history?.min!=null?formatPrice(data.history.min):"—"); setDetailText("detailPeriodMax",data.history?.max!=null?formatPrice(data.history.max):"—");
     setDetailText("detailMarketCap",formatCompactMoney(data.marketCap)); setDetailText("detailVolume",formatCompactMoney(data.volume24h));
-    document.getElementById("cryptoDetailChart").innerHTML=(data.history?.points||[]).length?buildHistoryChart(data.history.points,symbol,"24h"):"<div class="history-empty">Historique indisponible.</div>";
+    document.getElementById("cryptoDetailChart").innerHTML=(data.history?.points||[]).length?buildHistoryChart(data.history.points,symbol,"24h"):"<div class=\"history-empty\">Historique indisponible.</div>";
     bindEliteChartTools();
     setDetailText("cryptoDetailSource","Source : CoinGecko · données mises à jour automatiquement");
     document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
