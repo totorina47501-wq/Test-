@@ -309,10 +309,11 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     if(!body.paymentPayload||!body.paymentRequirements)return res.status(400).json({error:"paymentPayload et paymentRequirements sont requis."});
     if(!openFacilitator.config.settlementEnabled)return res.status(503).json({error:"Le settlement x402 réel est désactivé.",code:"X402_SETTLEMENT_DISABLED"});
     const requirements=body.paymentRequirements;
-    const amount=Number(requirements.maxAmountRequired??requirements.amount??0);
+    const amountEur=Number(body.amountEur);
+    if(!Number.isFinite(amountEur)||amountEur<=0)return res.status(400).json({error:"amountEur est requis pour appliquer les limites du mandat."});
     const asset=String(requirements.asset||"USDC").toUpperCase();
     const botType=String(body.botType||"agent-payment").toLowerCase();
-    const authorization=await agentPayments.authorize({userId:req.user.sub,botType,asset,amountEur:amount});
+    const authorization=await agentPayments.authorize({userId:req.user.sub,botType,asset,amountEur});
     if(!authorization.allowed)return res.status(403).json({error:"Paiement agent non autorisé.",code:"AGENT_PAYMENT_DENIED"});
     const result=await openFacilitator.settle(body.paymentPayload,requirements);
     res.json({provider:"OpenFacilitator",authorization,...result});
