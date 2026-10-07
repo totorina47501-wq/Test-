@@ -155,6 +155,7 @@ const x402AllowedNetwork=String(process.env.X402_ALLOWED_NETWORK||"eip155:84532"
 const x402AllowedAsset=String(process.env.X402_ALLOWED_ASSET||"").trim();
 const x402AllowedAssetSymbol=String(process.env.X402_ALLOWED_ASSET_SYMBOL||"USDC").trim().toUpperCase();
 const x402PayTo=String(process.env.X402_PAY_TO||"").trim();
+const x402EmergencyStop=String(process.env.X402_EMERGENCY_STOP||"true").trim().toLowerCase()!=="false";
 const openFacilitator = createOpenFacilitator({
   base: String(process.env.X402_FACILITATOR_URL || "https://pay.openfacilitator.io").trim(),
   enabled: String(process.env.X402_FACILITATOR_ENABLED || "false").toLowerCase() === "true",
@@ -392,6 +393,13 @@ app.post("/api/agent-payments/x402/quote",auth,async(req,res)=>{
   }
 });
 
+app.get("/api/agent-payments/x402/status",auth,(req,res)=>res.json({
+  settlementEnabled:Boolean(openFacilitator.config.settlementEnabled),
+  emergencyStop:x402EmergencyStop,
+  settlementAvailable:Boolean(openFacilitator.config.settlementEnabled&&!x402EmergencyStop),
+  mode:x402EmergencyStop?"emergency-stop":openFacilitator.config.settlementEnabled?"enabled":"disabled"
+}));
+
 app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
   const client=await pool.connect();
   try{
@@ -399,6 +407,7 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     if(!body.quoteId||!body.paymentPayload||!body.paymentRequirements)return res.status(400).json({error:"quoteId, paymentPayload et paymentRequirements sont requis."});
     const idempotencyKey=String(req.headers["idempotency-key"]||body.idempotencyKey||"").trim();
     if(!/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey))return res.status(400).json({error:"Idempotency-Key requis (8-128 caractères).",code:"X402_IDEMPOTENCY_REQUIRED"});
+    if(x402EmergencyStop)return res.status(503).json({error:"Arrêt d'urgence x402 actif.",code:"X402_EMERGENCY_STOP"});
     if(!openFacilitator.config.settlementEnabled)return res.status(503).json({error:"Le settlement x402 réel est désactivé.",code:"X402_SETTLEMENT_DISABLED"});
     await client.query("BEGIN");
   await client.query("INSERT INTO bot_ai_decisions(user_id,bot_type,engine,provider,model,action,asset,confidence,regime,reason,features) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",[subscription.user_id,subscription.bot_type,signal.engine||"ensemble-v1",signal.provider||"none",signal.model||null,signal.action||"hold",signal.asset||null,Number(signal.confidence||0),signal.regime?.label||signal.regime?.name||null,signal.message||null,JSON.stringify({features:signal.features||{},selected:signal.selected||null,portfolioRisk:signal.portfolioRisk||null})]);
