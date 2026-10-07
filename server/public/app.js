@@ -705,7 +705,7 @@ function renderDashboard(data){
     if(decisionEmpty)decisionEmpty.hidden=true;
     if(decisionBody)decisionBody.hidden=false;
     const dBot=document.getElementById("dashDecisionBot"),dAction=document.getElementById("dashDecisionAction"),dAsset=document.getElementById("dashDecisionAsset"),dSignal=document.getElementById("dashDecisionSignal"),dTime=document.getElementById("dashDecisionTime"),dReason=document.getElementById("dashDecisionReason");
-    if(dBot)dBot.textContent=botNames[latestDecision.bot_type]||latestDecision.bot_type||"Bot";
+    if(dBot)dBot.textContent=({"shield":"Shield","silver":"Silver","gold":"Gold","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse","macro-rotation":"Macro Rotation"})[latestDecision.bot_type]||latestDecision.bot_type||"Bot";
     if(dAction)dAction.textContent=(latestDecision.action||"Signal").toUpperCase();
     if(dAsset)dAsset.textContent=latestDecision.asset||"—";
     if(dSignal)dSignal.textContent=latestDecision.message||"Signal enregistré";
