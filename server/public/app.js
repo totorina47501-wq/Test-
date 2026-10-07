@@ -180,8 +180,11 @@ function formatMoney(value,options={}){
   const eur=Number(value)||0;
   const currency=options.currency||currentCurrency();
   const converted=eur*Number(BITGOLD_FX.rates[currency]||1);
-  const digits=options.maximumFractionDigits??(Math.abs(converted)<10?4:2);
-  return converted.toLocaleString("fr-FR",{minimumFractionDigits:options.minimumFractionDigits??2,maximumFractionDigits:digits,style:"currency",currency});
+  const requestedMax=options.maximumFractionDigits;
+  const digits=Number.isInteger(requestedMax)&&requestedMax>=0?requestedMax:(Math.abs(converted)<10?4:2);
+  const requestedMin=options.minimumFractionDigits;
+  const minDigits=Number.isInteger(requestedMin)&&requestedMin>=0?Math.min(requestedMin,digits):Math.min(2,digits);
+  return converted.toLocaleString("fr-FR",{minimumFractionDigits:minDigits,maximumFractionDigits:digits,style:"currency",currency});
 }
 function formatCompactMoney(value){
   const eur=Number(value)||0,converted=eur*fxRate();
@@ -361,7 +364,8 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   if(!points?.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
   const clean=points.map(p=>({timestamp:Number(p.timestamp),price:Number(p.price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
   if(!clean.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
-  const pointCounts={"5m":144,"1h":144,"24h":192,"7d":336,"30d":480,"1y":96,"5y":120};
+  // Densité élevée pour une lecture proche des plateformes de trading.
+  const pointCounts={"5m":120,"1h":240,"24h":288,"7d":336,"30d":360,"1y":365,"5y":720};
   const chartRange=HISTORY_RANGES[range]?range:"24h";
   const targetCount=pointCounts[chartRange]||24;
   const sampled=clean.length>targetCount?Array.from({length:targetCount},(_,i)=>clean[Math.round(i*(clean.length-1)/Math.max(targetCount-1,1))]):clean;
