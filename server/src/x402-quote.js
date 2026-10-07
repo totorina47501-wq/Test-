@@ -33,7 +33,7 @@ export function buildPaymentRequirements({
     payTo:String(payTo||"").trim()
   };
   if(!normalized.network||!normalized.asset||!normalized.payTo)throw new Error("network, asset et payTo sont requis.");
-  if(!/^\\d+$/.test(String(amountAtomic||"")))throw new Error("amountAtomic doit être un entier positif en unités atomiques.");
+  if(!/^\d+$/.test(String(amountAtomic||"")))throw new Error("amountAtomic doit être un entier positif en unités atomiques.");
   if(BigInt(amountAtomic)<=0n)throw new Error("amountAtomic doit être strictement positif.");
   const timeout=Number(maxTimeoutSeconds);
   if(!Number.isInteger(timeout)||timeout<1||timeout>3600)throw new Error("maxTimeoutSeconds invalide.");
