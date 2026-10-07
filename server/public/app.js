@@ -219,12 +219,12 @@ function simulateVisitorFees(){
   result.innerHTML="<span>Pour "+formatVisitorEuro(amount)+" en "+operation+" "+label+"</span><strong>"+formatVisitorEuro(fee)+" de frais</strong><small>Net simulé : "+formatVisitorEuro(net)+" · "+(rule.rate*100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" % + "+formatVisitorEuro(rule.fixed)+" · Aucun mouvement réel</small>";
 }
 const DEMO_BOTS={
-  shield:{name:"Shield Bot",asset:"BTC",amount:180,message:"Protection d'abord : petite exposition BTC avec une réserve de cash élevée."},
-  silver:{name:"Silver Bot",asset:"BTC",amount:300,message:"Équilibre tendance et diversification : renforcement progressif du leader."},
-  gold:{name:"Gold Bot",asset:"BTC",amount:450,message:"Approche offensive : renforcement du leader dans la simulation."},
-  "adaptive-ai":{name:"Adaptive AI Bot",asset:"ETH",amount:400,message:"Score adaptatif simulé : allocation vers l'actif présentant le meilleur signal."},
-  "quant-pulse":{name:"Quant Pulse Bot",asset:"SOL",amount:350,message:"Mean-reversion simulée : recherche d'un excès de prix avant entrée."},
-  "macro-rotation":{name:"Macro Rotation Bot",asset:"BTC",amount:500,message:"Rotation macro simulée : privilégie le leader en régime risk-on."}
+  shield:{name:"Shield Bot",asset:"BTC",amount:180,confidence:82,signals:"volatilité modérée · réserve cash · momentum positif",message:"Protection d'abord : petite exposition BTC avec une réserve de cash élevée."},
+  silver:{name:"Silver Bot",asset:"BTC",amount:300,confidence:76,signals:"tendance · diversification · momentum positif",message:"Équilibre tendance et diversification : renforcement progressif du leader."},
+  gold:{name:"Gold Bot",asset:"BTC",amount:450,confidence:88,signals:"momentum fort · régime risk-on · tendance dominante",message:"Approche offensive : renforcement du leader dans la simulation."},
+  "adaptive-ai":{name:"Adaptive AI Bot",asset:"ETH",amount:400,confidence:84,signals:"score adaptatif · momentum · volatilité",message:"Score adaptatif simulé : allocation vers l'actif présentant le meilleur signal."},
+  "quant-pulse":{name:"Quant Pulse Bot",asset:"SOL",amount:350,confidence:79,signals:"mean-reversion · écart au prix moyen · volatilité",message:"Mean-reversion simulée : recherche d'un excès de prix avant entrée."},
+  "macro-rotation":{name:"Macro Rotation Bot",asset:"BTC",amount:500,confidence:81,signals:"régime macro · rotation · momentum",message:"Rotation macro simulée : privilégie le leader en régime risk-on."}
 };
 const demoState={cash:10000,holdings:{BTC:0,ETH:0,SOL:0},activity:[]};
 function demoPortfolioTotal(){
@@ -260,7 +260,7 @@ function demoApplyBot(){
   const qty=amount/price;demoState.cash-=amount;demoState.holdings[bot.asset]=(demoState.holdings[bot.asset]||0)+qty;
   demoState.activity.push({icon:"⚙",title:bot.name+" · décision simulée",text:bot.message+" "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+"."});
   setDemoResult("demoBotResult",bot.name+" a appliqué son scénario démo : "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+".","success");
-  const decision=document.getElementById("demoDecision");if(decision){decision.hidden=false;decision.innerHTML='<div><span>DÉCISION DU BOT</span><strong>'+escapeHtml(bot.name)+'</strong></div><div><b>'+escapeHtml(bot.asset)+'</b><small>Actif sélectionné</small></div><div><b>'+formatMoney(amount,{currency:"EUR"})+'</b><small>Allocation simulée</small></div><div><b>'+qty.toFixed(8)+' '+escapeHtml(bot.asset)+'</b><small>Position ajoutée</small></div>'}
+  const decision=document.getElementById("demoDecision");if(decision){decision.hidden=false;decision.innerHTML='<div><span>DÉCISION DU BOT</span><strong>'+escapeHtml(bot.name)+'</strong></div><div><b>'+escapeHtml(bot.asset)+'</b><small>Actif sélectionné</small></div><div><b>'+formatMoney(amount,{currency:"EUR"})+'</b><small>Allocation simulée</small></div><div><b>'+qty.toFixed(8)+' '+escapeHtml(bot.asset)+'</b><small>Position ajoutée</small></div><div class="demo-decision-why"><span>POURQUOI ?</span><strong>'+escapeHtml(String(bot.confidence||0))+' % de confiance</strong><small>'+escapeHtml(bot.signals||"Signaux simulés")+'</small><em>'+escapeHtml(bot.message)+'</em></div>'}
   renderDemoLab();
 }
 function runDemoSimulation(){
