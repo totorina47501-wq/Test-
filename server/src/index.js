@@ -1097,12 +1097,13 @@ app.get("/api/dashboard/analytics",auth,async(req,res)=>{
 app.get("/api/dashboard",auth,async(req,res)=>{
   try{
     const market=await refreshMarket();
-    const [wallet,holdings,tradeRows,botRows,botActivity,userPlan]=await Promise.all([
+    const [wallet,holdings,tradeRows,botRows,botActivity,latestDecisionRows,userPlan]=await Promise.all([
       pool.query("SELECT cash FROM wallets WHERE user_id=$1",[req.user.sub]),
       pool.query("SELECT asset,quantity FROM holdings WHERE user_id=$1",[req.user.sub]),
       pool.query("SELECT side,asset,amount_eur,price_eur,quantity,created_at FROM trades WHERE user_id=$1 ORDER BY id ASC",[req.user.sub]),
       pool.query("SELECT bot_type,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,last_run FROM bot_subscriptions WHERE user_id=$1 ORDER BY id",[req.user.sub]),
       pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id DESC LIMIT 8",[req.user.sub]),
+      pool.query("SELECT id,bot_type,action,asset,confidence,regime,reason,features,created_at FROM bot_ai_decisions WHERE user_id=$1 ORDER BY id DESC LIMIT 1",[req.user.sub]),
       getUserPlan(req.user.sub)
     ]);
     const cash=Number(wallet.rows[0]?.cash||0);
@@ -1145,6 +1146,7 @@ app.get("/api/dashboard",auth,async(req,res)=>{
       market:{regime,leader,weakest},
       autopilot,
       activity:botActivity.rows,
+      latestDecision:latestDecisionRows[0]||null,
       integrity:{ok:Math.abs(total-(cash+invested))<0.01&&positions.every(row=>row.quantity>=-1e-12),cashPlusInvested:cash+invested,difference:total-(cash+invested),source:"wallets + holdings + live market prices"}
     });
   }catch(e){
