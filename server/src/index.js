@@ -201,6 +201,7 @@ const marketIds = {
 let marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
 let marketUpdatedAt = 0;
 const historyCache = new Map();
+const marketTickHistory = new Map();
 const coingeckoBaseUrl=String(process.env.COINGECKO_API_BASE_URL||"https://api.coingecko.com/api/v3").replace(/\/$/,"");
 const coingeckoApiKey=String(process.env.COINGECKO_API_KEY||"").trim();
 
@@ -235,7 +236,7 @@ async function coingeckoError(response,prefix="CoinGecko"){
 }
 
 async function refreshMarket(force=false) {
-  if(!force && Date.now()-marketUpdatedAt < 30000) return marketSnapshot;
+  if(!force && Date.now()-marketUpdatedAt < 15000) return marketSnapshot;
   try {
     const ids = Object.values(marketIds).join(",");
     const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
@@ -258,6 +259,13 @@ async function refreshMarket(force=false) {
       };
     });
     marketUpdatedAt = Date.now();
+    const tickTimestamp=marketUpdatedAt;
+    for(const row of marketSnapshot){
+      const ticks=marketTickHistory.get(row.symbol)||[];
+      ticks.push({timestamp:tickTimestamp,price:Number(row.price)});
+      const cutoff=tickTimestamp-10*60*1000;
+      marketTickHistory.set(row.symbol,ticks.filter(point=>point.timestamp>=cutoff).slice(-120));
+    }
   } catch(e) {
     console.error("[MARKET] refresh error", e.message);
     if(!marketSnapshot.length) {
@@ -800,6 +808,26 @@ async function fetchHistoryRange(symbol,range){
   const normalizedRange=String(range||"24h").trim().toLowerCase();
   const config=HISTORY_RANGES[normalizedRange]||HISTORY_RANGES["24h"];
   const cacheKey=`${symbol}:range:${normalizedRange}`;
+  if(normalizedRange==="5m"){
+    await refreshMarket();
+    const cutoff=Date.now()-config.maxAgeMs;
+    const ticks=(marketTickHistory.get(symbol)||[]).filter(point=>point.timestamp>=cutoff&&Number.isFinite(Number(point.price))&&Number(point.price)>0);
+    const source=await fetchHistory(symbol,config.days);
+    const sourceRecent=source.filter(point=>Number(point.timestamp)>=cutoff);
+    const merged=[...sourceRecent,...ticks].sort((a,b)=>Number(a.timestamp)-Number(b.timestamp));
+    const unique=[];
+    for(const point of merged){
+      const normalized={timestamp:Number(point.timestamp),price:Number(point.price)};
+      if(!unique.length||normalized.timestamp>unique[unique.length-1].timestamp) unique.push(normalized);
+      else unique[unique.length-1]=normalized;
+    }
+    if(unique.length>=2){
+      const pricesHistory=unique.slice(-120);
+      historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
+      return pricesHistory;
+    }
+    return ticks.length?ticks:sourceRecent;
+  }
   const cached=historyCache.get(cacheKey);
   if(cached && Date.now()-cached.updatedAt<60000)return cached.prices;
   const source=await fetchHistory(symbol,config.days);
