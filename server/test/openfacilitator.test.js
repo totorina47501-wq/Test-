@@ -96,3 +96,22 @@ test("x402 emergency stop is fail-closed and precedes settlement enablement",()=
   assert.match(index,/\/api\/agent-payments\/x402\/status/);
   assert.match(index,/settlementAvailable:Boolean\(openFacilitator.config.settlementEnabled&&!x402EmergencyStop\)/);
 });
+
+
+test("x402 audit exposes correlation and lifecycle without payment secrets",()=>{
+  assert.match(index,/CREATE TABLE IF NOT EXISTS x402_audit/);
+  assert.match(index,/X-Correlation-ID/);
+  assert.match(index,/event:"quote",outcome:"success"/);
+  assert.match(index,/event:"verify",outcome:"success"/);
+  assert.match(index,/event:"authorize",outcome:"success"/);
+  assert.match(index,/event:"settle",outcome:"success"/);
+  assert.match(index,/\/api\/agent-payments\/x402\/audit/);
+  assert.match(index,/secret\|token\|key\|payload\|signature\|authorization\/i/);
+});
+
+test("x402 settlement does not reference unrelated bot signal variables",()=>{
+  const start=index.indexOf('app.post("/api/agent-payments/x402/settle"');
+  const end=index.indexOf('app.post("/api/compliance/provider/webhook"',start);
+  const settle=index.slice(start,end);
+  assert.doesNotMatch(settle,/subscription\.user_id|signal\.engine|bot_ai_decisions/);
+});
