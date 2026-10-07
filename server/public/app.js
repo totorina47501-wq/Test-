@@ -714,13 +714,27 @@ function renderDashboard(data){
   if(latestDecision){
     if(decisionEmpty)decisionEmpty.hidden=true;
     if(decisionBody)decisionBody.hidden=false;
-    const dBot=document.getElementById("dashDecisionBot"),dAction=document.getElementById("dashDecisionAction"),dAsset=document.getElementById("dashDecisionAsset"),dSignal=document.getElementById("dashDecisionSignal"),dTime=document.getElementById("dashDecisionTime"),dReason=document.getElementById("dashDecisionReason");
-    if(dBot)dBot.textContent=({"shield":"Shield","silver":"Silver","gold":"Gold","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse","macro-rotation":"Macro Rotation"})[latestDecision.bot_type]||latestDecision.bot_type||"Bot";
-    if(dAction)dAction.textContent=(latestDecision.action||"Signal").toUpperCase();
-    if(dAsset)dAsset.textContent=latestDecision.asset||"—";
-    if(dSignal)dSignal.textContent=latestDecision.message||"Signal enregistré";
-    if(dTime)dTime.textContent=formatNewsAge(latestDecision.created_at);
-    if(dReason)dReason.textContent="Décision enregistrée dans le journal simulé. Aucun ordre réel n’est exécuté.";
+    const dBot=document.getElementById("dashDecisionBot"),dAction=document.getElementById("dashDecisionAction"),dAsset=document.getElementById("dashDecisionAsset"),dSignal=document.getElementById("dashDecisionSignal"),dConfidence=document.getElementById("dashDecisionConfidence"),dRegime=document.getElementById("dashDecisionRegime"),dTime=document.getElementById("dashDecisionTime"),dReason=document.getElementById("dashDecisionReason"),dWhyTitle=document.getElementById("dashDecisionWhyTitle"),dSignals=document.getElementById("dashDecisionSignals");
+    const decision=data.latestDecision||latestDecision||null;
+    if(dBot)dBot.textContent=({"shield":"Shield","silver":"Silver","gold":"Gold","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse","macro-rotation":"Macro Rotation"})[decision.bot_type]||decision.bot_type||"Bot";
+    if(dAction)dAction.textContent=(decision.action||"Signal").toUpperCase();
+    if(dAsset)dAsset.textContent=decision.asset||"—";
+    if(dSignal)dSignal.textContent=decision.message||decision.reason||"Signal enregistré";
+    if(dConfidence)dConfidence.textContent=Math.round(Number(decision.confidence||0)*100)+" %";
+    if(dRegime)dRegime.textContent=decision.regime||"—";
+    if(dTime)dTime.textContent=formatNewsAge(decision.created_at);
+    if(dReason)dReason.textContent=decision.reason||decision.message||"Décision enregistrée dans le journal simulé.";
+    if(dWhyTitle)dWhyTitle.textContent=(decision.action||"hold")==="hold"?"Pourquoi le moteur attend":"Pourquoi le moteur agit";
+    const features=decision.features?.features||decision.features||{};
+    const signalItems=[
+      ["Momentum",features.momentum!=null?Number(features.momentum).toFixed(2).replace(".",",")+" %":null],
+      ["RSI",features.rsi!=null?Number(features.rsi).toFixed(0):null],
+      ["Volatilité",features.volatility!=null?Number(features.volatility).toFixed(2).replace(".",",")+" %":null],
+      ["Position dans la range",features.rangePosition!=null?Number(features.rangePosition).toFixed(0)+" %":null],
+      ["Sentiment",decision.sentiment?.bias||null],
+      ["Risque portefeuille",decision.portfolioRisk?.score!=null?Number(decision.portfolioRisk.score).toFixed(0)+"/100":null]
+    ].filter(([,value])=>value!=null);
+    if(dSignals)dSignals.innerHTML=signalItems.length?signalItems.map(([label,value])=>"<span><b>"+escapeHtml(label)+"</b><em>"+escapeHtml(String(value))+"</em></span>").join(""):"<span><b>Signaux</b><em>Voir le détail du moteur</em></span>";
   }else{
     if(decisionEmpty)decisionEmpty.hidden=false;
     if(decisionBody)decisionBody.hidden=true;
