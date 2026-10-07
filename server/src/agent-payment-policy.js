@@ -7,7 +7,7 @@ export const AGENT_PLAN_POLICY=Object.freeze({
 });
 
 const ASSETS=new Set(["BTC","ETH","SOL","USDC","LINK","AVAX"]);
-const RAILS=new Set(["simulation","x402-prepared"]);
+const RAILS=new Set(["simulation","x402-prepared","openfacilitator"]);
 
 function planOf(value){
   const p=String(value||"").toLowerCase();
