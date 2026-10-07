@@ -1073,32 +1073,90 @@ window.openSecurityCenter=openSecurityCenter;
 window.addEventListener("DOMContentLoaded",()=>{if(apiToken){const b=document.createElement("button");b.type="button";b.textContent="Sécurité / 2FA";b.className="btn btn-ghost";b.style.position="fixed";b.style.right="18px";b.style.bottom="18px";b.style.zIndex="9990";b.onclick=openSecurityCenter;document.body.appendChild(b)}});
 
 /* BitGold AI comparator — simulation only. */
+const comparatorBotNames={shield:"Shield",adaptive-ai:"Adaptive AI",quant-pulse:"Quant Pulse",silver:"Silver",gold:"Gold","macro-rotation":"Macro Rotation"};
+function comparatorNumber(value,fallback=0){return Number.isFinite(Number(value))?Number(value):fallback}
+function comparatorPct(value){return Number.isFinite(Number(value))?((Number(value)>0?"+":"")+Number(value).toFixed(2)+" %"):"—"}
+function comparatorScore(row,sort){
+  if(sort==="sharpe")return comparatorNumber(row.sharpe,-Infinity);
+  if(sort==="sortino")return comparatorNumber(row.sortino,-Infinity);
+  if(sort==="drawdown")return -comparatorNumber(row.maxDrawdown,Infinity);
+  if(sort==="robustness")return comparatorNumber(row.robustness?.confidence?.p50,-Infinity);
+  return comparatorNumber(row.totalReturn,-Infinity);
+}
+function renderBotComparator(rows){
+  const body=document.querySelector("#botComparatorPanel [data-comparator-body]");
+  const summary=document.getElementById("botComparatorSummary");
+  if(!body)return;
+  if(!rows.length){
+    if(summary)summary.hidden=true;
+    body.innerHTML="<div class="comparator-empty">Aucun résultat.</div>";
+    return;
+  }
+  const sort=document.getElementById("botComparatorSort")?.value||"return";
+  const ranked=rows.slice().sort((a,b)=>comparatorScore(b,sort)-comparatorScore(a,sort));
+  const best=ranked[0];
+  const robustValues=ranked.map(row=>comparatorNumber(row.robustness?.confidence?.p50)).filter(Number.isFinite);
+  const avgReturn=ranked.reduce((sum,row)=>sum+comparatorNumber(row.totalReturn),0)/ranked.length;
+  const avgDrawdown=ranked.reduce((sum,row)=>sum+comparatorNumber(row.maxDrawdown),0)/ranked.length;
+  if(summary){
+    summary.hidden=false;
+    summary.innerHTML="<div><span>Leader selon le tri</span><strong>"+escapeHtml(comparatorBotNames[best.botType]||best.botType)+"</strong></div><div><span>Rendement moyen</span><strong>"+comparatorPct(avgReturn)+"</strong></div><div><span>Drawdown moyen</span><strong>"+comparatorPct(-avgDrawdown)+"</strong></div><div><span>Robustesse médiane</span><strong>"+(robustValues.length?comparatorPct(robustValues.reduce((a,b)=>a+b,0)/robustValues.length):"—")+"</strong></div>";
+  }
+  body.innerHTML=ranked.map((row,index)=>{
+    const robust=row.robustness||{},conf=robust.confidence||{};
+    const name=comparatorBotNames[row.botType]||row.botType;
+    const badge=index===0?"<span class="comparator-badge">Leader</span>":"";
+    return "<article class="comparator-card"+(index===0?" highlight":"")+"">"+
+      "<div class="comparator-rank">#"+(index+1)+"</div>"+
+      "<div class="comparator-main"><strong>"+escapeHtml(name)+"</strong><span>"+row.trades+" trades · "+row.periodPoints+" points"+badge+"</span></div>"+
+      "<div><small>Rendement</small><strong>"+comparatorPct(row.totalReturn)+"</strong></div>"+
+      "<div><small>vs BTC</small><strong>"+comparatorPct(row.benchmarkBTC)+"</strong></div>"+
+      "<div><small>Sharpe</small><strong>"+comparatorNumber(row.sharpe).toFixed(2)+"</strong></div>"+
+      "<div><small>Sortino</small><strong>"+comparatorNumber(row.sortino).toFixed(2)+"</strong></div>"+
+      "<div><small>Volatilité</small><strong>"+comparatorPct(row.volatility)+"</strong></div>"+
+      "<div><small>Drawdown max</small><strong>−"+comparatorNumber(row.maxDrawdown).toFixed(2)+" %</strong></div>"+
+      "<div><small>Robustesse P05/P50/P95</small><strong>"+comparatorPct(conf.p05)+" / "+comparatorPct(conf.p50)+" / "+comparatorPct(conf.p95)+"</strong></div>"+
+      "</article>";
+  }).join("");
+}
 async function loadBotComparator(){
   const panel=document.getElementById("botComparatorPanel");
   if(!panel)return;
   const days=Number(document.getElementById("botComparatorDays")?.value||90);
   const selected=[...document.querySelectorAll("#botComparatorBots input:checked")].map(input=>input.value);
   const body=panel.querySelector("[data-comparator-body]");
-  body.innerHTML="<div class=\"comparator-loading\">Calcul des backtests simulés…</div>";
+  const status=document.getElementById("botComparatorStatus");
+  if(selected.length<2){
+    if(status)status.textContent="Sélectionnez au moins 2 stratégies.";
+    if(body)body.innerHTML="<div class="comparator-empty">Sélectionnez au moins deux stratégies pour comparer leurs profils.</div>";
+    return;
+  }
+  if(body)body.innerHTML="<div class="comparator-loading">Calcul des backtests simulés · "+days+" jours · frais + slippage…</div>";
+  if(status)status.textContent="Calcul en cours…";
   try{
     const data=await apiFetch("/api/bots/comparator?days="+encodeURIComponent(days)+"&bots="+encodeURIComponent(selected.join(",")));
     const rows=Array.isArray(data?.bots)?data.bots:[];
-    if(!rows.length){body.innerHTML="<div class=\"comparator-empty\">Aucun résultat.</div>";return;}
-    body.innerHTML=rows.map((row,index)=>{
-      const robust=row.robustness||{};
-      const conf=robust.confidence||{};
-      const rank=index+1;
-      const fmt=v=>Number.isFinite(Number(v))?Number(v).toFixed(2)+" %":"—";
-      const name=({shield:"Shield Bot","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse",silver:"Silver Bot",gold:"Gold Bot","macro-rotation":"Macro Rotation"})[row.botType]||row.botType;
-      return "<article class=\"comparator-card\"><div class=\"comparator-rank\">#"+rank+"</div><div class=\"comparator-main\"><strong>"+name+"</strong><span>"+row.trades+" trades · "+row.periodPoints+" points</span></div><div><small>Rendement</small><strong>"+fmt(row.totalReturn)+"</strong></div><div><small>Drawdown</small><strong>"+fmt(row.maxDrawdown)+"</strong></div><div><small>Sharpe</small><strong>"+fmt(row.sharpe)+"</strong></div><div><small>Robustesse P05 / P50 / P95</small><strong>"+fmt(conf.p05)+" / "+fmt(conf.p50)+" / "+fmt(conf.p95)+"</strong></div></article>";
-    }).join("");
+    renderBotComparator(rows);
+    if(status)status.textContent=rows.length+" stratégies · historique identique · simulation uniquement.";
   }catch(error){
-    body.innerHTML="<div class=\"comparator-empty\">"+escapeHtml(error.message||"Comparateur indisponible.")+"</div>";
+    if(body)body.innerHTML="<div class="comparator-empty">"+escapeHtml(error.message||"Comparateur indisponible.")+"</div>";
+    if(status)status.textContent="Calcul indisponible.";
   }
+}
+function updateBotComparatorSelection(){
+  const count=document.querySelectorAll("#botComparatorBots input:checked").length;
+  const label=document.getElementById("botComparatorSelection");
+  if(label)label.textContent=count+" stratégie"+(count>1?"s":"")+" sélectionnée"+(count>1?"s":"");
 }
 function initBotComparator(){
   const panel=document.getElementById("botComparatorPanel");
   if(!panel)return;
   panel.querySelector("[data-comparator-run]")?.addEventListener("click",loadBotComparator);
+  panel.querySelectorAll("#botComparatorBots input").forEach(input=>input.addEventListener("change",updateBotComparatorSelection));
+  document.getElementById("botComparatorSort")?.addEventListener("change",()=>{
+    const cards=panel.querySelectorAll(".comparator-card");
+    if(cards.length)loadBotComparator().catch(error=>console.warn("Comparator sort:",error.message));
+  });
+  updateBotComparatorSelection();
 }
 document.addEventListener("DOMContentLoaded",initBotComparator);
