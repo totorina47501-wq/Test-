@@ -979,3 +979,29 @@ body.is-authenticated .visitor-transparency,
 body.is-authenticated .visitor-trust,
 body.is-authenticated .visitor-how,
 body.is-authenticated .visitor-final-cta{display:none!important}
+
+/* Cartes bots — sélection directe + identité visuelle */
+.bot-card{cursor:pointer;position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,filter .22s ease}
+.bot-card:focus-visible{outline:2px solid #c8ff45;outline-offset:3px}
+.bot-card:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 82% 12%,rgba(255,255,255,.13),transparent 38%);opacity:.9}
+.bot-card:hover{transform:translateY(-5px);box-shadow:0 26px 60px rgba(0,0,0,.34)}
+.bot-card-identity h3{font-size:32px!important;line-height:.95!important;letter-spacing:-.045em!important;font-weight:900!important;text-shadow:0 2px 20px rgba(0,0,0,.25)}
+.bot-card-identity p{opacity:.82}
+.bot-card .bot-portrait{width:58px;height:58px;border-radius:17px;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)}
+.bot-card .bot-portrait span{font-size:26px}
+.bot-card-open-label{display:inline-flex;align-items:center;gap:7px;color:#eaf6f0;font-size:11px;font-weight:850;white-space:nowrap}
+.bot-card-open-label b{color:#c8ff45;font-size:16px;transition:transform .2s ease}
+.bot-card:hover .bot-card-open-label b{transform:translateX(3px)}
+.bot-card.bot-shield{border-color:#3476a4;background:radial-gradient(circle at 84% 4%,rgba(72,166,255,.30),transparent 38%),linear-gradient(145deg,#10283b,#091711 74%)}
+.bot-card.bot-silver{border-color:#718c88;background:radial-gradient(circle at 84% 4%,rgba(190,220,214,.28),transparent 38%),linear-gradient(145deg,#263633,#0a1511 74%)}
+.bot-card.bot-gold{border-color:#a9852f;background:radial-gradient(circle at 84% 4%,rgba(255,194,52,.32),transparent 38%),linear-gradient(145deg,#39280d,#0d170f 74%)}
+.bot-card.bot-adaptive-ai{border-color:#8c57bd;background:radial-gradient(circle at 84% 4%,rgba(192,117,255,.31),transparent 38%),linear-gradient(145deg,#2b173b,#0b1510 74%)}
+.bot-card.bot-quant-pulse{border-color:#2c9d83;background:radial-gradient(circle at 84% 4%,rgba(57,224,180,.29),transparent 38%),linear-gradient(145deg,#10352b,#091610 74%)}
+.bot-card.bot-macro-rotation{border-color:#b56f31;background:radial-gradient(circle at 84% 4%,rgba(255,159,71,.31),transparent 38%),linear-gradient(145deg,#38200f,#0d160f 74%)}
+.bot-card.bot-shield .bot-portrait{box-shadow:0 0 30px rgba(72,166,255,.20),inset 0 0 22px rgba(72,166,255,.12)}
+.bot-card.bot-silver .bot-portrait{box-shadow:0 0 30px rgba(190,220,214,.18),inset 0 0 22px rgba(190,220,214,.10)}
+.bot-card.bot-gold .bot-portrait{box-shadow:0 0 30px rgba(255,194,52,.22),inset 0 0 22px rgba(255,194,52,.12)}
+.bot-card.bot-adaptive-ai .bot-portrait{box-shadow:0 0 30px rgba(192,117,255,.22),inset 0 0 22px rgba(192,117,255,.12)}
+.bot-card.bot-quant-pulse .bot-portrait{box-shadow:0 0 30px rgba(57,224,180,.20),inset 0 0 22px rgba(57,224,180,.12)}
+.bot-card.bot-macro-rotation .bot-portrait{box-shadow:0 0 30px rgba(255,159,71,.22),inset 0 0 22px rgba(255,159,71,.12)}
+@media(max-width:700px){.bot-card-identity h3{font-size:28px!important}.bot-card{border-radius:22px}.bot-card-footer{padding-bottom:18px}}
