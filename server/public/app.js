@@ -231,14 +231,14 @@ function demoPortfolioTotal(){
   return demoState.cash+Object.entries(demoState.holdings).reduce((sum,[asset,qty])=>sum+(Number(qty)||0)*(Number(marketPrices[asset])||0),0);
 }
 function renderDemoLab(){
-  const cash=document.getElementById("demoCash"),qty=document.getElementById("demoBtcQty"),total=document.getElementById("demoTotal"),price=document.getElementById("demoBtcPrice"),log=document.getElementById("demoActivity");
+  const cash=document.getElementById("demoCash"),holdings=document.getElementById("demoHoldings"),total=document.getElementById("demoTotal"),price=document.getElementById("demoBtcPrice"),log=document.getElementById("demoActivity");
   if(!cash)return;
-  const btc=Number(demoState.holdings.BTC||0);
+  const positions=Object.entries(demoState.holdings).filter(([,qty])=>Number(qty)>0).map(([asset,qty])=>asset+" "+Number(qty).toFixed(6));
   cash.textContent=formatMoney(demoState.cash,{currency:"EUR"});
-  qty.textContent=btc.toFixed(8)+" BTC";
+  if(holdings)holdings.textContent=positions.length?positions.join(" · "):"Aucune";
   total.textContent=formatMoney(demoPortfolioTotal(),{currency:"EUR"});
   if(price)price.textContent="BTC · "+formatMoney(marketPrices.BTC,{currency:"EUR"});
-  if(log)log.innerHTML=demoState.activity.length?demoState.activity.slice().reverse().map(item=>"<div class=\"demo-activity-row\"><span>"+item.icon+"</span><div><strong>"+escapeHtml(item.title)+"</strong><small>"+escapeHtml(item.text)+"</small></div></div>").join(""):'<div class="demo-empty">Aucune opération simulée.</div>';
+  if(log)log.innerHTML=demoState.activity.length?demoState.activity.slice().reverse().map(item=>"<div class="demo-activity-row"><span>"+item.icon+"</span><div><strong>"+escapeHtml(item.title)+"</strong><small>"+escapeHtml(item.text)+"</small></div></div>").join(""):'<div class="demo-empty">Aucune opération simulée.</div>';
 }
 function openDemoLab(){
   const modal=document.getElementById("demoModal");if(!modal)return;
@@ -258,12 +258,14 @@ function demoApplyBot(){
   const type=document.getElementById("demoBotSelect")?.value||"shield",bot=DEMO_BOTS[type],price=Number(marketPrices[bot.asset]||0),amount=Math.min(bot.amount,250,demoState.cash*.7);
   if(!bot||!price||amount<10)return setDemoResult("demoBotResult","Le bot ne peut pas agir dans ces conditions de simulation.","error");
   const qty=amount/price;demoState.cash-=amount;demoState.holdings[bot.asset]=(demoState.holdings[bot.asset]||0)+qty;
-  demoState.activity.push({icon:"⚙",title:bot.name+" · achat simulé",text:bot.message+" "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+"."});
-  setDemoResult("demoBotResult",bot.name+" a appliqué son scénario démo : achat de "+qty.toFixed(8)+" "+bot.asset+" pour "+formatMoney(amount,{currency:"EUR"})+".","success");renderDemoLab();
+  demoState.activity.push({icon:"⚙",title:bot.name+" · décision simulée",text:bot.message+" "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+"."});
+  setDemoResult("demoBotResult",bot.name+" a appliqué son scénario démo : "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+".","success");
+  const decision=document.getElementById("demoDecision");if(decision){decision.hidden=false;decision.innerHTML='<div><span>DÉCISION DU BOT</span><strong>'+escapeHtml(bot.name)+'</strong></div><div><b>'+escapeHtml(bot.asset)+'</b><small>Actif sélectionné</small></div><div><b>'+formatMoney(amount,{currency:"EUR"})+'</b><small>Allocation simulée</small></div><div><b>'+qty.toFixed(8)+' '+escapeHtml(bot.asset)+'</b><small>Position ajoutée</small></div>'}
+  renderDemoLab();
 }
 function resetDemoLab(){
   demoState.cash=10000;demoState.holdings={BTC:0,ETH:0,SOL:0};demoState.activity=[];
-  setDemoResult("demoTradeResult","Portefeuille démo réinitialisé.","success");setDemoResult("demoBotResult","Prêt pour une nouvelle simulation.","success");renderDemoLab();
+  setDemoResult("demoTradeResult","Portefeuille démo réinitialisé.","success");setDemoResult("demoBotResult","Prêt pour une nouvelle simulation.","success");const decision=document.getElementById("demoDecision");if(decision){decision.hidden=true;decision.innerHTML=""}renderDemoLab();
 }
 function setDemoResult(id,message,type=""){const el=document.getElementById(id);if(el){el.textContent=message;el.className="demo-result"+(type?" "+type:"")}}
 function initHomeExplorer(){
