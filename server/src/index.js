@@ -15,6 +15,7 @@ import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
 import { createCompliance } from "./compliance.js";
 import { createAgentPayments } from "./agent-payment-policy.js";
+import { createOpenFacilitator } from "./openfacilitator.js";
 
 const { Pool } = pg;
 const app = express();
@@ -118,6 +119,11 @@ const agentPayments = createAgentPayments(pool, {
   railMode: String(process.env.PAYMENT_RAIL_MODE || "simulation").trim().toLowerCase()
 });
 await agentPayments.init();
+const openFacilitator = createOpenFacilitator({
+  base: String(process.env.X402_FACILITATOR_URL || "https://pay.openfacilitator.io").trim(),
+  enabled: String(process.env.X402_FACILITATOR_ENABLED || "false").toLowerCase() === "true",
+  settlementEnabled: String(process.env.X402_SETTLEMENT_ENABLED || "false").toLowerCase() === "true"
+});
 
 app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
@@ -275,6 +281,44 @@ app.get("/api/agent-payments/mandate",auth,async(req,res)=>{
 });
 app.delete("/api/agent-payments/mandate/:botType",auth,async(req,res)=>{
   try{res.json(await agentPayments.revokeMandate(req.user.sub,req.params.botType))}catch(e){res.status(500).json({error:"Impossible de révoquer le mandat agent."})}
+});
+
+app.get("/api/agent-payments/x402/status",auth,async(req,res)=>{
+  try{
+    const health=await openFacilitator.health();
+    res.json({provider:"OpenFacilitator",...openFacilitator.config,health});
+  }catch(e){
+    res.status(502).json({provider:"OpenFacilitator",...openFacilitator.config,health:{ok:false,error:e.message}});
+  }
+});
+app.post("/api/agent-payments/x402/verify",auth,async(req,res)=>{
+  try{
+    const body=req.body||{};
+    if(!body.paymentPayload||!body.paymentRequirements)return res.status(400).json({error:"paymentPayload et paymentRequirements sont requis."});
+    const complianceStatus=await compliance.getUserStatus(req.user.sub);
+    if(isProduction&&!complianceStatus.transaction_clear)return res.status(403).json({error:"KYC/AML requis avant vérification d'un paiement agent.",code:"COMPLIANCE_REQUIRED"});
+    const result=await openFacilitator.verify(body.paymentPayload,body.paymentRequirements);
+    res.json({provider:"OpenFacilitator",...result});
+  }catch(e){
+    res.status(e.statusCode||502).json({error:e.message||"Vérification x402 impossible.",code:e.code});
+  }
+});
+app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
+  try{
+    const body=req.body||{};
+    if(!body.paymentPayload||!body.paymentRequirements)return res.status(400).json({error:"paymentPayload et paymentRequirements sont requis."});
+    if(!openFacilitator.config.settlementEnabled)return res.status(503).json({error:"Le settlement x402 réel est désactivé.",code:"X402_SETTLEMENT_DISABLED"});
+    const requirements=body.paymentRequirements;
+    const amount=Number(requirements.maxAmountRequired??requirements.amount??0);
+    const asset=String(requirements.asset||"USDC").toUpperCase();
+    const botType=String(body.botType||"agent-payment").toLowerCase();
+    const authorization=await agentPayments.authorize({userId:req.user.sub,botType,asset,amountEur:amount});
+    if(!authorization.allowed)return res.status(403).json({error:"Paiement agent non autorisé.",code:"AGENT_PAYMENT_DENIED"});
+    const result=await openFacilitator.settle(body.paymentPayload,requirements);
+    res.json({provider:"OpenFacilitator",authorization,...result});
+  }catch(e){
+    res.status(e.statusCode||502).json({error:e.message||"Settlement x402 impossible.",code:e.code});
+  }
 });
 
 app.post("/api/compliance/provider/webhook",async(req,res)=>{
