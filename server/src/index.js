@@ -726,7 +726,7 @@ const HISTORY_RANGES={
   "7d":{label:"7 jours",days:7},
   "30d":{label:"30 jours",days:30},
   "1y":{label:"1 an",days:365},
-  "5y":{label:"5 ans",days:1825},
+  "5y":{label:"5 ans",days:"max"},
 };
 
 app.get("/api/market/details/:symbol",async(req,res)=>{
@@ -753,28 +753,6 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
 });
 
 
-function fallbackNoise(seed,index) {
-  let x=(Math.imul((seed+index*374761393)|0,668265263)>>>0);
-  x^=x>>>13;
-  x=Math.imul(x,1274126177)>>>0;
-  return (x/4294967296)-0.5;
-}
-function buildFallbackHistory(symbol, days, maxAgeMs=null) {
-  const base=Number(prices[symbol])||1;
-  const numericDays=days==="max"?3650:Math.max(Number(days)||7,1);
-  const fallbackWindowMs=Number.isFinite(maxAgeMs)&&maxAgeMs>0?maxAgeMs:numericDays*86400000;
-  const points=maxAgeMs===5*60*1000?12:maxAgeMs===60*60*1000?24:Math.min(1000,Math.max(numericDays===1?288:numericDays===7?168:numericDays===30?720:numericDays>=365?365:120,12));
-  const now=Date.now();
-  const span=fallbackWindowMs;
-  const seed=symbol.split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);
-  let level=1+((seed%9)-4)*0.001;
-  return Array.from({length:points},(_,index)=>{
-    const progress=index/Math.max(points-1,1);
-    level=Math.max(.93,Math.min(1.07,level+fallbackNoise(seed,index)*.012+fallbackNoise(seed+97,index)*.004));
-    return {timestamp:now-span+(span*progress),price:base*level};
-  });
-}
-
 async function fetchHistory(symbol, days) {
   const cacheKey=`${symbol}:${days}`;
   const cached=historyCache.get(cacheKey);
@@ -792,14 +770,14 @@ async function fetchHistory(symbol, days) {
     if(attempt<2) await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
   }
   if(!response?.ok) {
-    console.warn("[MARKET] history fallback",symbol,days,lastError?.message||"CoinGecko indisponible");
-    return buildFallbackHistory(symbol,days);
+    console.warn("[MARKET] history unavailable",symbol,days,lastError?.message||"CoinGecko indisponible");
+    return [];
   }
   const data=await response.json();
   const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
   if(!pricesHistory.length) {
-    console.warn("[MARKET] history fallback",symbol,days,"Aucune donnée historique");
-    return buildFallbackHistory(symbol,days);
+    console.warn("[MARKET] history unavailable",symbol,days,"Aucune donnée historique");
+    return [];
   }
   historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
   return pricesHistory;
@@ -835,9 +813,7 @@ async function fetchHistoryRange(symbol,range){
   if(config.maxAgeMs){
     const cutoff=Date.now()-config.maxAgeMs;
     pricesHistory=source.filter(point=>Number(point.timestamp)>=cutoff);
-    if(pricesHistory.length<2)pricesHistory=buildFallbackHistory(symbol,1,config.maxAgeMs).filter(point=>Number(point.timestamp)>=cutoff);
   }
-  if(!pricesHistory.length)pricesHistory=buildFallbackHistory(symbol,config.days,config.maxAgeMs);
   historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
   return pricesHistory;
 }
@@ -863,8 +839,7 @@ app.get("/api/market/history/:symbol",async(req,res)=>{
     res.json({symbol,days,source:"CoinGecko",prices:pricesHistory});
   } catch(e) {
     console.error("[MARKET] history error",symbol,e.message);
-    const fallback=buildFallbackHistory(symbol,days);
-    res.json({symbol,days,source:"BitGold fallback",prices:fallback});
+    res.json({symbol,days,source:"CoinGecko",prices:[]});
   }
 });
 
