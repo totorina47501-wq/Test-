@@ -261,7 +261,7 @@ function demoApplyBot(){
   demoState.activity.push({icon:"⚙",title:bot.name+" · décision simulée",text:bot.message+" "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+"."});
   setDemoResult("demoBotResult",bot.name+" a appliqué son scénario démo : "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+".","success");
   const decision=document.getElementById("demoDecision");if(decision){decision.hidden=false;decision.innerHTML='<div><span>DÉCISION DU BOT</span><strong>'+escapeHtml(bot.name)+'</strong></div><div><b>'+escapeHtml(bot.asset)+'</b><small>Actif sélectionné</small></div><div><b>'+formatMoney(amount,{currency:"EUR"})+'</b><small>Allocation simulée</small></div><div><b>'+qty.toFixed(8)+' '+escapeHtml(bot.asset)+'</b><small>Position ajoutée</small></div><div class="demo-decision-why"><span>POURQUOI ?</span><strong>'+escapeHtml(String(bot.confidence||0))+' % de confiance</strong><small>'+escapeHtml(bot.signals||"Signaux simulés")+'</small><em>'+escapeHtml(bot.message)+'</em></div>'}
-  renderDemoLab();
+  pushSimNotification(bot.name+" · décision simulée",bot.message+" Allocation de "+formatMoney(amount,{currency:"EUR"})+" sur "+bot.asset+".","⚙");renderDemoLab();
 }
 function runDemoSimulation(){
   const type=document.getElementById("demoBotSelect")?.value||"shield",bot=DEMO_BOTS[type],days=Number(document.getElementById("demoSimDays")?.value||30);
@@ -1231,3 +1231,17 @@ function initBotComparator(){
   updateBotComparatorSelection();
 }
 document.addEventListener("DOMContentLoaded",initBotComparator);
+
+
+/* Centre de notifications — simulation uniquement. */
+const SIM_NOTIFICATION_KEY="bitgold-sim-notifications-v1";
+function getSimNotifications(){try{const raw=localStorage.getItem(SIM_NOTIFICATION_KEY);if(raw)return JSON.parse(raw)}catch(e){}return[
+  {id:"welcome",title:"Bienvenue dans BitGold AI",text:"Votre cockpit et vos bots sont prêts en mode simulation.",icon:"✦",read:false,date:Date.now()},
+  {id:"risk",title:"Risk Center disponible",text:"Surveillez exposition, concentration et drawdown depuis le cockpit.",icon:"◈",read:false,date:Date.now()-60000},
+  {id:"market",title:"Signal marché simulé",text:"Les indicateurs marché sont disponibles pour comparer les actifs.",icon:"↗",read:true,date:Date.now()-120000}
+]}
+function saveSimNotifications(items){try{localStorage.setItem(SIM_NOTIFICATION_KEY,JSON.stringify(items.slice(0,20)))}catch(e){}}
+function pushSimNotification(title,text,icon="•"){const items=getSimNotifications();items.unshift({id:Date.now()+Math.random().toString(16).slice(2),title,text,icon,read:false,date:Date.now()});saveSimNotifications(items);renderSimNotifications()}
+function renderSimNotifications(){const list=document.getElementById("notificationList"),badge=document.getElementById("notificationBadge");if(!list)return;const items=getSimNotifications();const unread=items.filter(x=>!x.read).length;if(badge){badge.hidden=!unread;badge.textContent=unread>9?"9+":String(unread)}if(!items.length){list.innerHTML='<div class="notification-empty">Aucune notification.</div>';return}list.innerHTML=items.map(x=>'<article class="notification-item '+(x.read?"":"unread")+'"><span class="notification-icon">'+escapeHtml(x.icon||"•")+'</span><div><strong>'+escapeHtml(x.title)+'</strong><p>'+escapeHtml(x.text)+'</p></div><time>'+escapeHtml(formatNewsAge(x.date))+'</time></article>').join("")}
+function toggleSimNotifications(force){const panel=document.getElementById("notificationPanel"),trigger=document.getElementById("notificationTrigger");if(!panel)return;const open=force===undefined?panel.hidden:force;panel.hidden=!open;if(trigger)trigger.setAttribute("aria-expanded",String(open));if(open)renderSimNotifications()}
+document.getElementById("notificationTrigger")?.addEventListener("click",()=>toggleSimNotifications());document.getElementById("notificationMarkRead")?.addEventListener("click",()=>{const items=getSimNotifications().map(x=>({...x,read:true}));saveSimNotifications(items);renderSimNotifications()});document.addEventListener("click",event=>{const panel=document.getElementById("notificationPanel"),trigger=document.getElementById("notificationTrigger");if(panel&&!panel.hidden&&!panel.contains(event.target)&&!trigger?.contains(event.target))toggleSimNotifications(false)});window.addEventListener("DOMContentLoaded",renderSimNotifications);
