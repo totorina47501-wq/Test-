@@ -334,7 +334,7 @@ app.post("/api/agent-payments/x402/quote",auth,async(req,res)=>{
     const payTo=String(body.payTo||"").trim();
     const botType=String(body.botType||"agent-payment").trim().toLowerCase();
     if(!Number.isFinite(amountEur)||amountEur<=0)return res.status(400).json({error:"amountEur doit être strictement positif."});
-    if(!/^\\d+$/.test(amountAtomic)||BigInt(amountAtomic)<=0n)return res.status(400).json({error:"amountAtomic doit être un entier positif en unités atomiques."});
+    if(!/^\d+$/.test(amountAtomic)||BigInt(amountAtomic)<=0n)return res.status(400).json({error:"amountAtomic doit être un entier positif en unités atomiques."});
     if(!asset||!assetSymbol||!network||!payTo)return res.status(400).json({error:"asset, assetSymbol, network et payTo sont requis."});
     if(!/^[a-z0-9][a-z0-9._:-]{1,99}$/i.test(network))return res.status(400).json({error:"network x402 invalide."});
     const complianceStatus=await compliance.getUserStatus(req.user.sub);
