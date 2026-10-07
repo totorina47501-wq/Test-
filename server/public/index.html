@@ -357,12 +357,15 @@
 </footer>
 
 <section id="botComparatorPanel" class="section comparator-section">
-  <div class="section-title"><div><span class="eyebrow">BACKTEST IA</span><h2>Comparateur de bots</h2><p class="section-subtitle">Comparer les stratégies sur un historique identique, avec frais, slippage et analyse de robustesse. <strong>Simulation uniquement.</strong></p></div></div>
+  <div class="section-title"><div><span class="eyebrow">STRATEGY LAB · BACKTEST IA</span><h2>Comparateur avancé des stratégies</h2><p class="section-subtitle">Même capital de départ, même historique, mêmes frais et slippage : comparez le rendement, le risque et la robustesse. <strong>Simulation uniquement.</strong></p></div><span class="comparator-mode">SIMULATION</span></div>
   <div class="comparator-controls">
     <label>Période
       <select id="botComparatorDays"><option value="30">30 jours</option><option value="90" selected>90 jours</option><option value="180">180 jours</option></select>
     </label>
-    <div id="botComparatorBots" class="comparator-checks">
+    <label>Classement
+      <select id="botComparatorSort"><option value="return">Rendement</option><option value="sharpe">Sharpe</option><option value="sortino">Sortino</option><option value="drawdown">Drawdown maîtrisé</option><option value="robustness">Robustesse médiane</option></select>
+    </label>
+    <div id="botComparatorBots" class="comparator-checks" aria-label="Stratégies à comparer">
       <label><input type="checkbox" value="shield" checked> Shield</label>
       <label><input type="checkbox" value="adaptive-ai" checked> Adaptive AI</label>
       <label><input type="checkbox" value="quant-pulse" checked> Quant Pulse</label>
@@ -370,12 +373,15 @@
       <label><input type="checkbox" value="gold"> Gold</label>
       <label><input type="checkbox" value="macro-rotation"> Macro Rotation</label>
     </div>
-    <button class="btn btn-primary" type="button" data-comparator-run>Comparer</button>
+    <button class="btn btn-primary" type="button" data-comparator-run>Comparer les stratégies</button>
   </div>
-  <div data-comparator-body class="comparator-results"><div class="comparator-empty">Lancez une comparaison pour calculer les résultats simulés.</div></div>
+  <div class="comparator-toolbar"><span id="botComparatorSelection">3 stratégies sélectionnées</span><span id="botComparatorStatus">Aucun calcul lancé.</span></div>
+  <div id="botComparatorSummary" class="comparator-summary" hidden></div>
+  <div data-comparator-body class="comparator-results"><div class="comparator-empty">Sélectionnez au moins deux stratégies puis lancez une comparaison simulée.</div></div>
+  <p class="comparator-disclaimer">Lecture pédagogique : un meilleur score historique ne garantit pas de meilleure performance future. Aucun ordre réel n'est exécuté.</p>
 </section>
 <style>
-.comparator-section{padding-top:18px}.comparator-controls{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin:18px 0}.comparator-controls label{display:flex;flex-direction:column;gap:6px;font-size:.85rem}.comparator-checks{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.comparator-checks label{display:inline-flex;flex-direction:row;align-items:center;gap:5px}.comparator-results{display:grid;gap:10px}.comparator-card{display:grid;grid-template-columns:auto minmax(150px,1fr) repeat(4,minmax(90px,1fr));gap:14px;align-items:center;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.03)}.comparator-card small,.comparator-card span{display:block;opacity:.65;font-size:.78rem}.comparator-card strong{display:block;margin-top:3px}.comparator-rank{font-size:1.15rem;font-weight:800}.comparator-loading,.comparator-empty{padding:22px;border:1px dashed rgba(255,255,255,.15);border-radius:14px;opacity:.75}@media(max-width:900px){.comparator-card{grid-template-columns:auto 1fr 1fr 1fr}.comparator-card>div:nth-last-child(-n+2){grid-column:span 2}}
+.comparator-section{padding-top:18px}.comparator-mode{padding:7px 10px;border:1px solid #294238;border-radius:999px;color:#c8ff45;font-size:9px;font-weight:800;letter-spacing:.08em}.comparator-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:18px 0 10px}.comparator-controls label{display:flex;flex-direction:column;gap:6px;font-size:9px;color:#71857b;text-transform:uppercase;letter-spacing:.06em}.comparator-controls select{min-height:34px}.comparator-checks{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.comparator-checks label{display:inline-flex;flex-direction:row;align-items:center;gap:5px;padding:8px 9px;border:1px solid #1b3027;border-radius:9px;color:#a5b6ae;background:#0a1711;text-transform:none;letter-spacing:0}.comparator-toolbar{display:flex;justify-content:space-between;gap:10px;margin:10px 0;color:#61736a;font-size:9px}.comparator-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.comparator-summary>div{padding:12px;border:1px solid #1b3027;border-radius:11px;background:#0d1b15}.comparator-summary span{display:block;color:#708179;font-size:8px;text-transform:uppercase;letter-spacing:.07em}.comparator-summary strong{display:block;margin-top:4px;color:#e4eee8;font-size:15px}.comparator-results{display:grid;gap:8px}.comparator-card{display:grid;grid-template-columns:42px minmax(170px,1.5fr) repeat(7,minmax(82px,1fr));gap:8px;align-items:center;padding:12px;border:1px solid #1b3027;border-radius:12px;background:#0a1711}.comparator-card.highlight{border-color:#58792b;box-shadow:0 0 0 1px rgba(200,255,69,.08)}.comparator-card>div{min-width:0}.comparator-card small{display:block;color:#708179;font-size:7px;text-transform:uppercase;letter-spacing:.06em}.comparator-card strong{display:block;margin-top:3px;color:#e4eee8;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.comparator-main strong{font-size:12px}.comparator-main span{display:block;margin-top:3px;color:#61736a;font-size:8px}.comparator-rank{font-size:14px;font-weight:900;color:#c8ff45}.comparator-badge{display:inline-block;margin-top:5px;padding:3px 5px;border-radius:5px;background:#132214;color:#c8ff45;font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.comparator-loading,.comparator-empty{padding:22px;border:1px dashed #294238;border-radius:12px;color:#71857b;font-size:10px}.comparator-disclaimer{margin:12px 0 0;color:#5f7369;font-size:8px;line-height:1.5}@media(max-width:1100px){.comparator-card{grid-template-columns:36px minmax(160px,1.4fr) repeat(4,minmax(82px,1fr))}.comparator-card>div:nth-child(n+7){grid-column:span 2}.comparator-summary{grid-template-columns:1fr 1fr}}@media(max-width:700px){.comparator-controls{align-items:stretch}.comparator-checks{width:100%}.comparator-toolbar{flex-direction:column}.comparator-card{grid-template-columns:36px 1fr 1fr}.comparator-card>div:nth-child(n+4){grid-column:span 1}.comparator-card>div:nth-child(n+6){grid-column:span 1}.comparator-summary{grid-template-columns:1fr 1fr}}
 </style>
 </main>
 <footer><span>© 2026 BitGold</span><span>Prototype — aucun investissement réel</span></footer>
