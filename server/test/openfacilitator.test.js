@@ -127,6 +127,6 @@ test("x402 quote lifecycle starts pending and remains compatible with legacy iss
 
 test("x402 provider exceptions persist a failed state after rollback",()=>{
   assert.match(index,/ROLLBACK/);
-  assert.match(index,/WHERE id=\$1 AND user_id=\$2 AND status='verified'/);
+  assert.match(index,/WHERE id=\$1 AND user_id=\$2 AND status IN \('pending','issued','verified'\)/);
   assert.match(index,/failed_at=CURRENT_TIMESTAMP/);
 });

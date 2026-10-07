@@ -471,7 +471,10 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     try{await client.query("ROLLBACK")}catch{}
     const quoteId=String(req.body?.quoteId||"");
     if(quoteId){
-      await pool.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1 AND user_id=$2 AND status='verified'",[quoteId,req.user.sub]).catch(()=>{});
+      // The transaction rollback also rolls back the transient 'verified' state.
+      // Persist failure from any still-consumable state so provider exceptions
+      // cannot leave the quote reusable.
+      await pool.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1 AND user_id=$2 AND status IN ('pending','issued','verified')",[quoteId,req.user.sub]).catch(()=>{});
     }
     await auditX402({correlationId,quoteId:quoteId||null,userId:req.user.sub,event:"settle",outcome:"failed",code:e.code||"X402_SETTLEMENT_ERROR"}).catch(()=>{});
     res.status(e.statusCode||502).json({error:e.message||"Settlement x402 impossible.",code:e.code});
