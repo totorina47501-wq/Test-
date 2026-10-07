@@ -7,6 +7,7 @@ const html=fs.readFileSync(path.join(root,"public/index.html"),"utf8");
 const app=fs.readFileSync(path.join(root,"public/app.js"),"utf8");
 const css=fs.readFileSync(path.join(root,"public/styles.css"),"utf8");
 const server=fs.readFileSync(path.join(root,"src/index.js"),"utf8");
+const backtest=fs.readFileSync(path.join(root,"src/bot-ai-backtest.js"),"utf8");
 
 test("visitor bot comparison is public and ordered",()=>{
   assert.match(html,/id="bots" class="section bots-section"/);
@@ -43,6 +44,25 @@ test("bot detail pages expose explanations, limits and pricing",()=>{
   assert.match(server,/max_trade_eur/); assert.match(server,/max_position_eur/); assert.match(server,/min_cash_pct/);
   assert.match(server,/id:"shield"[^]*plan:"free"/); assert.match(server,/id:"silver"[^]*plan:"pro"/); assert.match(server,/id:"macro-rotation"[^]*plan:"elite"/);
   assert.match(server,/maxTradeEur/);
+});
+
+test("advanced bot sheets expose quantitative simulation metrics",()=>{
+  assert.ok(html.includes('class="bot-analytics-card auth-only"'));
+  assert.ok(html.includes('id="botMetricReturn"'));
+  assert.ok(html.includes('id="botMetricSharpe"'));
+  assert.ok(html.includes('id="botMetricSortino"'));
+  assert.ok(html.includes('id="botMetricVolatility"'));
+  assert.ok(html.includes('id="botMetricTrades"'));
+  assert.ok(html.includes('id="botMetricFees"'));
+  assert.ok(html.includes('id="botMetricTurnover"'));
+  assert.ok(app.includes('/api/bots/"+encodeURIComponent(type)+"/backtest?days='));
+  assert.ok(server.includes('app.get("/api/bots/:botType/backtest",auth'));
+  assert.ok(backtest.includes('sharpe'));
+  assert.ok(backtest.includes('sortino'));
+  assert.ok(backtest.includes('volatility'));
+  assert.ok(backtest.includes('turnover'));
+  assert.ok(backtest.includes('fees'));
+  assert.ok(css.includes('.bot-analytics-grid'));
 });
 
 test("bot execution applies configured trade and position limits",()=>{
