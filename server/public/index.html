@@ -263,9 +263,9 @@
     <article><span>01</span><div><strong>Signal marché</strong><p>Momentum, RSI, position dans la range et volatilité alimentent l’analyse de stratégie.</p></div></article>
     <article><span>02</span><div><strong>Lecture du bot</strong><p>Chaque stratégie transforme ces signaux en orientation, niveau de confiance et allocation indicative.</p></div></article>
     <article><span>03</span><div><strong>Garde-fous</strong><p>Risque, exposition, montant maximal et réserve de cash restent visibles avant l’action.</p></div></article>
-    <article><span>04</span><div><strong>Journal</strong><p>La décision et les opérations simulées alimentent ensuite le Ledger pour garder une trace exploitable.</p></div></article>
+    <article><span>04</span><div><strong>Journal</strong><p>La décision et les opérations simulées alimentent ensuite le Journal d’activité pour garder une trace exploitable.</p></div></article>
   </div>
-  <div class="bot-decision-rail"><span>Signal IA</span><i>→</i><span>Risk check</span><i>→</i><span>Limites</span><i>→</i><span>Simulation</span><i>→</i><span>Ledger</span></div>
+  <div class="bot-decision-rail"><span>Signal IA</span><i>→</i><span>Risk check</span><i>→</i><span>Limites</span><i>→</i><span>Simulation</span><i>→</i><span>Journal d’activité</span></div>
 </section>
 <section id="pricings" class="section pricing-page-section visitor-only"><div class="pricing-section" aria-label="Pricings BitGold">
   <div class="pricing-heading">
@@ -304,7 +304,7 @@
 <section id="activite" class="activity-page auth-only" hidden>
   <div class="activity-page-shell">
     <button id="activityBack" class="btn btn-ghost" type="button">← Retour au tableau de bord</button>
-    <div class="activity-page-head"><div><span class="eyebrow">LEDGER · JOURNAL PERSONNEL</span><h2>Votre Ledger BitGold</h2><p>Un historique lisible de ce qui a été décidé, simulé ou activé. Chaque ligne répond à une question simple : quoi, pourquoi, quand et avec quel statut ?</p></div><span class="live">Privé · compte connecté</span></div>
+    <div class="activity-page-head"><div><span class="eyebrow">HISTORIQUE · JOURNAL D’ACTIVITÉ</span><h2>Votre historique BitGold</h2><p>Un journal opérationnel clair de vos décisions et opérations simulées. Retrouvez l’action, son origine, son horodatage et son statut dans une vue unique.</p></div><span class="live">Privé · compte connecté</span></div>
     <div class="ledger-trust"><span><b>Décision</b><small>Le bot à l’origine du signal</small></span><span><b>Opération</b><small>Achat, vente ou abonnement</small></span><span><b>Statut</b><small>Journalisé · simulation</small></span></div>
     <div class="activity-filters" role="tablist" aria-label="Filtrer les activités">
       <button class="active" data-activity-filter="all" type="button">Tout</button><button data-activity-filter="bot" type="button">Bots</button><button data-activity-filter="buy" type="button">Achats</button><button data-activity-filter="sell" type="button">Ventes</button><button data-activity-filter="subscription" type="button">Abonnements</button>

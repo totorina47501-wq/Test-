@@ -30,16 +30,16 @@ test("le parcours d'une décision est explicitement expliqué", () => {
     "Risk check",
     "Limites",
     "Simulation",
-    "Ledger"
+    "Journal d’activité"
   ]) {
     assert.ok(html.includes(marker), `marqueur absent: ${marker}`);
   }
 });
 
-test("le Ledger expose un parcours utilisateur lisible", () => {
-  assert.match(html, /LEDGER · JOURNAL PERSONNEL/);
-  assert.match(html, /Votre Ledger BitGold/);
-  assert.match(html, /quoi, pourquoi, quand et avec quel statut/);
+test("le journal d’activité expose un parcours utilisateur lisible", () => {
+  assert.match(html, /HISTORIQUE · JOURNAL D’ACTIVITÉ/);
+  assert.match(html, /Votre historique BitGold/);
+  assert.match(html, /journal opérationnel clair/);
   assert.match(html, /data-activity-filter="bot"/);
   assert.match(html, /data-activity-filter="buy"/);
   assert.match(html, /data-activity-filter="sell"/);
