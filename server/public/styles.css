@@ -892,3 +892,11 @@ main{padding-right:0}
 .news-rail-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 20px}.news-rail-item{padding:18px 0}.news-rail-item.featured{padding-top:18px}.news-rail-item h3{font-size:15px}.news-rail-item.featured h3{font-size:18px}.news-rail-image-wrap{border-radius:12px}.news-rail-more{width:max-content;min-width:210px}.news-rail-intro{padding-bottom:8px}
 @media(max-width:1200px){.bitgold-home-hero{grid-template-columns:1fr;gap:32px}.news-rail-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.bitgold-home-hero{padding-top:36px}.news-rail{margin-top:18px;padding:18px}.news-rail-list{grid-template-columns:1fr}}
+
+
+/* Market + cockpit hierarchy */
+.market-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.market{padding:18px;border-radius:16px;background:linear-gradient(145deg,#0e1d16,#09150f)}.market-card-head{min-height:40px}.market-price-row{margin-top:14px}.market .price{font-size:25px}.market-sparkline{height:68px;margin-top:6px;border-radius:10px}.market-actions{margin-top:12px;padding-top:11px}.market-actions .market-btn{min-height:36px}
+.dashboard-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.pro-kpi{padding:18px;border-radius:16px;background:linear-gradient(145deg,#0d1c15,#09150f);border:1px solid var(--line);box-shadow:0 14px 36px rgba(0,0,0,.10)}.pro-kpi strong{font-size:26px;letter-spacing:-.035em}.pro-kpi small{color:var(--text-muted)}
+.dashboard-cockpit-strip{grid-template-columns:1fr 1fr;gap:12px}.dashboard-pro-grid{grid-template-columns:1.2fr .8fr;gap:12px}.performance-panel{grid-column:1;grid-row:span 2}.risk-panel,.autopilot-panel,.allocation-panel{min-height:190px}.dashboard-analytics-grid{grid-template-columns:1.35fr .65fr;gap:12px}.pro-panel{border-radius:16px;padding:18px}.pro-panel-head{margin-bottom:14px}.pro-panel h3{letter-spacing:-.02em}.activity-panel{margin-top:12px}
+@media(max-width:1100px){.dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-cockpit-strip,.dashboard-pro-grid,.dashboard-analytics-grid{grid-template-columns:1fr}.performance-panel{grid-column:auto;grid-row:auto}}
+@media(max-width:700px){.market-grid{grid-template-columns:1fr}.dashboard-kpis{grid-template-columns:1fr}.pro-kpi strong{font-size:23px}}
