@@ -148,7 +148,12 @@ export function createAgentPayments(pool,{compliance,isProduction=false,enforcem
     ]);
     const today=events.rows.filter(row=>row.event_type==="authorized"&&new Date(row.created_at).toDateString()===new Date().toDateString());
     const spentTodayEur=today.reduce((sum,row)=>sum+Number(row.amount_eur||0),0);
-    return {rail_mode:railMode,enforcement,spentTodayEur,mandates:mandates.rows.map(row=>({...row,id:String(row.id),active:!row.revoked_at&&new Date(row.expires_at).getTime()>Date.now()})),events:events.rows};
+    const activeMandates=mandates.rows.filter(row=>!row.revoked_at&&new Date(row.expires_at).getTime()>Date.now());
+    const dailyCapacityEur=activeMandates.reduce((sum,row)=>sum+Number(row.daily_budget_eur||0),0);
+    const utilizationPct=dailyCapacityEur>0?Math.min(100,Math.round((spentTodayEur/dailyCapacityEur)*10000)/100):0;
+    const deniedToday=events.rows.filter(row=>row.event_type==="denied"&&new Date(row.created_at).toDateString()===new Date().toDateString()).length;
+    const alerts=[...(utilizationPct>=80?[{code:"AGENT_BUDGET_HIGH",severity:utilizationPct>=95?"critical":"warning",utilizationPct}]:[]),...(deniedToday>=5?[{code:"AGENT_DENIAL_SPIKE",severity:"warning",count:deniedToday}]:[])];
+    return {rail_mode:railMode,enforcement,spentTodayEur,dailyCapacityEur,utilizationPct,deniedToday,alerts,mandates:mandates.rows.map(row=>({...row,id:String(row.id),active:!row.revoked_at&&new Date(row.expires_at).getTime()>Date.now()})),events:events.rows};
   }
 
   async function validate({userId,botType,asset,amountEur}){
