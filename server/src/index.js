@@ -18,6 +18,7 @@ import { createAgentPayments } from "./agent-payment-policy.js";
 import { buildPaymentRequirements, hashPaymentRequirements, acceptedMatchesRequirements, requirementsMatch } from "./x402-quote.js";
 import { createOpenFacilitator } from "./openfacilitator.js";
 import { evaluateBot, getBotAIConfig } from "./bot-ai-engine.js";
+import { simulateBacktest } from "./bot-ai-backtest.js";
 
 const { Pool } = pg;
 const app = express();
@@ -992,6 +993,17 @@ app.get("/api/bots/ai/sentiment",auth,async(req,res)=>{
     const decision=await evaluateBot({type:"adaptive-ai",market:marketSnapshot,histories:{},portfolio:{cash:10000,total:10000,positions:[]},subscription:{min_cash_pct:20},news});
     res.json({ok:true,updatedAt:newsCache.updatedAt||Date.now(),source:newsCache.source,engine:decision.engine,sentiment:decision.sentiment});
   }catch(e){console.error("[BOT-AI] sentiment endpoint error",e.message);res.status(502).json({error:"Sentiment IA temporairement indisponible."})}
+});
+app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
+  try{
+    const botType=String(req.params.botType||"").toLowerCase();
+    if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});
+    const days=Math.min(Math.max(Number(req.query.days||30),14),180);
+    const symbols=Object.keys(marketIds).filter(symbol=>symbol!=="USDC");
+    const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)])));
+    const backtest=simulateBacktest({botType,histories,initialCash:10000});
+    res.json({ok:true,source:"CoinGecko",days,backtest});
+  }catch(e){console.error("[BOT-AI] backtest error",e.message);res.status(502).json({error:"Backtest IA temporairement indisponible."})}
 });
 app.get("/api/bots/:botType/decision",auth,async(req,res)=>{try{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});const sub=(await pool.query("SELECT min_cash_pct FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||{min_cash_pct:20};res.json(await botSignal(botType,req.user.sub,sub))}catch(e){console.error("[BOT-AI] decision error",e.message);res.status(500).json({error:"Impossible de calculer la décision IA."})}});
 app.get("/api/bots/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(404).json({error:"Bot inconnu."});const row=(await pool.query("SELECT bot_type,portfolio_name,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,created_at,last_run FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||null;res.json({bot:def,subscription:row})});
