@@ -650,6 +650,15 @@ function renderAssetScenario(symbol,basePrice,returnPct){const el=document.getEl
 async function loadAssetAnalytics(symbol,points,data){const status=document.getElementById("assetAnalyticsStatus");if(!status)return;try{const prices=points.map(p=>Number(p.price)).filter(Number.isFinite);if(prices.length<3)throw new Error("Historique insuffisant");let btc=[];if(symbol!=="BTC"){const btcData=await apiFetch("/api/market/details/BTC?range="+encodeURIComponent(historyState.range));btc=(btcData.history?.points||[]).map(p=>Number(p.price)).filter(Number.isFinite)}else btc=prices.slice();const returns=prices.slice(1).map((v,i)=>prices[i]?((v-prices[i])/prices[i]):0);const btcReturns=btc.slice(1).map((v,i)=>btc[i]?((v-btc[i])/btc[i]):0);const perf=prices[0]?((prices[prices.length-1]-prices[0])/prices[0])*100:0;const btcPerf=btc.length>1&&btc[0]?((btc[btc.length-1]-btc[0])/btc[0])*100:null;const corr=correlationCoefficient(returns,btcReturns);const vol=annualizedVolatility(prices);const dd=maxDrawdown(prices);const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};const pct=v=>v==null||!Number.isFinite(v)?"—":(v>=0?"+":"")+v.toFixed(2).replace(".",",")+" %";set("assetMetricReturn",pct(perf));set("assetMetricVsBtc",btcPerf==null?"—":pct(perf-btcPerf));set("assetMetricVolatility",vol==null?"—":vol.toFixed(2).replace(".",",")+" %");set("assetMetricDrawdown",dd==null?"—":"−"+dd.toFixed(2).replace(".",",")+" %");set("assetMetricCorrelation",corr==null?"—":corr.toFixed(2).replace(".",","));set("assetMetricRank",data?.marketCapRank?"#"+data.marketCapRank:"—");const total=Number(state.cash||0)+Object.entries(state.holdings||{}).reduce((sum,[sym,qty])=>sum+(Number(qty)||0)*(Number(marketPrices[sym])||0),0);const positionValue=(Number(state.holdings?.[symbol])||0)*(Number(marketPrices[symbol])||0);const exposure=total>0?positionValue/total*100:0;set("assetMetricExposure",exposure.toFixed(2).replace(".",",")+" %");set("assetMetricConcentration",exposure.toFixed(2).replace(".",",")+" %");renderAssetScenario(symbol,Number(data?.price)||prices[prices.length-1],perf);status.textContent=historyState.range+" · historique marché · simulation pédagogique";}catch(e){status.textContent=e.message||"Analyse indisponible";}}
 function closeCryptoDetail(){if(cryptoDetailRefreshTimer){clearInterval(cryptoDetailRefreshTimer);cryptoDetailRefreshTimer=null;}const modal=document.getElementById("cryptoDetailModal");if(modal)modal.hidden=true;document.body.classList.remove("modal-open")}
 function cockpitFocusValue(){return safeStorageGet("bitgold-cockpit-focus")||"performance"}
+function cockpitVisibilityValue(){try{const raw=safeStorageGet("bitgold-cockpit-visibility");const parsed=raw?JSON.parse(raw):null;return parsed&&typeof parsed==="object"?{performance:parsed.performance!==false,risk:parsed.risk!==false,bots:parsed.bots!==false}:{performance:true,risk:true,bots:true}}catch{return{performance:true,risk:true,bots:true}}}
+function applyCockpitVisibility(visibility,save=true){
+  const value={performance:visibility?.performance!==false,risk:visibility?.risk!==false,bots:visibility?.bots!==false};
+  const groups={performance:[".performance-panel",".performance-history-panel"],risk:[".risk-panel"],bots:[".autopilot-panel",".decision-panel",".bot-stats-panel"]};
+  Object.entries(groups).forEach(([key,selectors])=>selectors.forEach(selector=>document.querySelectorAll(selector).forEach(el=>el.classList.toggle("cockpit-module-hidden",!value[key]))));
+  document.querySelectorAll("[data-cockpit-visibility]").forEach(btn=>{const key=btn.dataset.cockpitVisibility;btn.classList.toggle("active",!!value[key]);btn.setAttribute("aria-pressed",String(!!value[key]))});
+  if(save)safeStorageSet("bitgold-cockpit-visibility",JSON.stringify(value));
+  return value;
+}
 function applyCockpitFocus(focus,save=true){
   const value=["performance","risk","bots"].includes(focus)?focus:"performance";
   const grid=document.querySelector(".dashboard-pro-grid");
@@ -660,12 +669,14 @@ function applyCockpitFocus(focus,save=true){
 }
 function initCockpitPersonalization(connected=false){
   applyCockpitFocus(cockpitFocusValue(),false);
+  applyCockpitVisibility(cockpitVisibilityValue(),false);
   const modal=document.getElementById("cockpitOnboarding");
   if(!modal)return;
   if(!modal.dataset.initialized){
     modal.dataset.initialized="true";
     let selected=cockpitFocusValue();
     document.querySelectorAll("[data-cockpit-focus]").forEach(btn=>btn.addEventListener("click",()=>applyCockpitFocus(btn.dataset.cockpitFocus)));
+    document.querySelectorAll("[data-cockpit-visibility]").forEach(btn=>btn.addEventListener("click",()=>{const current=cockpitVisibilityValue(),key=btn.dataset.cockpitVisibility;current[key]=!current[key];if(!current.performance&&!current.risk&&!current.bots)current[key]=true;applyCockpitVisibility(current)}));
     document.querySelectorAll("[data-cockpit-choice]").forEach(btn=>btn.addEventListener("click",()=>{selected=btn.dataset.cockpitChoice;document.querySelectorAll("[data-cockpit-choice]").forEach(item=>item.classList.toggle("active",item===btn))}));
     const hide=()=>{modal.hidden=true;document.body.classList.remove("modal-open")};
     document.getElementById("cockpitOnboardingClose")?.addEventListener("click",hide);
