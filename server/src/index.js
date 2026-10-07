@@ -15,7 +15,7 @@ import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
 import { createCompliance } from "./compliance.js";
 import { createAgentPayments } from "./agent-payment-policy.js";
-import { buildPaymentRequirements, hashPaymentRequirements, acceptedMatchesRequirements } from "./x402-quote.js";
+import { buildPaymentRequirements, hashPaymentRequirements, acceptedMatchesRequirements, requirementsMatch } from "./x402-quote.js";
 import { createOpenFacilitator } from "./openfacilitator.js";
 
 const { Pool } = pg;
