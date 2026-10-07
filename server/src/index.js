@@ -365,6 +365,15 @@ app.get("/api/agent-payments/operations",auth,async(req,res)=>{
   }catch(e){res.status(500).json({error:"Impossible de charger le cockpit des paiements agents."})}
 });
 
+app.get("/api/agent-payments/x402/reconciliation",auth,async(req,res)=>{
+  try{
+    const rows=(await pool.query("SELECT id,status,network,asset,amount_atomic,settled_at,failed_at,settlement_receipt,created_at FROM x402_quotes WHERE user_id=$1 ORDER BY created_at DESC LIMIT 200",[req.user.sub])).rows;
+    const counts=rows.reduce((acc,row)=>(acc[row.status]=(acc[row.status]||0)+1,acc),{});
+    const anomalies=rows.filter(row=>(row.status==="settled"&&!row.settlement_receipt)||(row.status==="failed"&&!row.failed_at)).map(row=>({quoteId:row.id,status:row.status,code:row.status==="settled"?"X402_MISSING_RECEIPT":"X402_MISSING_FAILURE_TIMESTAMP"}));
+    res.json({counts,anomalies,recent:rows});
+  }catch(e){res.status(500).json({error:"Impossible de réconcilier les paiements x402."})}
+});
+
 app.get("/api/agent-payments/x402/status",auth,async(req,res)=>{
   try{
     const health=await openFacilitator.health();
