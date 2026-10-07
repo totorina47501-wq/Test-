@@ -263,6 +263,40 @@ function demoApplyBot(){
   const decision=document.getElementById("demoDecision");if(decision){decision.hidden=false;decision.innerHTML='<div><span>DÉCISION DU BOT</span><strong>'+escapeHtml(bot.name)+'</strong></div><div><b>'+escapeHtml(bot.asset)+'</b><small>Actif sélectionné</small></div><div><b>'+formatMoney(amount,{currency:"EUR"})+'</b><small>Allocation simulée</small></div><div><b>'+qty.toFixed(8)+' '+escapeHtml(bot.asset)+'</b><small>Position ajoutée</small></div>'}
   renderDemoLab();
 }
+function runDemoSimulation(){
+  const type=document.getElementById("demoBotSelect")?.value||"shield",bot=DEMO_BOTS[type],days=Number(document.getElementById("demoSimDays")?.value||30);
+  if(!bot)return;
+  const profiles={shield:{beta:.55,alpha:.00035,vol:.007},silver:{beta:.78,alpha:.00045,vol:.010},gold:{beta:1.08,alpha:.00055,vol:.014},"adaptive-ai":{beta:.92,alpha:.0008,vol:.011},"quant-pulse":{beta:.84,alpha:.0007,vol:.009},"macro-rotation":{beta:.72,alpha:.00065,vol:.008}};
+  const profile=profiles[type]||profiles.shield;
+  let value=10000,peak=value,maxDd=0;const curve=[value],events=[];
+  for(let day=1;day<=days;day++){
+    const wave=Math.sin(day*.71+type.length)*.004;
+    const cycle=Math.sin(day*.19+type.length*.7)*.003;
+    const shock=(Math.sin(day*12.9898+type.length*78.233)*43758.5453%1)*profile.vol;
+    const marketReturn=wave+cycle+shock;
+    const daily=marketReturn*profile.beta+profile.alpha;
+    value*=1+daily;
+    if(value>peak)peak=value;
+    const dd=(value-peak)/peak;
+    if(dd<maxDd)maxDd=dd;
+    curve.push(value);
+    if(day===1||day%Math.max(5,Math.round(days/6))===0||day===days){
+      const action=day%3===0?"Renforcement simulé":"Ajustement de risque";
+      events.push({day,value,action,text:bot.name+" · "+action+" · exposition "+bot.asset});
+    }
+  }
+  const pnl=value-10000,chartW=900,chartH=220,padX=8,padY=18,min=Math.min(...curve),max=Math.max(...curve),range=Math.max(max-min,1);
+  const points=curve.map((v,i)=>(padX+(i/(curve.length-1))*(chartW-padX*2)).toFixed(1)+","+(padY+(1-(v-min)/range)*(chartH-padY*2)).toFixed(1)).join(" ");
+  const chart='<div class="demo-sim-chart-head"><span>Valeur du portefeuille</span><b>'+days+' jours</b></div><svg viewBox="0 0 '+chartW+' '+chartH+'" preserveAspectRatio="none" role="img" aria-label="Courbe de simulation sur '+days+' jours"><polyline points="'+points+'" fill="none" stroke="#c8ff45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="demo-sim-axis"><span>J0 · 10 000 €</span><span>J'+Math.round(days/2)+'</span><span>J'+days+'</span></div>';
+  const chartEl=document.getElementById("demoSimChart");if(chartEl)chartEl.innerHTML=chart;
+  const end=document.getElementById("demoSimEnd"),pnlEl=document.getElementById("demoSimPnl"),ddEl=document.getElementById("demoSimDrawdown");
+  if(end)end.textContent=formatMoney(value,{currency:"EUR"});
+  if(pnlEl){pnlEl.textContent=(pnl>=0?"+":"")+formatMoney(pnl,{currency:"EUR"});pnlEl.className=pnl>=0?"positive":"negative"}
+  if(ddEl){ddEl.textContent=(maxDd*100).toFixed(2).replace(".",",")+"%";ddEl.className=maxDd<=-.08?"negative":""}
+  const timeline=document.getElementById("demoSimTimeline");
+  if(timeline)timeline.innerHTML=events.map(e=>'<div class="demo-sim-event"><span>J'+e.day+'</span><div><strong>'+escapeHtml(e.action)+'</strong><small>'+escapeHtml(e.text)+'</small></div><b>'+formatMoney(e.value,{currency:"EUR"})+'</b></div>').join("");
+  demoState.activity.unshift({icon:"▶",title:bot.name+" · simulation "+days+" jours",text:"Résultat synthétique : "+(pnl>=0?"+":"")+formatMoney(pnl,{currency:"EUR"})+" · drawdown max "+(maxDd*100).toFixed(2).replace(".",",")+" %."});
+}
 function resetDemoLab(){
   demoState.cash=10000;demoState.holdings={BTC:0,ETH:0,SOL:0};demoState.activity=[];
   setDemoResult("demoTradeResult","Portefeuille démo réinitialisé.","success");setDemoResult("demoBotResult","Prêt pour une nouvelle simulation.","success");const decision=document.getElementById("demoDecision");if(decision){decision.hidden=true;decision.innerHTML=""}renderDemoLab();
@@ -928,7 +962,7 @@ document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("i
 document.querySelectorAll(".market-periods button").forEach(button=>button.addEventListener("click",()=>setMarketPreviewRange(Number(button.dataset.days))));
 document.querySelectorAll(".crypto-detail-ranges button").forEach(button=>button.addEventListener("click",()=>loadCryptoDetailRange(button.dataset.range)));
 document.getElementById("marketGrid")?.addEventListener("click",event=>{const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
-document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("heroDemo")?.addEventListener("click",openDemoLab);document.getElementById("demoBuyButton")?.addEventListener("click",demoBuyBitcoin);document.getElementById("demoApplyBot")?.addEventListener("click",demoApplyBot);document.getElementById("demoReset")?.addEventListener("click",resetDemoLab);document.getElementById("demoClose")?.addEventListener("click",closeDemoLab);initHomeExplorer();document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
+document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("heroDemo")?.addEventListener("click",openDemoLab);document.getElementById("demoBuyButton")?.addEventListener("click",demoBuyBitcoin);document.getElementById("demoApplyBot")?.addEventListener("click",demoApplyBot);document.getElementById("demoRunSimulation")?.addEventListener("click",runDemoSimulation);document.getElementById("demoReset")?.addEventListener("click",resetDemoLab);document.getElementById("demoClose")?.addEventListener("click",closeDemoLab);initHomeExplorer();document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
 document.getElementById("tradeConfirm")?.addEventListener("click",executeTrade);
