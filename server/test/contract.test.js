@@ -7,6 +7,7 @@ const html=fs.readFileSync(path.join(root,"public/index.html"),"utf8");
 const app=fs.readFileSync(path.join(root,"public/app.js"),"utf8");
 const css=fs.readFileSync(path.join(root,"public/styles.css"),"utf8");
 const server=fs.readFileSync(path.join(root,"src/index.js"),"utf8");
+const backtest=fs.readFileSync(path.join(root,"src/bot-ai-backtest.js"),"utf8");
 
 test("visitor bot comparison is public and ordered",()=>{
   assert.match(html,/id="bots" class="section bots-section"/);
@@ -56,11 +57,11 @@ test("advanced bot sheets expose quantitative simulation metrics",()=>{
   assert.ok(html.includes('id="botMetricTurnover"'));
   assert.ok(app.includes('/api/bots/"+encodeURIComponent(type)+"/backtest?days='));
   assert.ok(server.includes('app.get("/api/bots/:botType/backtest",auth'));
-  assert.ok(server.includes('sharpe'));
-  assert.ok(server.includes('sortino'));
-  assert.ok(server.includes('volatility'));
-  assert.ok(server.includes('turnover'));
-  assert.ok(server.includes('fees'));
+  assert.ok(backtest.includes('sharpe'));
+  assert.ok(backtest.includes('sortino'));
+  assert.ok(backtest.includes('volatility'));
+  assert.ok(backtest.includes('turnover'));
+  assert.ok(backtest.includes('fees'));
   assert.ok(css.includes('.bot-analytics-grid'));
 });
 
