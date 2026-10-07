@@ -721,6 +721,20 @@ app.get("/api/news",async(req,res)=>{
     return res.status(502).json({error:"Actualités temporairement indisponibles.",items:[]});
   }
 });
+async function getBotNewsForAI(){
+  if(newsCache.items.length&&Date.now()-newsCache.updatedAt<300000)return newsCache.items;
+  try{
+    const {items}=await fetchProfessionalNews();
+    newsCache.items=items;
+    newsCache.source="BitGold News · IA";
+    newsCache.updatedAt=Date.now();
+    return items;
+  }catch(e){
+    console.warn("[BOT-AI] news sentiment unavailable:",e.message);
+    return newsCache.items;
+  }
+}
+
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
 const HISTORY_RANGES={
   "5m":{label:"5 min",days:1,maxAgeMs:5*60*1000},
@@ -867,7 +881,13 @@ async function botSignal(type,userId,subscription={}){
  const positions=holdings.rows.map(row=>{const asset=String(row.asset||"").toUpperCase();const quantity=Number(row.quantity||0);const price=Number(prices[asset]||0);return{asset,quantity,price,value:quantity*price,allocation:0}}).filter(row=>row.quantity>0&&row.price>0);
  const total=cash+positions.reduce((sum,row)=>sum+row.value,0);
  const weighted=positions.map(row=>({...row,allocation:total?row.value/total*100:0}));
- return evaluateBot({type,market:marketSnapshot,histories,portfolio:{cash,total,positions:weighted},subscription});
+ const news=await getBotNewsForAI();
+ const decision=await evaluateBot({type,market:marketSnapshot,histories,portfolio:{cash,total,positions:weighted},subscription,news});
+ await pool.query(
+   "INSERT INTO bot_ai_decisions(user_id,bot_type,engine,provider,model,action,asset,confidence,regime,reason,features) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+   [userId,type,decision.engine,decision.provider,decision.model,decision.action,decision.asset,decision.confidence,decision.regime?.name||"unknown",decision.message,JSON.stringify({selected:decision.selected,portfolioRisk:decision.portfolioRisk,sentiment:decision.sentiment})]
+ );
+ return decision;
 }
 async function executeBotDecision(subscription,signal){
  const complianceCheck=()=>compliance.assertTransactionAllowed(subscription.user_id);
@@ -965,7 +985,14 @@ app.post("/api/stripe/portal",auth,async(req,res)=>{
 app.get("/api/plan",auth,async(req,res)=>{try{res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de charger le plan."})}});
 app.post("/api/plan/demo",auth,async(req,res)=>{try{const plan=String(req.body.plan||"free").toLowerCase();if(!["free","pro","elite"].includes(plan))return res.status(400).json({error:"Plan invalide."});await pool.query("UPDATE users SET plan=$1,pro_since=CASE WHEN $1='pro' THEN COALESCE(pro_since,CURRENT_TIMESTAMP) ELSE NULL END WHERE id=$2",[plan,req.user.sub]);res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de modifier le plan de démonstration."})}});
 app.get("/api/bots/catalog",(req,res)=>res.json({catalog:BOT_CATALOG,ai:getBotAIConfig()}));
-app.get("/api/bots/ai/status",auth,async(req,res)=>{try{res.json({ok:true,...getBotAIConfig()})}catch(e){res.status(500).json({error:"Impossible de charger le moteur IA."})}});
+app.get("/api/bots/ai/status",auth,async(req,res)=>{try{res.json({ok:true,...getBotAIConfig(),sentiment:{enabled:true,source:"BitGold News",windowHours:36}})}catch(e){res.status(500).json({error:"Impossible de charger le moteur IA."})}});
+app.get("/api/bots/ai/sentiment",auth,async(req,res)=>{
+  try{
+    const news=await getBotNewsForAI();
+    const decision=await evaluateBot({type:"adaptive-ai",market:marketSnapshot,histories:{},portfolio:{cash:10000,total:10000,positions:[]},subscription:{min_cash_pct:20},news});
+    res.json({ok:true,updatedAt:newsCache.updatedAt||Date.now(),source:newsCache.source,engine:decision.engine,sentiment:decision.sentiment});
+  }catch(e){console.error("[BOT-AI] sentiment endpoint error",e.message);res.status(502).json({error:"Sentiment IA temporairement indisponible."})}
+});
 app.get("/api/bots/:botType/decision",auth,async(req,res)=>{try{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});const sub=(await pool.query("SELECT min_cash_pct FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||{min_cash_pct:20};res.json(await botSignal(botType,req.user.sub,sub))}catch(e){console.error("[BOT-AI] decision error",e.message);res.status(500).json({error:"Impossible de calculer la décision IA."})}});
 app.get("/api/bots/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(404).json({error:"Bot inconnu."});const row=(await pool.query("SELECT bot_type,portfolio_name,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,created_at,last_run FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||null;res.json({bot:def,subscription:row})});
 app.get("/api/bots",auth,async(req,res)=>{try{const [subs,activity,plan]=await Promise.all([pool.query("SELECT bot_type,portfolio_name,active,created_at,last_run,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct FROM bot_subscriptions WHERE user_id=$1 ORDER BY id",[req.user.sub]),pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id DESC LIMIT 30",[req.user.sub]),getUserPlan(req.user.sub)]);res.json({catalog:BOT_CATALOG,items:subs.rows,activity:activity.rows,plan})}catch(e){res.status(500).json({error:"Impossible de charger les bots."})}});
