@@ -881,3 +881,14 @@ body{background:var(--bg);color:var(--text);font-size:15px;-webkit-font-smoothin
 .section{padding-top:72px;padding-bottom:24px;border-top:1px solid rgba(28,55,42,.75)}.section-title,.section-head{margin-bottom:26px}.section h2{letter-spacing:-.035em}.eyebrow{letter-spacing:.14em}
 .card,.panel,.pro-panel,.market,.bot-card,.about-card,.trust-item,.news-card,.newsletter-card,.simulator,.demo-modal-box{box-shadow:0 18px 48px rgba(0,0,0,.12)}
 @media(max-width:850px){.topbar{height:66px;padding:0 14px}.topbar nav{gap:3px}.topbar nav a{padding:8px 9px;font-size:12px}.section{padding-top:54px}.btn{min-height:38px}}
+
+
+/* Homepage focus + integrated news */
+main{padding-right:0}
+.bitgold-home-hero{grid-template-columns:minmax(0,1.08fr) minmax(400px,.92fr);gap:56px;padding-top:68px}
+.bitgold-home-hero .hero-copy{max-width:720px}.bitgold-home-hero h1{max-width:760px}.bitgold-home-hero .hero-proof{gap:8px}.bitgold-home-hero .hero-proof span{background:#0b1812;border-color:#20392d}
+.home-explorer{border:1px solid #294b3b;background:linear-gradient(150deg,#0f2118,#09150f);box-shadow:0 26px 70px rgba(0,0,0,.22);border-radius:22px}
+.news-rail{position:relative;inset:auto;width:100%;max-width:none;max-height:none;margin:26px 0 0;padding:24px;border-radius:22px;background:linear-gradient(145deg,#0d1d15,#09150f);border-color:#20392d;box-shadow:none}
+.news-rail-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 20px}.news-rail-item{padding:18px 0}.news-rail-item.featured{padding-top:18px}.news-rail-item h3{font-size:15px}.news-rail-item.featured h3{font-size:18px}.news-rail-image-wrap{border-radius:12px}.news-rail-more{width:max-content;min-width:210px}.news-rail-intro{padding-bottom:8px}
+@media(max-width:1200px){.bitgold-home-hero{grid-template-columns:1fr;gap:32px}.news-rail-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.bitgold-home-hero{padding-top:36px}.news-rail{margin-top:18px;padding:18px}.news-rail-list{grid-template-columns:1fr}}
