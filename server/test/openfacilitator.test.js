@@ -84,3 +84,15 @@ test("x402 settlement requires idempotency and audits lifecycle states",()=>{
   assert.match(index,/status='failed',failed_at=CURRENT_TIMESTAMP/);
   assert.match(index,/quote\.status==="settled"&&quote\.idempotency_key===idempotencyKey/);
 });
+
+
+test("x402 emergency stop is fail-closed and precedes settlement enablement",()=>{
+  assert.match(index,/X402_EMERGENCY_STOP\|\|"true"/);
+  const emergency=index.indexOf('if(x402EmergencyStop)');
+  const enabled=index.indexOf('if(!openFacilitator.config.settlementEnabled)',emergency);
+  assert.ok(emergency>=0);
+  assert.ok(enabled>emergency);
+  assert.match(index,/X402_EMERGENCY_STOP/);
+  assert.match(index,/\/api\/agent-payments\/x402\/status/);
+  assert.match(index,/settlementAvailable:Boolean\(openFacilitator.config.settlementEnabled&&!x402EmergencyStop\)/);
+});
