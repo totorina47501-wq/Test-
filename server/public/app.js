@@ -455,7 +455,7 @@ function bindEliteChartTools(){
   const indicators=calculateIndicators(clean);
   const panel=document.createElement("div");
   panel.className="elite-chart-indicators";
-  panel.innerHTML="<span><b>Momentum</b> "+(indicators.momentum==null?"—":(indicators.momentum>=0?"+":"")+indicators.momentum.toFixed(2).replace(".",",")+"%</span><span><b>RSI</b> "+(indicators.rsi==null?"—":indicators.rsi.toFixed(0))+"</span><span><b>Volatilité</b> "+(indicators.volatility==null?"—":indicators.volatility.toFixed(2).replace(".",",")+"%")+"</span><span><b>Repère</b> date/heure au survol</span>";
+  panel.innerHTML=`<span><b>Momentum</b> ${indicators.momentum==null?"—":(indicators.momentum>=0?"+":"")+indicators.momentum.toFixed(2).replace(".",",")+"%"}</span><span><b>RSI</b> ${indicators.rsi==null?"—":indicators.rsi.toFixed(0)}</span><span><b>Volatilité</b> ${indicators.volatility==null?"—":indicators.volatility.toFixed(2).replace(".",",")+"%"}</span><span><b>Repère</b> date/heure au survol</span>`;
   wrap.appendChild(panel);
 }
 function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.range){
