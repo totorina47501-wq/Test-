@@ -130,6 +130,16 @@
       <button class="btn btn-primary" id="autopilotAction" type="button">Voir la stratégie</button>
       <small class="panel-note">Suggestion simulée — aucune exécution automatique.</small>
     </article>
+    <article class="pro-panel decision-panel">
+      <div class="pro-panel-head"><div><span class="eyebrow">DERNIÈRE DÉCISION</span><h3>Ce que fait le moteur</h3></div><span id="dashDecisionType" class="status-pill">SIMULATION</span></div>
+      <div id="dashDecisionEmpty" class="empty-state">Aucune décision récente.</div>
+      <div id="dashDecisionBody" hidden>
+        <div class="decision-main"><strong id="dashDecisionBot">—</strong><span id="dashDecisionAction">—</span></div>
+        <div class="decision-facts"><span>Actif <b id="dashDecisionAsset">—</b></span><span>Signal <b id="dashDecisionSignal">—</b></span><span>Horodatage <b id="dashDecisionTime">—</b></span></div>
+        <p id="dashDecisionReason">—</p>
+      </div>
+      <button class="btn btn-ghost" id="dashDecisionOpen" type="button">Voir le journal complet</button>
+    </article>
     <article class="pro-panel allocation-panel">
       <div class="pro-panel-head"><div><span class="eyebrow">ALLOCATION</span><h3>Répartition actuelle</h3></div><span id="dashRegime" class="status-pill">—</span></div>
       <div id="dashAllocations" class="allocation-list"><div class="empty-state">Chargement…</div></div>

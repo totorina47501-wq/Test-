@@ -699,6 +699,22 @@ function renderDashboard(data){
     const rows=p.positions||[];
     allocations.innerHTML=rows.length?rows.slice(0,5).map(row=>`<div class="allocation-row"><strong>${escapeHtml(row.asset)}</strong><div class="allocation-track"><span style="width:${Math.min(100,Number(row.allocation||0))}%"></span></div><em>${Number(row.allocation||0).toFixed(1).replace(".",",")}%</em></div>`).join(""):'<div class="empty-state">Aucun actif détenu pour le moment.</div>';
   }
+  const decisionRows=data.activity||[], latestDecision=decisionRows[0];
+  const decisionEmpty=document.getElementById("dashDecisionEmpty"),decisionBody=document.getElementById("dashDecisionBody");
+  if(latestDecision){
+    if(decisionEmpty)decisionEmpty.hidden=true;
+    if(decisionBody)decisionBody.hidden=false;
+    const dBot=document.getElementById("dashDecisionBot"),dAction=document.getElementById("dashDecisionAction"),dAsset=document.getElementById("dashDecisionAsset"),dSignal=document.getElementById("dashDecisionSignal"),dTime=document.getElementById("dashDecisionTime"),dReason=document.getElementById("dashDecisionReason");
+    if(dBot)dBot.textContent=({"shield":"Shield","silver":"Silver","gold":"Gold","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse","macro-rotation":"Macro Rotation"})[latestDecision.bot_type]||latestDecision.bot_type||"Bot";
+    if(dAction)dAction.textContent=(latestDecision.action||"Signal").toUpperCase();
+    if(dAsset)dAsset.textContent=latestDecision.asset||"—";
+    if(dSignal)dSignal.textContent=latestDecision.message||"Signal enregistré";
+    if(dTime)dTime.textContent=formatNewsAge(latestDecision.created_at);
+    if(dReason)dReason.textContent="Décision enregistrée dans le journal simulé. Aucun ordre réel n’est exécuté.";
+  }else{
+    if(decisionEmpty)decisionEmpty.hidden=false;
+    if(decisionBody)decisionBody.hidden=true;
+  }
   const status=document.getElementById("autopilotStatus");if(status)status.textContent=auto.status||"—";
   const title=document.getElementById("autopilotTitle");if(title)title.textContent=auto.title||"Analyse du marché";
   const reason=document.getElementById("autopilotReason");if(reason)reason.textContent=auto.reason||"Aucune recommandation disponible.";
@@ -962,7 +978,7 @@ document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("i
 document.querySelectorAll(".market-periods button").forEach(button=>button.addEventListener("click",()=>setMarketPreviewRange(Number(button.dataset.days))));
 document.querySelectorAll(".crypto-detail-ranges button").forEach(button=>button.addEventListener("click",()=>loadCryptoDetailRange(button.dataset.range)));
 document.getElementById("marketGrid")?.addEventListener("click",event=>{const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
-document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("heroDemo")?.addEventListener("click",openDemoLab);document.getElementById("demoBuyButton")?.addEventListener("click",demoBuyBitcoin);document.getElementById("demoApplyBot")?.addEventListener("click",demoApplyBot);document.getElementById("demoRunSimulation")?.addEventListener("click",runDemoSimulation);document.getElementById("demoReset")?.addEventListener("click",resetDemoLab);document.getElementById("demoClose")?.addEventListener("click",closeDemoLab);initHomeExplorer();document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
+document.getElementById("dashDecisionOpen")?.addEventListener("click",()=>{window.location.hash="#activite"});document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("heroDemo")?.addEventListener("click",openDemoLab);document.getElementById("demoBuyButton")?.addEventListener("click",demoBuyBitcoin);document.getElementById("demoApplyBot")?.addEventListener("click",demoApplyBot);document.getElementById("demoRunSimulation")?.addEventListener("click",runDemoSimulation);document.getElementById("demoReset")?.addEventListener("click",resetDemoLab);document.getElementById("demoClose")?.addEventListener("click",closeDemoLab);initHomeExplorer();document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
 document.getElementById("tradeConfirm")?.addEventListener("click",executeTrade);
