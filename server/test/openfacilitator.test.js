@@ -115,3 +115,18 @@ test("x402 settlement does not reference unrelated bot signal variables",()=>{
   const settle=index.slice(start,end);
   assert.doesNotMatch(settle,/subscription\.user_id|signal\.engine|bot_ai_decisions/);
 });
+
+
+test("x402 quote lifecycle starts pending and remains compatible with legacy issued quotes",()=>{
+  assert.match(index,/status TEXT NOT NULL DEFAULT 'pending'/);
+  assert.match(index,/\["pending","issued"\]\.includes\(quote\.status\)/);
+  assert.match(index,/SET status='verified'/);
+  assert.match(index,/SET status='settled'/);
+  assert.match(index,/SET status='failed'/);
+});
+
+test("x402 provider exceptions persist a failed state after rollback",()=>{
+  assert.match(index,/ROLLBACK/);
+  assert.match(index,/WHERE id=\$1 AND user_id=\$2 AND status='verified'/);
+  assert.match(index,/failed_at=CURRENT_TIMESTAMP/);
+});
