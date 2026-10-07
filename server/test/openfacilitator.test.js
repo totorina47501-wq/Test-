@@ -65,3 +65,68 @@ test("x402 quote helper binds amount, network, asset and recipient",()=>{
   assert.equal(acceptedMatchesRequirements({accepted:requirements},requirements),true);
   assert.equal(acceptedMatchesRequirements({accepted:{...requirements,network:"eip155:1"}},requirements),false);
 });
+
+
+test("x402 quote is fail-closed behind a server allowlist",()=>{
+  assert.match(index,/X402_ALLOWED_NETWORK/);
+  assert.match(index,/X402_ALLOWED_ASSET/);
+  assert.match(index,/X402_ALLOWED_ASSET_SYMBOL/);
+  assert.match(index,/X402_PAY_TO/);
+  assert.match(index,/X402_ALLOWLIST_NOT_CONFIGURED/);
+  assert.match(index,/X402_TARGET_DENIED/);
+});
+
+test("x402 settlement requires idempotency and audits lifecycle states",()=>{
+  assert.match(index,/Idempotency-Key requis/);
+  assert.match(index,/idempotency_key TEXT/);
+  assert.match(index,/status='verified'/);
+  assert.match(index,/status='settled',settled_at=CURRENT_TIMESTAMP/);
+  assert.match(index,/status='failed',failed_at=CURRENT_TIMESTAMP/);
+  assert.match(index,/quote\.status==="settled"&&quote\.idempotency_key===idempotencyKey/);
+});
+
+
+test("x402 emergency stop is fail-closed and precedes settlement enablement",()=>{
+  assert.match(index,/X402_EMERGENCY_STOP\|\|"true"/);
+  const emergency=index.indexOf('if(x402EmergencyStop)');
+  const enabled=index.indexOf('if(!openFacilitator.config.settlementEnabled)',emergency);
+  assert.ok(emergency>=0);
+  assert.ok(enabled>emergency);
+  assert.match(index,/X402_EMERGENCY_STOP/);
+  assert.match(index,/\/api\/agent-payments\/x402\/status/);
+  assert.match(index,/settlementAvailable:Boolean\(openFacilitator.config.settlementEnabled&&!x402EmergencyStop\)/);
+});
+
+
+test("x402 audit exposes correlation and lifecycle without payment secrets",()=>{
+  assert.match(index,/CREATE TABLE IF NOT EXISTS x402_audit/);
+  assert.match(index,/X-Correlation-ID/);
+  assert.match(index,/event:"quote",outcome:"success"/);
+  assert.match(index,/event:"verify",outcome:"success"/);
+  assert.match(index,/event:"authorize",outcome:"success"/);
+  assert.match(index,/event:"settle",outcome:"success"/);
+  assert.match(index,/\/api\/agent-payments\/x402\/audit/);
+  assert.match(index,/secret\|token\|key\|payload\|signature\|authorization\/i/);
+});
+
+test("x402 settlement does not reference unrelated bot signal variables",()=>{
+  const start=index.indexOf('app.post("/api/agent-payments/x402/settle"');
+  const end=index.indexOf('app.post("/api/compliance/provider/webhook"',start);
+  const settle=index.slice(start,end);
+  assert.doesNotMatch(settle,/subscription\.user_id|signal\.engine|bot_ai_decisions/);
+});
+
+
+test("x402 quote lifecycle starts pending and remains compatible with legacy issued quotes",()=>{
+  assert.match(index,/status TEXT NOT NULL DEFAULT 'pending'/);
+  assert.match(index,/\["pending","issued"\]\.includes\(quote\.status\)/);
+  assert.match(index,/SET status='verified'/);
+  assert.match(index,/SET status='settled'/);
+  assert.match(index,/SET status='failed'/);
+});
+
+test("x402 provider exceptions persist a failed state after rollback",()=>{
+  assert.match(index,/ROLLBACK/);
+  assert.match(index,/WHERE id=\$1 AND user_id=\$2 AND status='verified'/);
+  assert.match(index,/failed_at=CURRENT_TIMESTAMP/);
+});
