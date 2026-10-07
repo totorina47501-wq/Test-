@@ -157,7 +157,7 @@ export function createAgentPayments(pool,{compliance,isProduction=false,enforcem
     const validation=await validate({userId,botType,asset,amountEur});
     if(!validation.allowed)return validation;
     const mandate=await getMandate(userId,botType);
-    await audit({mandateId:mandate?.id||null,userId,eventType:"authorized",amount:Number(amountEur),asset:String(asset||"").toUpperCase(),botType,payload:{amount:Number(amountEur),asset:String(asset||"").toUpperCase(),botType,rail_mode:mandate?.rail_mode||validation.simulation?"simulation":validation.rail_mode}});
+    await audit({mandateId:mandate?.id||null,userId,eventType:"authorized",amount:Number(amountEur),asset:String(asset||"").toUpperCase(),botType,payload:{amount:Number(amountEur),asset:String(asset||"").toUpperCase(),botType,rail_mode:mandate?.rail_mode||validation.rail_mode}});
     return validation;
   }
 
