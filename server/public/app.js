@@ -946,3 +946,34 @@ async function openSecurityCenter(){
 }
 window.openSecurityCenter=openSecurityCenter;
 window.addEventListener("DOMContentLoaded",()=>{if(apiToken){const b=document.createElement("button");b.type="button";b.textContent="Sécurité / 2FA";b.className="btn btn-ghost";b.style.position="fixed";b.style.right="18px";b.style.bottom="18px";b.style.zIndex="9990";b.onclick=openSecurityCenter;document.body.appendChild(b)}});
+
+/* BitGold AI comparator — simulation only. */
+async function loadBotComparator(){
+  const panel=document.getElementById("botComparatorPanel");
+  if(!panel)return;
+  const days=Number(document.getElementById("botComparatorDays")?.value||90);
+  const selected=[...document.querySelectorAll("#botComparatorBots input:checked")].map(input=>input.value);
+  const body=panel.querySelector("[data-comparator-body]");
+  body.innerHTML="<div class=\"comparator-loading\">Calcul des backtests simulés…</div>";
+  try{
+    const data=await apiFetch("/api/bots/comparator?days="+encodeURIComponent(days)+"&bots="+encodeURIComponent(selected.join(",")));
+    const rows=Array.isArray(data?.bots)?data.bots:[];
+    if(!rows.length){body.innerHTML="<div class=\"comparator-empty\">Aucun résultat.</div>";return;}
+    body.innerHTML=rows.map((row,index)=>{
+      const robust=row.robustness||{};
+      const conf=robust.confidence||{};
+      const rank=index+1;
+      const fmt=v=>Number.isFinite(Number(v))?Number(v).toFixed(2)+" %":"—";
+      const name=({shield:"Shield Bot","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse",silver:"Silver Bot",gold:"Gold Bot","macro-rotation":"Macro Rotation"})[row.botType]||row.botType;
+      return "<article class=\"comparator-card\"><div class=\"comparator-rank\">#"+rank+"</div><div class=\"comparator-main\"><strong>"+name+"</strong><span>"+row.trades+" trades · "+row.periodPoints+" points</span></div><div><small>Rendement</small><strong>"+fmt(row.totalReturn)+"</strong></div><div><small>Drawdown</small><strong>"+fmt(row.maxDrawdown)+"</strong></div><div><small>Sharpe</small><strong>"+fmt(row.sharpe)+"</strong></div><div><small>Robustesse P05 / P50 / P95</small><strong>"+fmt(conf.p05)+" / "+fmt(conf.p50)+" / "+fmt(conf.p95)+"</strong></div></article>";
+    }).join("");
+  }catch(error){
+    body.innerHTML="<div class=\"comparator-empty\">"+escapeHtml(error.message||"Comparateur indisponible.")+"</div>";
+  }
+}
+function initBotComparator(){
+  const panel=document.getElementById("botComparatorPanel");
+  if(!panel)return;
+  panel.querySelector("[data-comparator-run]")?.addEventListener("click",loadBotComparator);
+}
+document.addEventListener("DOMContentLoaded",initBotComparator);
