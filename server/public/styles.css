@@ -1063,3 +1063,46 @@ body.is-authenticated .visitor-final-cta{display:none!important}
 
 /* Cockpit personalization */
 .cockpit-customizer{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:14px}.cockpit-customizer>span{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.6;margin-right:3px}.cockpit-focus-btn{border:1px solid var(--border,#dfe4ea);background:var(--surface,#fff);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer}.cockpit-focus-btn.active{background:var(--ink,#111);color:#fff;border-color:var(--ink,#111)}.cockpit-onboarding-box{max-width:720px}.cockpit-onboarding-box h3{font-size:28px;margin:8px 0}.cockpit-onboarding-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.cockpit-choice{text-align:left;border:1px solid var(--border,#dfe4ea);background:var(--surface,#fff);border-radius:16px;padding:16px;cursor:pointer;min-height:120px}.cockpit-choice strong{display:block;font-size:16px;margin-bottom:7px}.cockpit-choice span{display:block;font-size:13px;line-height:1.5;opacity:.7}.cockpit-choice.active{border-color:var(--ink,#111);box-shadow:0 0 0 2px rgba(17,17,17,.08)}.cockpit-onboarding-actions{display:flex;gap:10px;justify-content:flex-end}.dashboard-pro-grid.focus-risk .risk-panel{order:-2}.dashboard-pro-grid.focus-bots .autopilot-panel{order:-2}.dashboard-pro-grid.focus-bots .decision-panel{order:-1}.dashboard-pro-grid.focus-performance .performance-panel{order:-2}@media(max-width:760px){.cockpit-onboarding-grid{grid-template-columns:1fr}.cockpit-onboarding-actions{flex-direction:column}.cockpit-onboarding-actions .btn{width:100%}}
+
+
+/* Mobile UX + micro-interactions */
+@media(max-width:760px){
+  html{scroll-behavior:smooth}
+  body{overflow-x:hidden}
+  .app-main{padding-left:12px;padding-right:12px}
+  .topbar{gap:8px;padding-left:12px;padding-right:12px}
+  .topbar-actions{gap:6px}
+  .topbar-actions button,.topbar-actions a,.btn{min-height:42px}
+  .cockpit-customizer{position:sticky;top:8px;z-index:8;padding:8px 0;background:var(--bg,#f6f7f5);overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .cockpit-customizer::-webkit-scrollbar{display:none}
+  .cockpit-customizer>span{flex:0 0 auto}
+  .cockpit-focus-btn{min-height:38px;flex:0 0 auto;padding:8px 12px}
+  .dashboard-pro-grid{display:flex;flex-direction:column;gap:12px}
+  .dashboard-pro-grid.focus-risk .risk-panel,.dashboard-pro-grid.focus-bots .autopilot-panel,.dashboard-pro-grid.focus-bots .decision-panel,.dashboard-pro-grid.focus-performance .performance-panel{order:initial}
+  .dashboard-pro-grid.focus-risk .risk-panel{order:-3}
+  .dashboard-pro-grid.focus-bots .autopilot-panel{order:-3}
+  .dashboard-pro-grid.focus-bots .decision-panel{order:-2}
+  .dashboard-pro-grid.focus-performance .performance-panel{order:-3}
+  .panel,.card{border-radius:14px}
+  .panel-header,.card-header{gap:10px;align-items:flex-start}
+  .panel-header{flex-wrap:wrap}
+  .risk-stress-controls,.risk-stress-advanced-controls,.bot-analytics-periods,.comparator-toolbar,.comparator-controls{display:flex;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .risk-stress-controls::-webkit-scrollbar,.risk-stress-advanced-controls::-webkit-scrollbar,.bot-analytics-periods::-webkit-scrollbar,.comparator-toolbar::-webkit-scrollbar,.comparator-controls::-webkit-scrollbar{display:none}
+  .risk-stress-btn,.risk-stress-advanced-btn,.bot-analytics-period,.comparator-toolbar button,.comparator-controls button{min-height:40px;flex:0 0 auto}
+  .comparator-card{padding:14px}
+  .comparator-summary{grid-template-columns:1fr 1fr}
+  .comparator-grid{grid-template-columns:1fr}
+  .modal-box{width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:18px}
+  .cockpit-onboarding-box{width:calc(100vw - 24px)}
+  .cockpit-onboarding-grid{gap:9px;margin:14px 0}
+  .cockpit-choice{min-height:0;padding:14px}
+  .cockpit-onboarding-actions{gap:8px}
+  .asset-scenario-chart svg{height:110px}
+}
+@media(max-width:420px){
+  .app-main{padding-left:9px;padding-right:9px}
+  .topbar{padding-left:9px;padding-right:9px}
+  .comparator-summary{grid-template-columns:1fr}
+  .bot-analytics-grid,.asset-analytics-grid{grid-template-columns:1fr 1fr}
+  .cockpit-customizer{margin-left:-2px;margin-right:-2px}
+}
