@@ -38,8 +38,9 @@ test("Agent mandates can select OpenFacilitator without removing simulation",()=
 test("x402 settlement cannot trust a client-supplied amountEur",()=>{
   assert.match(index,/\/api\/agent-payments\/x402\/quote/);
   assert.match(index,/quoteId, paymentPayload et paymentRequirements sont requis/);
-  assert.doesNotMatch(index,/const amountEur=Number\(body\.amountEur\).*agentPayments\.authorize/s);
-  assert.match(index,/quote\.amount_eur/);
+  const settleRoute=index.slice(index.indexOf('app.post("/api/agent-payments/x402/settle"'));
+  assert.doesNotMatch(settleRoute,/body\.amountEur/);
+  assert.match(settleRoute,/quote\.amount_eur/);
   assert.match(index,/X402_QUOTE_MISMATCH/);
 });
 
