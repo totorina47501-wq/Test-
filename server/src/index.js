@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS x402_quotes(
   amount_atomic TEXT NOT NULL,
   requirements JSONB NOT NULL,
   requirements_hash TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'issued',
+  status TEXT NOT NULL DEFAULT 'pending',
   idempotency_key TEXT,
   verified_at TIMESTAMPTZ,
   settled_at TIMESTAMPTZ,
@@ -445,7 +445,7 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     const quote=(await client.query("SELECT * FROM x402_quotes WHERE id=$1 AND user_id=$2 FOR UPDATE",[String(body.quoteId),req.user.sub])).rows[0];
     if(!quote){await client.query("ROLLBACK");return res.status(404).json({error:"Quote x402 introuvable."});}
     if(quote.status==="settled"&&quote.idempotency_key===idempotencyKey){await client.query("ROLLBACK");return res.status(200).json({provider:"OpenFacilitator",quoteId:quote.id,idempotent:true,status:"settled"});}
-    if(quote.status!=="issued"){await client.query("ROLLBACK");return res.status(409).json({error:"Ce quote x402 n'est plus utilisable.",code:"X402_QUOTE_USED"});}
+    if(!["pending","issued"].includes(quote.status)){await client.query("ROLLBACK");return res.status(409).json({error:"Ce quote x402 n'est plus utilisable.",code:"X402_QUOTE_USED"});}
     if(new Date(quote.expires_at).getTime()<=Date.now()){await client.query("UPDATE x402_quotes SET status='expired' WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(410).json({error:"Quote x402 expiré.",code:"X402_QUOTE_EXPIRED"});}
     const requirements=body.paymentRequirements;
     if(!requirementsMatch(requirements,quote.requirements)||hashPaymentRequirements(requirements)!==quote.requirements_hash){
@@ -469,7 +469,11 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     res.json({provider:"OpenFacilitator",correlationId,quoteId:quote.id,authorization,...result});
   }catch(e){
     try{await client.query("ROLLBACK")}catch{}
-    await auditX402({correlationId,userId:req.user.sub,event:"settle",outcome:"failed",code:e.code||"X402_SETTLEMENT_ERROR"}).catch(()=>{});
+    const quoteId=String(req.body?.quoteId||"");
+    if(quoteId){
+      await pool.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1 AND user_id=$2 AND status='verified'",[quoteId,req.user.sub]).catch(()=>{});
+    }
+    await auditX402({correlationId,quoteId:quoteId||null,userId:req.user.sub,event:"settle",outcome:"failed",code:e.code||"X402_SETTLEMENT_ERROR"}).catch(()=>{});
     res.status(e.statusCode||502).json({error:e.message||"Settlement x402 impossible.",code:e.code});
   }finally{client.release()}
 });
