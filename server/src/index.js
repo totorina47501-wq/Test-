@@ -236,7 +236,7 @@ async function coingeckoError(response,prefix="CoinGecko"){
 }
 
 async function refreshMarket(force=false) {
-  if(!force && Date.now()-marketUpdatedAt < 15000) return marketSnapshot;
+  if(!force && Date.now()-marketUpdatedAt < 12000) return marketSnapshot;
   try {
     const ids = Object.values(marketIds).join(",");
     const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
