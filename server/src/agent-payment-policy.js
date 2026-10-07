@@ -7,7 +7,7 @@ export const AGENT_PLAN_POLICY=Object.freeze({
 });
 
 const ASSETS=new Set(["BTC","ETH","SOL","USDC","LINK","AVAX"]);
-const RAILS=new Set(["simulation","x402-prepared"]);
+const RAILS=new Set(["simulation","x402-prepared","openfacilitator"]);
 
 function planOf(value){
   const p=String(value||"").toLowerCase();
@@ -134,7 +134,7 @@ export function createAgentPayments(pool,{compliance,isProduction=false,enforcem
     return {revoked:result.rowCount>0};
   }
 
-  async function authorize({userId,botType,asset,amountEur}){
+  async function validate({userId,botType,asset,amountEur}){
     const amount=Number(amountEur), symbol=String(asset||"").toUpperCase();
     const user=(await pool.query("SELECT plan FROM users WHERE id=$1",[userId])).rows[0];
     if(!user)throw Object.assign(new Error("Utilisateur introuvable."),{statusCode:404});
@@ -150,8 +150,15 @@ export function createAgentPayments(pool,{compliance,isProduction=false,enforcem
     if(amount>=Number(payload.human_approval_threshold_eur)&&Number(payload.human_approval_threshold_eur)>0)throw Object.assign(new Error("Validation humaine requise au-delà du seuil du mandat."),{statusCode:403,code:"AGENT_HUMAN_APPROVAL_REQUIRED"});
     const used=Number((await pool.query("SELECT COALESCE(SUM(amount_eur),0) total FROM agent_payment_events WHERE user_id=$1 AND mandate_id=$2 AND event_type='authorized' AND created_at>=CURRENT_DATE",[userId,mandate.id])).rows[0]?.total||0);
     if(used+amount>Number(payload.daily_budget_eur))throw Object.assign(new Error("Budget quotidien du mandat agent atteint."),{statusCode:403,code:"AGENT_DAILY_BUDGET"});
-    await audit({mandateId:mandate.id,userId,eventType:"authorized",amount,asset:symbol,botType,payload:{amount,asset:symbol,botType,rail_mode:mandate.rail_mode}});
     return {allowed:true,simulation:mandate.rail_mode==="simulation",rail_mode:mandate.rail_mode,mandate_id:String(mandate.id)};
+  }
+
+  async function authorize({userId,botType,asset,amountEur}){
+    const validation=await validate({userId,botType,asset,amountEur});
+    if(!validation.allowed)return validation;
+    const mandate=await getMandate(userId,botType);
+    await audit({mandateId:mandate?.id||null,userId,eventType:"authorized",amount:Number(amountEur),asset:String(asset||"").toUpperCase(),botType,payload:{amount:Number(amountEur),asset:String(asset||"").toUpperCase(),botType,rail_mode:mandate?.rail_mode||validation.rail_mode}});
+    return validation;
   }
 
   async function status(userId){
@@ -162,5 +169,5 @@ export function createAgentPayments(pool,{compliance,isProduction=false,enforcem
     return {enforcement,isProduction,rail_mode:railMode,mandates:rows.map(row=>({...row,id:String(row.id)}))};
   }
 
-  return {init,createMandate,revokeMandate,authorize,status,config:{enforcement,isProduction,railMode,secretConfigured:Boolean(secret)}};
+  return {init,createMandate,revokeMandate,validate,authorize,status,config:{enforcement,isProduction,railMode,secretConfigured:Boolean(secret)}};
 }

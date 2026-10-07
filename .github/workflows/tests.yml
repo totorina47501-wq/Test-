@@ -1,4 +1,5 @@
 name: BitGold tests
+# CI trigger: x402 quote-binding validation
 on:
   push:
     branches: [main]
