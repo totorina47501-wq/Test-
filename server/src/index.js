@@ -142,6 +142,19 @@ ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ;
 ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS failed_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_x402_quotes_user_status ON x402_quotes(user_id,status,expires_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_x402_quotes_user_idempotency ON x402_quotes(user_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE TABLE IF NOT EXISTS x402_audit(
+  id BIGSERIAL PRIMARY KEY,
+  correlation_id UUID NOT NULL,
+  quote_id UUID,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  event TEXT NOT NULL,
+  outcome TEXT NOT NULL,
+  code TEXT,
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_x402_audit_quote_created ON x402_audit(quote_id,created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_x402_audit_event_created ON x402_audit(event,created_at DESC);
 `);
 const agentPayments = createAgentPayments(pool, {
   compliance,
@@ -156,6 +169,14 @@ const x402AllowedAsset=String(process.env.X402_ALLOWED_ASSET||"").trim();
 const x402AllowedAssetSymbol=String(process.env.X402_ALLOWED_ASSET_SYMBOL||"USDC").trim().toUpperCase();
 const x402PayTo=String(process.env.X402_PAY_TO||"").trim();
 const x402EmergencyStop=String(process.env.X402_EMERGENCY_STOP||"true").trim().toLowerCase()!=="false";
+async function auditX402({correlationId,quoteId=null,userId=null,event,outcome,code=null,details={}}){
+  const safeDetails={};
+  for(const [key,value] of Object.entries(details||{})){
+    if(!/secret|token|key|payload|signature|authorization/i.test(key))safeDetails[key]=value;
+  }
+  await pool.query("INSERT INTO x402_audit(correlation_id,quote_id,user_id,event,outcome,code,details) VALUES($1,$2,$3,$4,$5,$6,$7)",[correlationId,quoteId,userId,event,outcome,code,JSON.stringify(safeDetails)]);
+  console.info(JSON.stringify({scope:"x402",correlationId,quoteId,event,outcome,code}));
+}
 const openFacilitator = createOpenFacilitator({
   base: String(process.env.X402_FACILITATOR_URL || "https://pay.openfacilitator.io").trim(),
   enabled: String(process.env.X402_FACILITATOR_ENABLED || "false").toLowerCase() === "true",
@@ -351,6 +372,8 @@ app.post("/api/agent-payments/x402/verify",auth,async(req,res)=>{
   }
 });
 app.post("/api/agent-payments/x402/quote",auth,async(req,res)=>{
+  const correlationId=crypto.randomUUID();
+  res.setHeader("X-Correlation-ID",correlationId);
   try{
     const body=req.body||{};
     const amountEur=Number(body.amountEur);
@@ -387,10 +410,17 @@ app.post("/api/agent-payments/x402/quote",auth,async(req,res)=>{
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
       [id,req.user.sub,botType,assetSymbol,asset,network,payTo,amountEur,amountAtomic,requirements,hashPaymentRequirements(requirements),expiresAt]
     );
-    res.status(201).json({ok:true,quoteId:id,expiresAt:expiresAt.toISOString(),amountEur,amountAtomic,requirements,authorization:validation});
+    await auditX402({correlationId,quoteId:id,userId:req.user.sub,event:"quote",outcome:"success",details:{botType,assetSymbol,network,amountEur}});
+    res.status(201).json({ok:true,correlationId,quoteId:id,expiresAt:expiresAt.toISOString(),amountEur,amountAtomic,requirements,authorization:validation});
   }catch(e){
+    await auditX402({correlationId,userId:req.user.sub,event:"quote",outcome:"failed",code:e.code||"X402_QUOTE_ERROR"}).catch(()=>{});
     res.status(e.statusCode||400).json({error:e.message||"Impossible de créer le quote x402.",code:e.code});
   }
+});
+
+app.get("/api/agent-payments/x402/audit",auth,async(req,res)=>{
+  const rows=(await pool.query("SELECT correlation_id,quote_id,event,outcome,code,details,created_at FROM x402_audit WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100",[req.user.sub])).rows;
+  res.json({events:rows});
 });
 
 app.get("/api/agent-payments/x402/status",auth,(req,res)=>res.json({
@@ -401,6 +431,8 @@ app.get("/api/agent-payments/x402/status",auth,(req,res)=>res.json({
 }));
 
 app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
+  const correlationId=crypto.randomUUID();
+  res.setHeader("X-Correlation-ID",correlationId);
   const client=await pool.connect();
   try{
     const body=req.body||{};
@@ -410,7 +442,6 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     if(x402EmergencyStop)return res.status(503).json({error:"Arrêt d'urgence x402 actif.",code:"X402_EMERGENCY_STOP"});
     if(!openFacilitator.config.settlementEnabled)return res.status(503).json({error:"Le settlement x402 réel est désactivé.",code:"X402_SETTLEMENT_DISABLED"});
     await client.query("BEGIN");
-  await client.query("INSERT INTO bot_ai_decisions(user_id,bot_type,engine,provider,model,action,asset,confidence,regime,reason,features) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",[subscription.user_id,subscription.bot_type,signal.engine||"ensemble-v1",signal.provider||"none",signal.model||null,signal.action||"hold",signal.asset||null,Number(signal.confidence||0),signal.regime?.label||signal.regime?.name||null,signal.message||null,JSON.stringify({features:signal.features||{},selected:signal.selected||null,portfolioRisk:signal.portfolioRisk||null})]);
     const quote=(await client.query("SELECT * FROM x402_quotes WHERE id=$1 AND user_id=$2 FOR UPDATE",[String(body.quoteId),req.user.sub])).rows[0];
     if(!quote){await client.query("ROLLBACK");return res.status(404).json({error:"Quote x402 introuvable."});}
     if(quote.status==="settled"&&quote.idempotency_key===idempotencyKey){await client.query("ROLLBACK");return res.status(200).json({provider:"OpenFacilitator",quoteId:quote.id,idempotent:true,status:"settled"});}
@@ -426,15 +457,19 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
       return res.status(409).json({error:"Le paiement signé ne correspond pas aux paymentRequirements du quote.",code:"X402_PAYMENT_MISMATCH"});
     }
     await client.query("UPDATE x402_quotes SET status='verified',idempotency_key=$2,verified_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id,idempotencyKey]);
+    await auditX402({correlationId,quoteId:quote.id,userId:req.user.sub,event:"verify",outcome:"success",details:{assetSymbol:quote.asset_symbol,network:quote.network,amountEur:Number(quote.amount_eur)}});
     const authorization=await agentPayments.authorize({userId:req.user.sub,botType:quote.bot_type,asset:quote.asset_symbol,amountEur:Number(quote.amount_eur)});
-    if(!authorization.allowed){await client.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(403).json({error:"Paiement agent non autorisé.",code:"AGENT_PAYMENT_DENIED"});}
+    if(!authorization.allowed){await client.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);await client.query("COMMIT");await auditX402({correlationId,quoteId:quote.id,userId:req.user.sub,event:"authorize",outcome:"denied",code:"AGENT_PAYMENT_DENIED"});return res.status(403).json({error:"Paiement agent non autorisé.",code:"AGENT_PAYMENT_DENIED"});}
+    await auditX402({correlationId,quoteId:quote.id,userId:req.user.sub,event:"authorize",outcome:"success"});
     const result=await openFacilitator.settle(body.paymentPayload,requirements);
     if(result?.success===false){await client.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(402).json({provider:"OpenFacilitator",authorization,...result});}
     await client.query("UPDATE x402_quotes SET status='settled',settled_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);
     await client.query("COMMIT");
-    res.json({provider:"OpenFacilitator",quoteId:quote.id,authorization,...result});
+    await auditX402({correlationId,quoteId:quote.id,userId:req.user.sub,event:"settle",outcome:"success",details:{provider:"OpenFacilitator"}});
+    res.json({provider:"OpenFacilitator",correlationId,quoteId:quote.id,authorization,...result});
   }catch(e){
     try{await client.query("ROLLBACK")}catch{}
+    await auditX402({correlationId,userId:req.user.sub,event:"settle",outcome:"failed",code:e.code||"X402_SETTLEMENT_ERROR"}).catch(()=>{});
     res.status(e.statusCode||502).json({error:e.message||"Settlement x402 impossible.",code:e.code});
   }finally{client.release()}
 });
