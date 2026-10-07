@@ -238,7 +238,7 @@ function renderDemoLab(){
   if(holdings)holdings.textContent=positions.length?positions.join(" · "):"Aucune";
   total.textContent=formatMoney(demoPortfolioTotal(),{currency:"EUR"});
   if(price)price.textContent="BTC · "+formatMoney(marketPrices.BTC,{currency:"EUR"});
-  if(log)log.innerHTML=demoState.activity.length?demoState.activity.slice().reverse().map(item=>"<div class="demo-activity-row"><span>"+item.icon+"</span><div><strong>"+escapeHtml(item.title)+"</strong><small>"+escapeHtml(item.text)+"</small></div></div>").join(""):'<div class="demo-empty">Aucune opération simulée.</div>';
+  if(log)log.innerHTML=demoState.activity.length?demoState.activity.slice().reverse().map(item=>'<div class="demo-activity-row"><span>'+item.icon+'</span><div><strong>'+escapeHtml(item.title)+'</strong><small>'+escapeHtml(item.text)+'</small></div></div>').join(""):'<div class="demo-empty">Aucune opération simulée.</div>';
 }
 function openDemoLab(){
   const modal=document.getElementById("demoModal");if(!modal)return;
