@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS x402_quotes(
   verified_at TIMESTAMPTZ,
   settled_at TIMESTAMPTZ,
   failed_at TIMESTAMPTZ,
+  settlement_receipt JSONB,
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -140,6 +141,7 @@ ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
 ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
 ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ;
 ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS failed_at TIMESTAMPTZ;
+ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS settlement_receipt JSONB;
 CREATE INDEX IF NOT EXISTS idx_x402_quotes_user_status ON x402_quotes(user_id,status,expires_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_x402_quotes_user_idempotency ON x402_quotes(user_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
 CREATE TABLE IF NOT EXISTS x402_audit(
@@ -350,6 +352,18 @@ app.get("/api/agent-payments/mandate",auth,async(req,res)=>{
 app.delete("/api/agent-payments/mandate/:botType",auth,async(req,res)=>{
   try{res.json(await agentPayments.revokeMandate(req.user.sub,req.params.botType))}catch(e){res.status(500).json({error:"Impossible de révoquer le mandat agent."})}
 });
+app.delete("/api/agent-payments/mandates/id/:mandateId",auth,async(req,res)=>{
+  try{res.json(await agentPayments.revokeMandateById(req.user.sub,req.params.mandateId))}catch(e){res.status(500).json({error:"Impossible de révoquer ce mandat agent."})}
+});
+app.get("/api/agent-payments/operations",auth,async(req,res)=>{
+  try{
+    const [operations,audit]=await Promise.all([
+      agentPayments.operations(req.user.sub),
+      pool.query("SELECT correlation_id,quote_id,event,outcome,code,details,created_at FROM x402_audit WHERE user_id=$1 ORDER BY id DESC LIMIT 100",[req.user.sub])
+    ]);
+    res.json({...operations,x402:{emergencyStop:x402EmergencyStop,facilitatorEnabled:Boolean(openFacilitator.config.enabled),settlementEnabled:Boolean(openFacilitator.config.settlementEnabled),settlementAvailable:Boolean(openFacilitator.config.settlementEnabled&&!x402EmergencyStop),audit:audit.rows}});
+  }catch(e){res.status(500).json({error:"Impossible de charger le cockpit des paiements agents."})}
+});
 
 app.get("/api/agent-payments/x402/status",auth,async(req,res)=>{
   try{
@@ -423,6 +437,13 @@ app.get("/api/agent-payments/x402/audit",auth,async(req,res)=>{
   res.json({events:rows});
 });
 
+app.get("/api/agent-payments/x402/receipt/:quoteId",auth,async(req,res)=>{
+  const quote=(await pool.query("SELECT id,status,network,asset,amount_atomic,settled_at,settlement_receipt FROM x402_quotes WHERE id=$1 AND user_id=$2",[req.params.quoteId,req.user.sub])).rows[0];
+  if(!quote)return res.status(404).json({error:"Quote x402 introuvable."});
+  if(quote.status!=="settled")return res.status(409).json({error:"Aucune preuve de règlement disponible.",code:"X402_RECEIPT_NOT_AVAILABLE"});
+  res.json({quoteId:quote.id,status:quote.status,network:quote.network,asset:quote.asset,amountAtomic:quote.amount_atomic,settledAt:quote.settled_at,receipt:quote.settlement_receipt});
+});
+
 app.get("/api/agent-payments/x402/status",auth,(req,res)=>res.json({
   settlementEnabled:Boolean(openFacilitator.config.settlementEnabled),
   emergencyStop:x402EmergencyStop,
@@ -444,7 +465,9 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     await client.query("BEGIN");
     const quote=(await client.query("SELECT * FROM x402_quotes WHERE id=$1 AND user_id=$2 FOR UPDATE",[String(body.quoteId),req.user.sub])).rows[0];
     if(!quote){await client.query("ROLLBACK");return res.status(404).json({error:"Quote x402 introuvable."});}
-    if(quote.status==="settled"&&quote.idempotency_key===idempotencyKey){await client.query("ROLLBACK");return res.status(200).json({provider:"OpenFacilitator",quoteId:quote.id,idempotent:true,status:"settled"});}
+    if(quote.status==="settled"&&quote.idempotency_key===idempotencyKey){await client.query("ROLLBACK");return res.status(200).json({provider:"OpenFacilitator",quoteId:quote.id,idempotent:true,status:"settled",receipt:quote.settlement_receipt});}
+    const replay=(await client.query("SELECT id,status FROM x402_quotes WHERE user_id=$1 AND idempotency_key=$2 AND id<>$3 LIMIT 1",[req.user.sub,idempotencyKey,quote.id])).rows[0];
+    if(replay){await client.query("ROLLBACK");return res.status(409).json({error:"Cette clé d'idempotence est déjà liée à un autre quote.",code:"X402_IDEMPOTENCY_REPLAY"});}
     if(!["pending","issued"].includes(quote.status)){await client.query("ROLLBACK");return res.status(409).json({error:"Ce quote x402 n'est plus utilisable.",code:"X402_QUOTE_USED"});}
     if(new Date(quote.expires_at).getTime()<=Date.now()){await client.query("UPDATE x402_quotes SET status='expired' WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(410).json({error:"Quote x402 expiré.",code:"X402_QUOTE_EXPIRED"});}
     const requirements=body.paymentRequirements;
@@ -463,15 +486,19 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     await auditX402({correlationId,quoteId:quote.id,userId:req.user.sub,event:"authorize",outcome:"success"});
     const result=await openFacilitator.settle(body.paymentPayload,requirements);
     if(result?.success===false){await client.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(402).json({provider:"OpenFacilitator",authorization,...result});}
-    await client.query("UPDATE x402_quotes SET status='settled',settled_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);
+    const receipt={provider:"OpenFacilitator",transaction:result?.transaction||result?.txHash||result?.transactionHash||null,network:quote.network,asset:quote.asset,amountAtomic:quote.amount_atomic};
+    await client.query("UPDATE x402_quotes SET status='settled',settled_at=CURRENT_TIMESTAMP,settlement_receipt=$2 WHERE id=$1",[quote.id,receipt]);
     await client.query("COMMIT");
-    await auditX402({correlationId,quoteId:quote.id,userId:req.user.sub,event:"settle",outcome:"success",details:{provider:"OpenFacilitator"}});
+    await auditX402({correlationId,quoteId:quote.id,userId:req.user.sub,event:"settle",outcome:"success",details:{provider:"OpenFacilitator",transaction:receipt.transaction}});
     res.json({provider:"OpenFacilitator",correlationId,quoteId:quote.id,authorization,...result});
   }catch(e){
     try{await client.query("ROLLBACK")}catch{}
     const quoteId=String(req.body?.quoteId||"");
     if(quoteId){
-      await pool.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1 AND user_id=$2 AND status='verified'",[quoteId,req.user.sub]).catch(()=>{});
+      // The transaction rollback also rolls back the transient 'verified' state.
+      // Persist failure from any still-consumable state so provider exceptions
+      // cannot leave the quote reusable.
+      await pool.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1 AND user_id=$2 AND status IN ('pending','issued','verified')",[quoteId,req.user.sub]).catch(()=>{});
     }
     await auditX402({correlationId,quoteId:quoteId||null,userId:req.user.sub,event:"settle",outcome:"failed",code:e.code||"X402_SETTLEMENT_ERROR"}).catch(()=>{});
     res.status(e.statusCode||502).json({error:e.message||"Settlement x402 impossible.",code:e.code});
