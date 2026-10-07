@@ -449,7 +449,7 @@ function syncCryptoDetailRefresh(){
   if(cryptoDetailRefreshTimer){clearInterval(cryptoDetailRefreshTimer);cryptoDetailRefreshTimer=null;}
   const modal=document.getElementById("cryptoDetailModal");
   if(!modal||modal.hidden||historyState.range!=="5m")return;
-  cryptoDetailRefreshTimer=setInterval(()=>loadCryptoDetailRange("5m",{silent:true}),15000);
+  cryptoDetailRefreshTimer=setInterval(()=>loadCryptoDetailRange("5m",{silent:true}),12000);
 }
 async function loadCryptoDetailRange(range,options={}){
   if(!historyState.symbol)return;
