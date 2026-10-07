@@ -350,6 +350,18 @@ app.get("/api/agent-payments/mandate",auth,async(req,res)=>{
 app.delete("/api/agent-payments/mandate/:botType",auth,async(req,res)=>{
   try{res.json(await agentPayments.revokeMandate(req.user.sub,req.params.botType))}catch(e){res.status(500).json({error:"Impossible de révoquer le mandat agent."})}
 });
+app.delete("/api/agent-payments/mandates/id/:mandateId",auth,async(req,res)=>{
+  try{res.json(await agentPayments.revokeMandateById(req.user.sub,req.params.mandateId))}catch(e){res.status(500).json({error:"Impossible de révoquer ce mandat agent."})}
+});
+app.get("/api/agent-payments/operations",auth,async(req,res)=>{
+  try{
+    const [operations,audit]=await Promise.all([
+      agentPayments.operations(req.user.sub),
+      pool.query("SELECT correlation_id,quote_id,event,outcome,code,details,created_at FROM x402_audit WHERE user_id=$1 ORDER BY id DESC LIMIT 100",[req.user.sub])
+    ]);
+    res.json({...operations,x402:{emergencyStop:x402EmergencyStop,facilitatorEnabled:Boolean(openFacilitator.config.enabled),settlementEnabled:Boolean(openFacilitator.config.settlementEnabled),settlementAvailable:Boolean(openFacilitator.config.settlementEnabled&&!x402EmergencyStop),audit:audit.rows}});
+  }catch(e){res.status(500).json({error:"Impossible de charger le cockpit des paiements agents."})}
+});
 
 app.get("/api/agent-payments/x402/status",auth,async(req,res)=>{
   try{

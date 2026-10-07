@@ -134,6 +134,23 @@ export function createAgentPayments(pool,{compliance,isProduction=false,enforcem
     return {revoked:result.rowCount>0};
   }
 
+  async function revokeMandateById(userId,mandateId){
+    const result=await pool.query("UPDATE agent_payment_mandates SET revoked_at=CURRENT_TIMESTAMP WHERE id=$1 AND user_id=$2 AND revoked_at IS NULL RETURNING bot_type",[mandateId,userId]);
+    const botType=result.rows[0]?.bot_type||null;
+    if(result.rowCount>0)await audit({mandateId,userId,eventType:"mandate_revoked",botType,reason:"individual_revocation"});
+    return {revoked:result.rowCount>0,id:String(mandateId)};
+  }
+
+  async function operations(userId){
+    const [mandates,events]=await Promise.all([
+      pool.query(`SELECT id,bot_type,allowed_assets,max_transaction_eur,daily_budget_eur,human_approval_threshold_eur,rail_mode,expires_at,revoked_at,created_at FROM agent_payment_mandates WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50`,[userId]),
+      pool.query(`SELECT mandate_id,event_type,amount_eur,asset,bot_type,reason,created_at FROM agent_payment_events WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100`,[userId])
+    ]);
+    const today=events.rows.filter(row=>row.event_type==="authorized"&&new Date(row.created_at).toDateString()===new Date().toDateString());
+    const spentTodayEur=today.reduce((sum,row)=>sum+Number(row.amount_eur||0),0);
+    return {rail_mode:railMode,enforcement,spentTodayEur,mandates:mandates.rows.map(row=>({...row,id:String(row.id),active:!row.revoked_at&&new Date(row.expires_at).getTime()>Date.now()})),events:events.rows};
+  }
+
   async function validate({userId,botType,asset,amountEur}){
     const amount=Number(amountEur), symbol=String(asset||"").toUpperCase();
     const user=(await pool.query("SELECT plan FROM users WHERE id=$1",[userId])).rows[0];
@@ -169,5 +186,5 @@ export function createAgentPayments(pool,{compliance,isProduction=false,enforcem
     return {enforcement,isProduction,rail_mode:railMode,mandates:rows.map(row=>({...row,id:String(row.id)}))};
   }
 
-  return {init,createMandate,revokeMandate,validate,authorize,status,config:{enforcement,isProduction,railMode,secretConfigured:Boolean(secret)}};
+  return {init,createMandate,revokeMandate,revokeMandateById,validate,authorize,status,operations,config:{enforcement,isProduction,railMode,secretConfigured:Boolean(secret)}};
 }
