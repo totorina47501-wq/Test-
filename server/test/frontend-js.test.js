@@ -27,3 +27,6 @@ test("l'activation des outils graphiques reste strictement réservée à Elite",
   assert.match(app, /botState\.plan\?\.plan==="elite"/);
   assert.match(app, /botState\.plan\?\.features\?\.chartAdvanced===true/);
 });
+
+
+test("les décisions IA ont un endpoint et un statut visibles",()=>{assert.ok(app.includes("encodeURIComponent(type)"));assert.ok(app.includes("/decision"));assert.ok(app.includes("botsAIStatus"));assert.ok(app.includes("botAIConfidence"));});

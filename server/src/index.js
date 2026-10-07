@@ -17,6 +17,7 @@ import { createCompliance } from "./compliance.js";
 import { createAgentPayments } from "./agent-payment-policy.js";
 import { buildPaymentRequirements, hashPaymentRequirements, acceptedMatchesRequirements, requirementsMatch } from "./x402-quote.js";
 import { createOpenFacilitator } from "./openfacilitator.js";
+import { evaluateBot, getBotAIConfig } from "./bot-ai-engine.js";
 
 const { Pool } = pg;
 const app = express();
@@ -96,6 +97,7 @@ CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id
 CREATE TABLE IF NOT EXISTS trades(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),side TEXT NOT NULL,asset TEXT NOT NULL,amount_eur DOUBLE PRECISION NOT NULL,price_eur DOUBLE PRECISION NOT NULL,quantity DOUBLE PRECISION NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS bot_subscriptions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,portfolio_name TEXT NOT NULL DEFAULT 'Portefeuille principal',active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,last_run TIMESTAMPTZ,UNIQUE(user_id,bot_type));
 CREATE TABLE IF NOT EXISTS bot_activity(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,action TEXT NOT NULL DEFAULT 'hold',asset TEXT,message TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS bot_ai_decisions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,engine TEXT NOT NULL,provider TEXT NOT NULL,model TEXT,action TEXT NOT NULL,asset TEXT,confidence DOUBLE PRECISION NOT NULL DEFAULT 0,regime TEXT,reason TEXT,features JSONB,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS max_trade_eur DOUBLE PRECISION NOT NULL DEFAULT 250;
 ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS max_position_eur DOUBLE PRECISION NOT NULL DEFAULT 1000;
 ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS stop_loss_pct DOUBLE PRECISION NOT NULL DEFAULT 8;
@@ -379,6 +381,7 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
     if(!body.quoteId||!body.paymentPayload||!body.paymentRequirements)return res.status(400).json({error:"quoteId, paymentPayload et paymentRequirements sont requis."});
     if(!openFacilitator.config.settlementEnabled)return res.status(503).json({error:"Le settlement x402 réel est désactivé.",code:"X402_SETTLEMENT_DISABLED"});
     await client.query("BEGIN");
+  await client.query("INSERT INTO bot_ai_decisions(user_id,bot_type,engine,provider,model,action,asset,confidence,regime,reason,features) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",[subscription.user_id,subscription.bot_type,signal.engine||"ensemble-v1",signal.provider||"none",signal.model||null,signal.action||"hold",signal.asset||null,Number(signal.confidence||0),signal.regime?.label||signal.regime?.name||null,signal.message||null,JSON.stringify({features:signal.features||{},selected:signal.selected||null,portfolioRisk:signal.portfolioRisk||null})]);
     const quote=(await client.query("SELECT * FROM x402_quotes WHERE id=$1 AND user_id=$2 FOR UPDATE",[String(body.quoteId),req.user.sub])).rows[0];
     if(!quote){await client.query("ROLLBACK");return res.status(404).json({error:"Quote x402 introuvable."});}
     if(quote.status!=="issued"){await client.query("ROLLBACK");return res.status(409).json({error:"Ce quote x402 n'est plus utilisable.",code:"X402_QUOTE_USED"});}
@@ -854,48 +857,17 @@ const BOT_CATALOG=[
 function botDefinition(type){return BOT_CATALOG.find(bot=>bot.id===type)}
 function botMomentum(points){const v=(points||[]).map(p=>Number(p.price)).filter(Number.isFinite);return v.length>2&&v[0]?((v[v.length-1]-v[0])/v[0])*100:0}
 function botRsi(points){const v=(points||[]).map(p=>Number(p.price)).filter(Number.isFinite);if(v.length<3)return 50;const start=Math.max(1,v.length-14),g=[],l=[];for(let i=start;i<v.length;i++){const d=v[i]-v[i-1];if(d>0)g.push(d);else if(d<0)l.push(Math.abs(d))}const ag=g.reduce((a,b)=>a+b,0)/(g.length||1),al=l.reduce((a,b)=>a+b,0)/(l.length||1);return al===0?100:100-(100/(1+ag/al))}
-async function botSignal(type){
+async function botSignal(type,userId,subscription={}){
  await refreshMarket();
- const symbols=Object.keys(marketIds),histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,7)])));
- const momentum=Object.fromEntries(symbols.map(symbol=>[symbol,botMomentum(histories[symbol])]));
- const positive=symbols.filter(symbol=>momentum[symbol]>0).length,bull=momentum.BTC>=8&&positive>=4&&momentum.ETH>2;
- if(type==="quant-pulse"){
-  const candidates=symbols.map(symbol=>{
-   const values=(histories[symbol]||[]).map(p=>Number(p.price)).filter(Number.isFinite),rsi=botRsi(histories[symbol]);
-   const mean=values.reduce((a,b)=>a+b,0)/(values.length||1),last=values[values.length-1]||mean;
-   const deviation=mean?((last-mean)/mean)*100:0;
-   return{symbol,rsi,deviation,mean};
-  }).sort((a,b)=>Math.abs(b.deviation)-Math.abs(a.deviation));
-  const buy=candidates.find(x=>x.rsi<32&&x.deviation<=-4),sell=candidates.find(x=>x.rsi>68&&x.deviation>=4);
-  if(buy)return{action:"buy",asset:buy.symbol,fraction:.04,message:"Quant Pulse : excès baissier détecté, retour vers la moyenne recherché sur "+buy.symbol+"."};
-  if(sell)return{action:"sell",asset:sell.symbol,fraction:.035,message:"Quant Pulse : excès haussier détecté, prise de risque réduite sur "+sell.symbol+"."};
-  return{action:"hold",asset:candidates[0]?.symbol||"BTC",message:"Quant Pulse : aucun écart statistique suffisamment extrême."};
- }
- if(type==="macro-rotation"){
-  const ranked=symbols.map(symbol=>({symbol,momentum:momentum[symbol]})).sort((a,b)=>b.momentum-a.momentum),breadth=positive/symbols.length,riskOn=breadth>=.60&&momentum.BTC>=3&&momentum.ETH>=0;
-  if(riskOn){const leader=ranked[0]?.symbol||"BTC";return{action:"buy",asset:leader,fraction:.055,message:"Macro Rotation Elite : régime risk-on confirmé, rotation vers le leader "+leader+"."};}
-  if(breadth<.40||momentum.BTC<=-4){const weakest=ranked[ranked.length-1]?.symbol||"SOL";return{action:"sell",asset:weakest,fraction:.045,message:"Macro Rotation Elite : régime risk-off, réduction de l'actif le plus faible."};}
-  return{action:"hold",asset:ranked[0]?.symbol||"BTC",message:"Macro Rotation Elite : régime neutre, aucune rotation agressive."};
- }
- if(type==="adaptive-ai"){
-  const scored=symbols.map(symbol=>{
-   const values=(histories[symbol]||[]).map(p=>Number(p.price)).filter(Number.isFinite),rsi=botRsi(histories[symbol]),returns=[];
-   for(let i=1;i<values.length;i++)if(values[i-1])returns.push((values[i]-values[i-1])/values[i-1]*100);
-   const mean=returns.reduce((a,b)=>a+b,0)/(returns.length||1),variance=returns.reduce((a,b)=>a+(b-mean)**2,0)/(returns.length||1),volatility=Math.sqrt(variance),min=Math.min(...values),max=Math.max(...values),last=values[values.length-1];
-   const rangePosition=max===min?50:((last-min)/(max-min))*100,momentumScore=Math.max(0,Math.min(100,50+momentum[symbol]*3)),rsiScore=Math.max(0,Math.min(100,100-Math.abs(rsi-55)*2)),rangeScore=Math.max(0,Math.min(100,rangePosition)),volatilityScore=Math.max(0,Math.min(100,100-volatility*12)),score=.45*momentumScore+.25*rsiScore+.20*rangeScore+.10*volatilityScore;
-   return{symbol,score,momentum:momentum[symbol],rsi};
-  }).sort((a,b)=>b.score-a.score);
-  const best=scored[0],confidence=Math.round(best?.score||50);
-  if(best&&best.score>=68)return{action:"buy",asset:best.symbol,fraction:.05,confidence,message:"IA Adaptive : score "+confidence+"/100, momentum "+best.momentum.toFixed(1)+" %, RSI "+best.rsi.toFixed(0)+". Convergence favorable."};
-  if(best&&best.score<=32)return{action:"sell",asset:best.symbol,fraction:.04,confidence,message:"IA Adaptive : score faible ("+confidence+"/100). Exposition réduite."};
-  return{action:"hold",asset:best?.symbol||"BTC",confidence,message:"IA Adaptive : score "+confidence+"/100. Signaux insuffisamment convergents, conservation du cash."};
- }
- if(type==="gold"){if(bull)return{action:"buy",asset:momentum.ETH>=momentum.BTC?"ETH":"BTC",fraction:.065,message:"Signal bull run confirmé : momentum BTC, breadth et ETH convergent."};if(momentum.BTC<=-6)return{action:"sell",asset:"BTC",fraction:.04,message:"Signal de sortie : momentum BTC 7j fortement négatif."};return{action:"hold",asset:"BTC",message:"Pas de bull run confirmé : le bot conserve sa réserve."}}
- if(type==="silver"){const leader=["BTC","ETH","SOL"].sort((a,b)=>momentum[b]-momentum[a])[0],rsi=botRsi(histories[leader]);if(momentum[leader]>=3&&rsi<72)return{action:"buy",asset:leader,fraction:.035,message:"Tendance positive détectée : renforcement progressif du leader."};if(momentum[leader]<=-5)return{action:"sell",asset:leader,fraction:.025,message:"Tendance dégradée : réduction de l’exposition."};return{action:"hold",asset:leader,message:"Tendance intermédiaire : aucune opération."}}
- const weak=["SOL","LINK","AVAX"].sort((a,b)=>momentum[a]-momentum[b])[0],leader=["BTC","ETH"].sort((a,b)=>momentum[b]-momentum[a])[0];
- if(momentum[weak]<=-7)return{action:"sell",asset:weak,fraction:.035,message:"Protection active : réduction d’un actif en tendance baissière."};
- if(momentum[leader]>=5&&botRsi(histories[leader])<68)return{action:"buy",asset:leader,fraction:.02,message:"Signal défensif favorable : petite entrée sur un leader confirmé."};
- return{action:"hold",asset:leader,message:"Marché incertain : priorité au capital disponible."};
+ const symbols=Object.keys(marketIds);
+ const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,7)])));
+ const wallet=await pool.query("SELECT cash FROM wallets WHERE user_id=$1",[userId]);
+ const holdings=await pool.query("SELECT asset,quantity FROM holdings WHERE user_id=$1",[userId]);
+ const cash=Number(wallet.rows[0]?.cash||0);
+ const positions=holdings.rows.map(row=>{const asset=String(row.asset||"").toUpperCase();const quantity=Number(row.quantity||0);const price=Number(prices[asset]||0);return{asset,quantity,price,value:quantity*price,allocation:0}}).filter(row=>row.quantity>0&&row.price>0);
+ const total=cash+positions.reduce((sum,row)=>sum+row.value,0);
+ const weighted=positions.map(row=>({...row,allocation:total?row.value/total*100:0}));
+ return evaluateBot({type,market:marketSnapshot,histories,portfolio:{cash,total,positions:weighted},subscription});
 }
 async function executeBotDecision(subscription,signal){
  const complianceCheck=()=>compliance.assertTransactionAllowed(subscription.user_id);
@@ -918,7 +890,7 @@ async function executeBotDecision(subscription,signal){
  }catch(e){await client.query("ROLLBACK");console.error("[BOT] execution error",e.message)}finally{client.release()}
 }
 async function runBots(){
- try{const r=await pool.query("SELECT * FROM bot_subscriptions WHERE active=TRUE AND (last_run IS NULL OR last_run<CURRENT_TIMESTAMP-INTERVAL '15 minutes') ORDER BY id");for(const sub of r.rows){try{await executeBotDecision(sub,await botSignal(sub.bot_type))}catch(e){console.error("[BOT] signal error",sub.bot_type,e.message);await pool.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[sub.id])}}}catch(e){console.error("[BOT] scheduler error",e.message)}
+ try{const r=await pool.query("SELECT * FROM bot_subscriptions WHERE active=TRUE AND (last_run IS NULL OR last_run<CURRENT_TIMESTAMP-INTERVAL '15 minutes') ORDER BY id");for(const sub of r.rows){try{await executeBotDecision(sub,await botSignal(sub.bot_type,sub.user_id,sub))}catch(e){console.error("[BOT] signal error",sub.bot_type,e.message);await pool.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[sub.id])}}}catch(e){console.error("[BOT] scheduler error",e.message)}
 }
 async function getUserPlan(userId){const r=await pool.query("SELECT plan,pro_since FROM users WHERE id=$1",[userId]);const row=r.rows[0]||{plan:"free",pro_since:null};const plan=row.plan==="elite"?"elite":row.plan==="pro"?"pro":"free";return{plan,pro_since:row.pro_since};}
 const TRANSFER_FEE_POLICY={
@@ -992,7 +964,9 @@ app.post("/api/stripe/portal",auth,async(req,res)=>{
 
 app.get("/api/plan",auth,async(req,res)=>{try{res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de charger le plan."})}});
 app.post("/api/plan/demo",auth,async(req,res)=>{try{const plan=String(req.body.plan||"free").toLowerCase();if(!["free","pro","elite"].includes(plan))return res.status(400).json({error:"Plan invalide."});await pool.query("UPDATE users SET plan=$1,pro_since=CASE WHEN $1='pro' THEN COALESCE(pro_since,CURRENT_TIMESTAMP) ELSE NULL END WHERE id=$2",[plan,req.user.sub]);res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de modifier le plan de démonstration."})}});
-app.get("/api/bots/catalog",(req,res)=>res.json({catalog:BOT_CATALOG}));
+app.get("/api/bots/catalog",(req,res)=>res.json({catalog:BOT_CATALOG,ai:getBotAIConfig()}));
+app.get("/api/bots/ai/status",auth,async(req,res)=>{try{res.json({ok:true,...getBotAIConfig()})}catch(e){res.status(500).json({error:"Impossible de charger le moteur IA."})}});
+app.get("/api/bots/:botType/decision",auth,async(req,res)=>{try{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});const sub=(await pool.query("SELECT min_cash_pct FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||{min_cash_pct:20};res.json(await botSignal(botType,req.user.sub,sub))}catch(e){console.error("[BOT-AI] decision error",e.message);res.status(500).json({error:"Impossible de calculer la décision IA."})}});
 app.get("/api/bots/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(404).json({error:"Bot inconnu."});const row=(await pool.query("SELECT bot_type,portfolio_name,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,created_at,last_run FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||null;res.json({bot:def,subscription:row})});
 app.get("/api/bots",auth,async(req,res)=>{try{const [subs,activity,plan]=await Promise.all([pool.query("SELECT bot_type,portfolio_name,active,created_at,last_run,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct FROM bot_subscriptions WHERE user_id=$1 ORDER BY id",[req.user.sub]),pool.query("SELECT bot_type,action,asset,message,created_at FROM bot_activity WHERE user_id=$1 ORDER BY id DESC LIMIT 30",[req.user.sub]),getUserPlan(req.user.sub)]);res.json({catalog:BOT_CATALOG,items:subs.rows,activity:activity.rows,plan})}catch(e){res.status(500).json({error:"Impossible de charger les bots."})}});
 app.get("/api/activity",auth,async(req,res)=>{
@@ -1004,7 +978,7 @@ app.get("/api/activity",auth,async(req,res)=>{
     res.json({botLogs:botLogs.rows,trades:trades.rows});
   }catch(e){console.error("[ACTIVITY] error",e.message);res.status(500).json({error:"Impossible de charger le journal d'activité."})}
 });
-app.post("/api/bots/subscriptions",auth,async(req,res)=>{const botType=String(req.body.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(400).json({error:"Bot inconnu."});const plan=(await getUserPlan(req.user.sub)).plan;if(!botEntitlement(plan,botType))return res.status(402).json({error:"Ce bot est réservé au plan Pro.",code:"PRO_REQUIRED"});const activeCount=Number((await pool.query("SELECT COUNT(*) FROM bot_subscriptions WHERE user_id=$1 AND active=TRUE",[req.user.sub])).rows[0]?.count||0),existing=await pool.query("SELECT id FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType]);if(plan==="free"&&activeCount>=1&&!existing.rows.length)return res.status(403).json({error:"Le plan Free autorise un seul bot actif.",code:"FREE_BOT_LIMIT"});if(plan==="pro"&&activeCount>=3&&!existing.rows.length)return res.status(403).json({error:"Le plan Pro est limité à 3 bots actifs.",code:"PRO_BOT_LIMIT"});if(plan==="elite"&&activeCount>=5&&!existing.rows.length)return res.status(403).json({error:"Le mode Elite est limité à 5 bots actifs.",code:"ELITE_BOT_LIMIT"});const defaults=plan==="elite"?{maxTrade:2500,maxPosition:15000,stopLoss:3,minCash:10}:plan==="pro"?{maxTrade:1000,maxPosition:5000,stopLoss:5,minCash:15}:{maxTrade:250,maxPosition:1000,stopLoss:8,minCash:30};const maxTrade=Number(req.body.maxTradeEur??defaults.maxTrade),maxPosition=Number(req.body.maxPositionEur??defaults.maxPosition),stopLoss=Number(req.body.stopLossPct??defaults.stopLoss),minCash=Number(req.body.minCashPct??defaults.minCash);if(![maxTrade,maxPosition,stopLoss,minCash].every(Number.isFinite)||maxTrade<10||maxPosition<100||stopLoss<1||stopLoss>50||minCash<0||minCash>90)return res.status(400).json({error:"Paramètres de risque invalides."});try{if(plan==="free")await pool.query("UPDATE bot_subscriptions SET active=FALSE WHERE user_id=$1 AND bot_type<>$2",[req.user.sub,botType]);await pool.query("INSERT INTO bot_subscriptions(user_id,bot_type,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(user_id,bot_type) DO UPDATE SET active=TRUE,max_trade_eur=EXCLUDED.max_trade_eur,max_position_eur=EXCLUDED.max_position_eur,stop_loss_pct=EXCLUDED.stop_loss_pct,min_cash_pct=EXCLUDED.min_cash_pct",[req.user.sub,botType,maxTrade,maxPosition,stopLoss,minCash]);const sub=(await pool.query("SELECT * FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0];await pool.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[req.user.sub,botType,"subscribe",null,"Souscription activée ou renouvelée pour "+def.name+"."]);await executeBotDecision(sub,await botSignal(botType));res.status(201).json({ok:true,bot:def,subscription:sub})}catch(e){console.error("[BOT] subscribe error",e.message);res.status(500).json({error:"Impossible d’activer ce bot."})}});
+app.post("/api/bots/subscriptions",auth,async(req,res)=>{const botType=String(req.body.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(400).json({error:"Bot inconnu."});const plan=(await getUserPlan(req.user.sub)).plan;if(!botEntitlement(plan,botType))return res.status(402).json({error:"Ce bot est réservé au plan Pro.",code:"PRO_REQUIRED"});const activeCount=Number((await pool.query("SELECT COUNT(*) FROM bot_subscriptions WHERE user_id=$1 AND active=TRUE",[req.user.sub])).rows[0]?.count||0),existing=await pool.query("SELECT id FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType]);if(plan==="free"&&activeCount>=1&&!existing.rows.length)return res.status(403).json({error:"Le plan Free autorise un seul bot actif.",code:"FREE_BOT_LIMIT"});if(plan==="pro"&&activeCount>=3&&!existing.rows.length)return res.status(403).json({error:"Le plan Pro est limité à 3 bots actifs.",code:"PRO_BOT_LIMIT"});if(plan==="elite"&&activeCount>=5&&!existing.rows.length)return res.status(403).json({error:"Le mode Elite est limité à 5 bots actifs.",code:"ELITE_BOT_LIMIT"});const defaults=plan==="elite"?{maxTrade:2500,maxPosition:15000,stopLoss:3,minCash:10}:plan==="pro"?{maxTrade:1000,maxPosition:5000,stopLoss:5,minCash:15}:{maxTrade:250,maxPosition:1000,stopLoss:8,minCash:30};const maxTrade=Number(req.body.maxTradeEur??defaults.maxTrade),maxPosition=Number(req.body.maxPositionEur??defaults.maxPosition),stopLoss=Number(req.body.stopLossPct??defaults.stopLoss),minCash=Number(req.body.minCashPct??defaults.minCash);if(![maxTrade,maxPosition,stopLoss,minCash].every(Number.isFinite)||maxTrade<10||maxPosition<100||stopLoss<1||stopLoss>50||minCash<0||minCash>90)return res.status(400).json({error:"Paramètres de risque invalides."});try{if(plan==="free")await pool.query("UPDATE bot_subscriptions SET active=FALSE WHERE user_id=$1 AND bot_type<>$2",[req.user.sub,botType]);await pool.query("INSERT INTO bot_subscriptions(user_id,bot_type,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(user_id,bot_type) DO UPDATE SET active=TRUE,max_trade_eur=EXCLUDED.max_trade_eur,max_position_eur=EXCLUDED.max_position_eur,stop_loss_pct=EXCLUDED.stop_loss_pct,min_cash_pct=EXCLUDED.min_cash_pct",[req.user.sub,botType,maxTrade,maxPosition,stopLoss,minCash]);const sub=(await pool.query("SELECT * FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0];await pool.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[req.user.sub,botType,"subscribe",null,"Souscription activée ou renouvelée pour "+def.name+"."]);await executeBotDecision(sub,await botSignal(botType,req.user.sub,sub));res.status(201).json({ok:true,bot:def,subscription:sub})}catch(e){console.error("[BOT] subscribe error",e.message);res.status(500).json({error:"Impossible d’activer ce bot."})}});
 app.delete("/api/bots/subscriptions/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});await pool.query("UPDATE bot_subscriptions SET active=FALSE WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType]);await pool.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[req.user.sub,botType,"unsubscribe",null,"Désabonnement du "+botDefinition(botType).name+"."]);res.json({ok:true})});
 setInterval(runBots,60000);runBots().catch(()=>{});
 app.get("/api/portfolio",auth,async(req,res)=>{
