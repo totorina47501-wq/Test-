@@ -828,7 +828,7 @@ function renderBots(){
     const assets=(bot.compatible_assets||[]).slice(0,4).join(" · ");
     const access=locked?"Réservé "+(bot.plan==="elite"?"Elite":"Pro"):subscribed?"Actif":"Disponible";
     const action=subscribed?"Gérer":locked?"Voir les conditions":"Découvrir";
-    return '<article class="bot-card bot-'+bot.id+(locked?" bot-locked":"")+'" data-bot-tone="'+m.tone+'">'+
+    return '<article class="bot-card bot-'+bot.id+(locked?" bot-locked":"")+'" data-bot-tone="'+m.tone+'">'+'<div class="bot-card-rank">Niveau '+(index+1)+'</div>'+
       '<div class="bot-card-hero"><div class="bot-portrait"><span>'+m.icon+'</span></div><div class="bot-card-identity"><span class="bot-kicker">'+escapeHtml(m.family)+'</span><h3>'+escapeHtml(bot.name.replace(/ Bot$/,""))+'</h3><p>'+escapeHtml(m.tagline)+'</p></div><span class="bot-access '+(subscribed?"active":locked?"locked":"")+'">'+access+'</span></div>'+
       '<div class="bot-card-focus"><span>'+escapeHtml(m.focus)+'</span><span>'+escapeHtml(bot.tier)+'</span><span>'+String(bot.plan||"free").toUpperCase()+'</span></div>'+
       '<p class="bot-card-summary">'+escapeHtml(bot.summary||bot.description)+'</p>'+
