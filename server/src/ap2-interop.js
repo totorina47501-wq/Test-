@@ -30,12 +30,24 @@ export function mapBitGoldMandateToAp2(mandate){
   return {checkoutMandate,paymentMandate};
 }
 
-export function validateAp2Boundary({checkoutMandate,paymentMandate}={}){
+export function signAp2Boundary({checkoutMandate,paymentMandate},secret){
+  if(!secret||String(secret).length<32)throw new Error("Secret AP2 de test/interoperabilite requis.");
+  return crypto.createHmac("sha256",String(secret)).update(JSON.stringify(stable({checkoutMandate,paymentMandate}))).digest("base64url");
+}
+
+export function validateAp2Boundary({checkoutMandate,paymentMandate,signature}={},options={}){
   if(checkoutMandate?.type!=="checkout_mandate"||paymentMandate?.type!=="payment_mandate")return {valid:false,reason:"AP2_MANDATE_SHAPE"};
   const hash=crypto.createHash("sha256").update(JSON.stringify(stable(checkoutMandate))).digest("hex");
   if(paymentMandate.checkoutMandateHash!==hash)return {valid:false,reason:"AP2_MANDATE_BINDING"};
   if(paymentMandate.compliance?.provider!=="bitgold")return {valid:false,reason:"AP2_COMPLIANCE_BOUNDARY"};
+  if(options.requireSignature){
+    if(!signature||!options.secret)return {valid:false,reason:"AP2_SIGNATURE_REQUIRED"};
+    const expected=signAp2Boundary({checkoutMandate,paymentMandate},options.secret);
+    const left=Buffer.from(String(signature));const right=Buffer.from(expected);
+    if(left.length!==right.length||!crypto.timingSafeEqual(left,right))return {valid:false,reason:"AP2_SIGNATURE_INVALID"};
+  }
   return {valid:true};
+
 }
 
 export const AP2_INTEROP_STATUS=Object.freeze({
