@@ -368,9 +368,9 @@ app.get("/api/agent-payments/operations",auth,async(req,res)=>{
 app.get("/api/agent-payments/x402/reconciliation",auth,async(req,res)=>{
   try{
     const rows=(await pool.query("SELECT id,status,network,asset,amount_atomic,settled_at,failed_at,settlement_receipt,created_at FROM x402_quotes WHERE user_id=$1 ORDER BY created_at DESC LIMIT 200",[req.user.sub])).rows;
-    const counts=rows.reduce((acc,row)=>(acc[row.status]=(acc[row.status]||0)+1,acc),{});
-    const anomalies=rows.filter(row=>(row.status==="settled"&&!row.settlement_receipt)||(row.status==="failed"&&!row.failed_at)).map(row=>({quoteId:row.id,status:row.status,code:row.status==="settled"?"X402_MISSING_RECEIPT":"X402_MISSING_FAILURE_TIMESTAMP"}));
-    res.json({counts,anomalies,recent:rows});
+    const counts=rows.reduce((acc,row)=>(acc[row.status]=(acc[row.status]||0)+1,acc),{});\n    const staleBefore=Date.now()-15*60*1000;
+    const anomalies=rows.flatMap(row=>{\n      if(row.status==="settled"&&!row.settlement_receipt)return [{quoteId:row.id,status:row.status,code:"X402_MISSING_RECEIPT",severity:"critical"}];\n      if(row.status==="failed"&&!row.failed_at)return [{quoteId:row.id,status:row.status,code:"X402_MISSING_FAILURE_TIMESTAMP",severity:"warning"}];\n      if(["pending","verified"].includes(row.status)&&new Date(row.created_at).getTime()<staleBefore)return [{quoteId:row.id,status:row.status,code:"X402_STALE_IN_FLIGHT",severity:"warning"}];\n      return [];\n    });
+    res.json({counts,healthy:anomalies.length===0,anomalies,recent:rows});
   }catch(e){res.status(500).json({error:"Impossible de réconcilier les paiements x402."})}
 });
 
