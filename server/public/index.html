@@ -121,6 +121,20 @@
       <div class="risk-meter"><span id="dashRiskMeter"></span></div>
       <p id="dashRiskText">Analyse en cours…</p>
       <div class="risk-facts"><span>Concentration <b id="dashConcentration">—</b></span><span>Cash <b id="dashCashPct">—</b></span></div>
+      <div class="risk-stress">
+        <div class="risk-stress-head"><div><span class="eyebrow">STRESS TEST</span><strong>Choc de marché simulé</strong></div><span id="dashStressStatus">Sans exécution</span></div>
+        <div class="risk-stress-controls" role="group" aria-label="Scénario de stress">
+          <button type="button" class="risk-stress-btn active" data-stress="-10">−10 %</button>
+          <button type="button" class="risk-stress-btn" data-stress="-20">−20 %</button>
+          <button type="button" class="risk-stress-btn" data-stress="-30">−30 %</button>
+        </div>
+        <div class="risk-stress-result">
+          <div><span>Impact portefeuille</span><b id="dashStressImpact">—</b></div>
+          <div><span>Valeur simulée</span><b id="dashStressValue">—</b></div>
+          <div><span>Drawdown estimé</span><b id="dashStressDrawdown">—</b></div>
+        </div>
+        <p class="risk-stress-note">Scénario pédagogique : le choc est appliqué aux actifs risqués détenus, le cash reste inchangé.</p>
+      </div>
     </article>
     <article class="pro-panel autopilot-panel">
       <div class="pro-panel-head"><div><span class="eyebrow">BITGOLD AUTOPILOT</span><h3>Orientation du marché</h3></div><span id="autopilotStatus" class="status-pill">—</span></div>
