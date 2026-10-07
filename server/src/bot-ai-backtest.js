@@ -28,6 +28,27 @@ function annualizationFactor(timeline){
   return Math.sqrt((365*86400000)/Math.max(3600000,median));
 }
 
+export function analyzeBacktestRobustness({curve=[],paths=250,seed=42}={}){
+  const safeCurve=Array.isArray(curve)?curve.filter(row=>Number.isFinite(Number(row?.equity))&&Number(row.equity)>0):[];
+  const returns=[];
+  for(let i=1;i<safeCurve.length;i++){const prev=Number(safeCurve[i-1].equity),next=Number(safeCurve[i].equity);if(prev>0)returns.push(next/prev-1)}
+  if(returns.length<8)return{paths:0,confidence:{p05:null,p50:null,p95:null},drawdown:{p95:null},sampleSize:returns.length};
+  let state=(Number(seed)>>>0)||42;
+  const rand=()=>{state=(Math.imul(1664525,state)+1013904223)>>>0;return state/4294967296};
+  const finals=[],drawdowns=[],count=Math.max(25,Math.min(1000,Number(paths)||250));
+  for(let p=0;p<count;p++){
+    let equity=1,peak=1,dd=0;
+    for(let i=0;i<returns.length;i++){const r=returns[Math.floor(rand()*returns.length)];equity*=Math.max(.05,1+r);peak=Math.max(peak,equity);dd=Math.max(dd,(peak-equity)/peak)}
+    finals.push(equity-1);drawdowns.push(dd);
+  }
+  const percentile=(values,p)=>{const sorted=values.slice().sort((a,b)=>a-b),index=(sorted.length-1)*p,lo=Math.floor(index),hi=Math.ceil(index);return lo===hi?sorted[lo]:sorted[lo]+(sorted[hi]-sorted[lo])*(index-lo)};
+  return{paths:count,confidence:{p05:Number((percentile(finals,.05)*100).toFixed(2)),p50:Number((percentile(finals,.5)*100).toFixed(2)),p95:Number((percentile(finals,.95)*100).toFixed(2))},drawdown:{p95:Number((percentile(drawdowns,.95)*100).toFixed(2))},sampleSize:returns.length,seed:Number(seed)||42};
+}
+
+export function compareBacktests({histories={},botTypes=[],initialCash=10000,feeRate=.0015,slippageRate=.0005}={}){
+  return botTypes.filter(Boolean).map(botType=>simulateBacktest({botType,histories,initialCash,feeRate,slippageRate})).sort((a,b)=>b.totalReturn-a.totalReturn);
+}
+
 export function simulateBacktest({
   botType="adaptive-ai",
   histories={},
