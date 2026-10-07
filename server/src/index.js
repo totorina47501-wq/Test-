@@ -129,10 +129,19 @@ CREATE TABLE IF NOT EXISTS x402_quotes(
   requirements JSONB NOT NULL,
   requirements_hash TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'issued',
+  idempotency_key TEXT,
+  verified_at TIMESTAMPTZ,
+  settled_at TIMESTAMPTZ,
+  failed_at TIMESTAMPTZ,
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ;
+ALTER TABLE x402_quotes ADD COLUMN IF NOT EXISTS failed_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_x402_quotes_user_status ON x402_quotes(user_id,status,expires_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_x402_quotes_user_idempotency ON x402_quotes(user_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
 `);
 const agentPayments = createAgentPayments(pool, {
   compliance,
@@ -142,6 +151,10 @@ const agentPayments = createAgentPayments(pool, {
   railMode: String(process.env.PAYMENT_RAIL_MODE || "simulation").trim().toLowerCase()
 });
 await agentPayments.init();
+const x402AllowedNetwork=String(process.env.X402_ALLOWED_NETWORK||"eip155:84532").trim();
+const x402AllowedAsset=String(process.env.X402_ALLOWED_ASSET||"").trim();
+const x402AllowedAssetSymbol=String(process.env.X402_ALLOWED_ASSET_SYMBOL||"USDC").trim().toUpperCase();
+const x402PayTo=String(process.env.X402_PAY_TO||"").trim();
 const openFacilitator = createOpenFacilitator({
   base: String(process.env.X402_FACILITATOR_URL || "https://pay.openfacilitator.io").trim(),
   enabled: String(process.env.X402_FACILITATOR_ENABLED || "false").toLowerCase() === "true",
@@ -350,6 +363,8 @@ app.post("/api/agent-payments/x402/quote",auth,async(req,res)=>{
     if(!/^\d+$/.test(amountAtomic)||BigInt(amountAtomic)<=0n)return res.status(400).json({error:"amountAtomic doit être un entier positif en unités atomiques."});
     if(!asset||!assetSymbol||!network||!payTo)return res.status(400).json({error:"asset, assetSymbol, network et payTo sont requis."});
     if(!/^[a-z0-9][a-z0-9._:-]{1,99}$/i.test(network))return res.status(400).json({error:"network x402 invalide."});
+    if(!x402AllowedAsset||!x402PayTo)return res.status(503).json({error:"Allowlist x402 non configurée.",code:"X402_ALLOWLIST_NOT_CONFIGURED"});
+    if(network!==x402AllowedNetwork||asset!==x402AllowedAsset||assetSymbol!==x402AllowedAssetSymbol||payTo.toLowerCase()!==x402PayTo.toLowerCase())return res.status(403).json({error:"Cible x402 non autorisée.",code:"X402_TARGET_DENIED"});
     const complianceStatus=await compliance.getUserStatus(req.user.sub);
     if(isProduction&&!complianceStatus.transaction_clear)return res.status(403).json({error:"KYC/AML requis avant création du quote agent.",code:"COMPLIANCE_REQUIRED"});
     const validation=await agentPayments.validate({userId:req.user.sub,botType,asset:assetSymbol,amountEur});
@@ -382,11 +397,14 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
   try{
     const body=req.body||{};
     if(!body.quoteId||!body.paymentPayload||!body.paymentRequirements)return res.status(400).json({error:"quoteId, paymentPayload et paymentRequirements sont requis."});
+    const idempotencyKey=String(req.headers["idempotency-key"]||body.idempotencyKey||"").trim();
+    if(!/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey))return res.status(400).json({error:"Idempotency-Key requis (8-128 caractères).",code:"X402_IDEMPOTENCY_REQUIRED"});
     if(!openFacilitator.config.settlementEnabled)return res.status(503).json({error:"Le settlement x402 réel est désactivé.",code:"X402_SETTLEMENT_DISABLED"});
     await client.query("BEGIN");
   await client.query("INSERT INTO bot_ai_decisions(user_id,bot_type,engine,provider,model,action,asset,confidence,regime,reason,features) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",[subscription.user_id,subscription.bot_type,signal.engine||"ensemble-v1",signal.provider||"none",signal.model||null,signal.action||"hold",signal.asset||null,Number(signal.confidence||0),signal.regime?.label||signal.regime?.name||null,signal.message||null,JSON.stringify({features:signal.features||{},selected:signal.selected||null,portfolioRisk:signal.portfolioRisk||null})]);
     const quote=(await client.query("SELECT * FROM x402_quotes WHERE id=$1 AND user_id=$2 FOR UPDATE",[String(body.quoteId),req.user.sub])).rows[0];
     if(!quote){await client.query("ROLLBACK");return res.status(404).json({error:"Quote x402 introuvable."});}
+    if(quote.status==="settled"&&quote.idempotency_key===idempotencyKey){await client.query("ROLLBACK");return res.status(200).json({provider:"OpenFacilitator",quoteId:quote.id,idempotent:true,status:"settled"});}
     if(quote.status!=="issued"){await client.query("ROLLBACK");return res.status(409).json({error:"Ce quote x402 n'est plus utilisable.",code:"X402_QUOTE_USED"});}
     if(new Date(quote.expires_at).getTime()<=Date.now()){await client.query("UPDATE x402_quotes SET status='expired' WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(410).json({error:"Quote x402 expiré.",code:"X402_QUOTE_EXPIRED"});}
     const requirements=body.paymentRequirements;
@@ -398,11 +416,12 @@ app.post("/api/agent-payments/x402/settle",auth,async(req,res)=>{
       await client.query("ROLLBACK");
       return res.status(409).json({error:"Le paiement signé ne correspond pas aux paymentRequirements du quote.",code:"X402_PAYMENT_MISMATCH"});
     }
+    await client.query("UPDATE x402_quotes SET status='verified',idempotency_key=$2,verified_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id,idempotencyKey]);
     const authorization=await agentPayments.authorize({userId:req.user.sub,botType:quote.bot_type,asset:quote.asset_symbol,amountEur:Number(quote.amount_eur)});
-    if(!authorization.allowed){await client.query("ROLLBACK");return res.status(403).json({error:"Paiement agent non autorisé.",code:"AGENT_PAYMENT_DENIED"});}
+    if(!authorization.allowed){await client.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(403).json({error:"Paiement agent non autorisé.",code:"AGENT_PAYMENT_DENIED"});}
     const result=await openFacilitator.settle(body.paymentPayload,requirements);
-    if(result?.success===false){await client.query("ROLLBACK");return res.status(402).json({provider:"OpenFacilitator",authorization,...result});}
-    await client.query("UPDATE x402_quotes SET status='settled' WHERE id=$1",[quote.id]);
+    if(result?.success===false){await client.query("UPDATE x402_quotes SET status='failed',failed_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);await client.query("COMMIT");return res.status(402).json({provider:"OpenFacilitator",authorization,...result});}
+    await client.query("UPDATE x402_quotes SET status='settled',settled_at=CURRENT_TIMESTAMP WHERE id=$1",[quote.id]);
     await client.query("COMMIT");
     res.json({provider:"OpenFacilitator",quoteId:quote.id,authorization,...result});
   }catch(e){
