@@ -45,6 +45,19 @@ test("bot detail pages expose explanations, limits and pricing",()=>{
   assert.match(server,/maxTradeEur/);
 });
 
+test("advanced bot sheets expose quantitative simulation metrics",()=>{
+  assert.match(html,/class="bot-analytics-card auth-only"/);
+  assert.match(html,/id="botMetricReturn"/); assert.match(html,/id="botMetricSharpe"/);
+  assert.match(html,/id="botMetricSortino"/); assert.match(html,/id="botMetricVolatility"/);
+  assert.match(html,/id="botMetricTrades"/); assert.match(html,/id="botMetricFees"/);
+  assert.match(html,/id="botMetricTurnover"/);
+  assert.match(app,/\/api\/bots\/\+encodeURIComponent\(type\)\+"\/backtest\?days=/);
+  assert.match(server,/app\.get\("\/api\/bots\/:botType\/backtest",auth/);
+  assert.match(server,/sharpe/); assert.match(server,/sortino/); assert.match(server,/volatility/);
+  assert.match(server,/turnover/); assert.match(server,/fees/);
+  assert.match(css,/bot-analytics-grid/);
+});
+
 test("bot execution applies configured trade and position limits",()=>{
   assert.match(server,/const maxTrade=Number\(subscription\.max_trade_eur\|\|250\)/);
   assert.match(server,/const maxPosition=Number\(subscription\.max_position_eur\|\|1000\)/);
