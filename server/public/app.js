@@ -370,7 +370,7 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   const chartRange=HISTORY_RANGES[range]?range:"24h";
   const targetCount=pointCounts[chartRange]||24;
   const sampled=clean.length>targetCount?Array.from({length:targetCount},(_,i)=>clean[Math.round(i*(clean.length-1)/Math.max(targetCount-1,1))]):clean;
-  if(chartRange==="5m"&&sampled.length<2) return "<div class=\"history-empty\">Acquisition des relevés en temps réel…</div>";
+  if(sampled.length<2) return "<div class=\"history-empty\">Historique insuffisant pour afficher une courbe fiable.</div>";
   const values=sampled.map(p=>p.price);
   const minValue=Math.min(...values),maxValue=Math.max(...values);
   const spread=Math.max(maxValue-minValue,0.0000001);
