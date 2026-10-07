@@ -971,3 +971,11 @@ body.is-authenticated .markets-news-layout{grid-template-columns:1fr}
 body.is-authenticated .markets-news-layout>#actualites{display:none!important}
 @media(max-width:1100px){.markets-news-layout{grid-template-columns:1fr}.news-rail{position:relative;top:auto;max-height:none;margin:0 0 26px}.markets-news-layout>#marches{order:1}.markets-news-layout>#actualites{order:2}.news-rail-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}.news-rail-item{padding:12px 0}.news-rail-item.featured{grid-column:span 2}}
 @media(max-width:600px){.news-rail{margin-bottom:18px;padding:15px;border-radius:16px}.news-rail-list{grid-template-columns:1fr}.news-rail-item.featured{grid-column:auto}.news-rail-item.compact .news-rail-image-wrap{width:64px}.news-rail-item-media{grid-template-columns:64px minmax(0,1fr)}.news-rail-item.featured .news-rail-image-wrap{aspect-ratio:16/9}.news-rail-item.featured h3{font-size:14px}}
+
+
+/* Connected home — show the cockpit first, keep marketing sections out of the authenticated flow. */
+body.is-authenticated .visitor-hero,
+body.is-authenticated .visitor-transparency,
+body.is-authenticated .visitor-trust,
+body.is-authenticated .visitor-how,
+body.is-authenticated .visitor-final-cta{display:none!important}
