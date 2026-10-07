@@ -29,4 +29,4 @@ test("l'activation des outils graphiques reste strictement réservée à Elite",
 });
 
 
-test("les décisions IA ont un endpoint et un statut visibles",()=>{assert.match(app,/encodeURIComponent\\(type\\)/);assert.match(app,/\\/decision/);assert.match(app,/botsAIStatus/);assert.match(app,/botAIConfidence/);});
+test("les décisions IA ont un endpoint et un statut visibles",()=>{assert.ok(app.includes("encodeURIComponent(type)"));assert.ok(app.includes("/decision"));assert.ok(app.includes("botsAIStatus"));assert.ok(app.includes("botAIConfidence"));});
