@@ -6,8 +6,9 @@ Toute modification suit obligatoirement ce flux :
 
 1. **feature/fix/chore branch** → développement et commits atomiques.
 2. **Pull Request vers `staging`** → la CI doit être verte.
-3. **Promotion `staging` → `main`** → uniquement après CI staging verte.
-4. **CI `main`** → la CI doit rester verte après promotion.
+3. **Accumulation d'un lot de release sur `staging`** → plusieurs évolutions peuvent être intégrées successivement, chacune avec CI verte.
+4. **Promotion unique `staging` → `main`** → à la frontière de release, après validation du lot complet sur staging.
+5. **CI `main`** → la CI doit rester verte après promotion.
 
 ### Branches
 
@@ -24,9 +25,9 @@ Le workflow `.github/workflows/tests.yml` s'exécute sur :
 
 La séquence attendue est donc :
 
-`feature/*` → PR `staging` → CI verte → PR `staging` → `main` → CI verte.
+`feature/*` → PR `staging` → CI verte → merge staging → CI verte → autres évolutions du lot → validation staging → PR unique `staging` → `main` → CI verte.
 
-Aucune fonctionnalité ne doit être présentée comme livrée avant la validation CI sur `staging`.
+Aucune évolution ne doit être intégrée à `staging` sans CI de PR verte. La promotion vers `main` se fait par lot de release et non après chaque évolution.
 
 ## Convention de commit
 
