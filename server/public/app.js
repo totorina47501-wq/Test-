@@ -688,7 +688,34 @@ function renderDashboard(data){
   const concentration=document.getElementById("dashConcentration");if(concentration)concentration.textContent=Number(risk.concentration||0).toFixed(1).replace(".",",")+" %";
   const cashPct=document.getElementById("dashCashPct");if(cashPct)cashPct.textContent=Number(risk.cashPct||0).toFixed(1).replace(".",",")+" %";
   const riskMeta=document.getElementById("dashRiskMeta");if(riskMeta)riskMeta.textContent="Score "+Number(risk.score||0)+"/100";
-  const stressButtons=document.querySelectorAll("[data-stress]");
+  const advancedStressButtons=document.querySelectorAll("[data-advanced-stress]");
+function renderAdvancedStress(shock){
+  const positions=(p.positions||[]).filter(row=>Number(row.value||0)>0);
+  const riskyValue=positions.reduce((sum,row)=>sum+Number(row.value||0),0);
+  const total=Number(p.total||0);
+  const cashValue=Math.max(0,total-riskyValue);
+  const shockPct=Number(shock)||0;
+  const loss=Math.abs(riskyValue*(shockPct/100));
+  const stressedValue=Math.max(0,total-loss);
+  const exposure=stressedValue>0?Math.max(0,(riskyValue*(1+shockPct/100))/stressedValue*100):0;
+  const baseRisk=Number(p.riskScore||0);
+  const postRisk=Math.min(100,Math.max(0,baseRisk+Math.abs(shockPct)*0.55));
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+  set("dashStressAdvancedShock",(shockPct>0?"+":"")+shockPct.toFixed(0)+" %");
+  set("dashStressAdvancedLoss",formatMoney(-loss));
+  set("dashStressAdvancedValue",formatMoney(stressedValue));
+  set("dashStressAdvancedCash",formatMoney(cashValue));
+  set("dashStressAdvancedExposure",exposure.toFixed(1).replace(".",",")+" %");
+  set("dashStressAdvancedRisk",Math.round(postRisk)+"/100");
+  const status=document.getElementById("dashStressAdvancedStatus");
+  if(status)status.textContent="Choc "+Math.abs(shockPct).toFixed(0)+" % · simulation";
+}
+advancedStressButtons.forEach(button=>button.addEventListener("click",()=>{
+  advancedStressButtons.forEach(item=>item.classList.remove("active"));
+  button.classList.add("active");
+  renderAdvancedStress(Number(button.dataset.advancedStress));
+}));
+const stressButtons=document.querySelectorAll("[data-stress]");
   const stressRender=(shock)=>{const positions=(p.positions||[]).filter(row=>Number(row.value||0)>0);const riskyValue=positions.reduce((sum,row)=>sum+Number(row.value||0),0);const cashValue=Math.max(0,Number(p.total||0)-riskyValue);const shockPct=Number(shock)||0;const impact=riskyValue*(shockPct/100);const stressedTotal=Math.max(0,Number(p.total||0)+impact);const impactPct=Number(p.total||0)>0?(impact/Number(p.total||0))*100:0;const currentReturn=Number(perf.returnPct||0);const drawdown=Math.min(0,currentReturn+impactPct);const impactEl=document.getElementById("dashStressImpact"),valueEl=document.getElementById("dashStressValue"),ddEl=document.getElementById("dashStressDrawdown");if(impactEl)impactEl.textContent=(impact>=0?"+":"")+formatEuro(impact);if(valueEl)valueEl.textContent=formatEuro(stressedTotal);if(ddEl)ddEl.textContent=drawdown.toLocaleString("fr-FR",{minimumFractionDigits:1,maximumFractionDigits:1})+" %";const status=document.getElementById("dashStressStatus");if(status)status.textContent=Math.abs(shockPct)+" % choc · simulé";};
   stressButtons.forEach(button=>button.addEventListener("click",()=>{stressButtons.forEach(item=>item.classList.remove("active"));button.classList.add("active");stressRender(button.dataset.stress)}));
   stressRender(document.querySelector("[data-stress].active")?.dataset.stress||"-10");
