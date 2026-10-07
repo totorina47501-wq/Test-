@@ -192,6 +192,7 @@ const twoFactorRateLimit = rateLimit({
 app.use(express.static(path.join(__dirname, "../public"), { setHeaders: (res, filePath) => { if(filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) res.setHeader("Cache-Control", "no-store, max-age=0"); } }));
 app.get(/^\/bot\/(shield|silver|gold|adaptive-ai|quant-pulse|macro-rotation)\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
 app.get(/^\/activite\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
+app.get(/^\/investir\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
 
 const prices = { BTC: 67420.10, ETH: 3248.70, SOL: 154.20, USDC: 0.92, LINK: 17.84, AVAX: 28.16 };
 const marketIds = {
