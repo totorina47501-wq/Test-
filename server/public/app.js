@@ -354,9 +354,16 @@ const fallbackMarkets=[["Bitcoin","BTC",67420.10,0],["Ethereum","ETH",3248.70,0]
 let marketPreviewDays=1;
 let botState={catalog:[],items:[],activity:[],plan:{plan:"free"}};
 let lastMarketData=[];
+function marketCategory(symbol){if(symbol==="USDC")return "stable";if(["LINK","AVAX"].includes(symbol))return "defi";return "majors"}
 function renderMarket(markets){
   lastMarketData=markets||[];
-  document.getElementById("marketGrid").innerHTML=markets.map(({symbol,price,change24h,marketCap})=>{
+  const grid=document.getElementById("marketGrid");
+  if(!grid)return;
+  const query=String(document.getElementById("investirMarketSearch")?.value||"").trim().toLowerCase();
+  const filter=document.querySelector("[data-market-filter].active")?.dataset.marketFilter||"all";
+  const filtered=lastMarketData.filter(item=>{const symbol=String(item.symbol||"").toLowerCase();const name=String(marketNames[item.symbol]||item.symbol||"").toLowerCase();return (!query||symbol.includes(query)||name.includes(query))&&(filter==="all"||marketCategory(item.symbol)===filter)});
+  const count=document.getElementById("investirMarketCount");if(count)count.textContent=filtered.length+" actif"+(filtered.length>1?"s":"")+" affiché"+(filtered.length>1?"s":"");
+  grid.innerHTML=filtered.length?filtered.map(({symbol,price,change24h,marketCap})=>{
     const name=marketNames[symbol]||symbol;
     const change=Number(change24h||0);
     marketPrices[symbol]=Number(price)||marketPrices[symbol];
@@ -373,9 +380,9 @@ function renderMarket(markets){
       <div class="market-sparkline" data-sparkline="${symbol}"><span>Chargement…</span></div>
       <div class="market-card-foot"><span class="market-meta">${marketCap?formatCompactMoney(marketCap)+" cap.": "Marché crypto"}</span><span class="market-arrow">Voir le détail →</span></div>
       <div class="market-indicators" data-indicators="${symbol}" aria-label="Indicateurs techniques"><span class="market-indicator muted">Analyse…</span></div>
-      <div class="market-actions">${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Acheter</button>`:""}</div>
+      <div class="market-actions">${canTrade?`<button class="btn btn-primary market-btn" data-trade-side="buy" data-trade-asset="${symbol}" type="button">Simuler</button>`:""}</div>
     </article>`;
-  }).join("");
+  }).join(""):"";
 }
 async function loadMarket(){
   try{
@@ -1080,7 +1087,7 @@ const navLinks=[...document.querySelectorAll(".main-nav a[href^='#']")];const na
 document.querySelector("#heroSignup")?.addEventListener("click",()=>openModal("inscription"));
 document.querySelectorAll(".market-periods button").forEach(button=>button.addEventListener("click",()=>setMarketPreviewRange(Number(button.dataset.days))));
 document.querySelectorAll(".crypto-detail-ranges button").forEach(button=>button.addEventListener("click",()=>loadCryptoDetailRange(button.dataset.range)));
-document.getElementById("marketGrid")?.addEventListener("click",event=>{const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
+document.querySelectorAll("[data-market-filter]").forEach(button=>button.addEventListener("click",()=>{document.querySelectorAll("[data-market-filter]").forEach(item=>item.classList.remove("active"));button.classList.add("active");renderMarket(lastMarketData)}));document.getElementById("investirMarketSearch")?.addEventListener("input",()=>renderMarket(lastMarketData));document.getElementById("marketGrid")?.addEventListener("click",event=>{const tradeButton=event.target.closest("[data-trade-side]");if(tradeButton){event.stopPropagation();openTrade(tradeButton.dataset.tradeSide,tradeButton.dataset.tradeAsset||"BTC");return}const card=event.target.closest(".market[data-crypto]");if(card)openCryptoDetail(card.dataset.crypto)});
 document.getElementById("dashDecisionOpen")?.addEventListener("click",()=>{window.location.hash="#activite"});document.getElementById("simulateButton")?.addEventListener("click",simulate);document.getElementById("heroDemo")?.addEventListener("click",openDemoLab);document.getElementById("demoBuyButton")?.addEventListener("click",demoBuyBitcoin);document.getElementById("demoApplyBot")?.addEventListener("click",demoApplyBot);document.getElementById("demoRunSimulation")?.addEventListener("click",runDemoSimulation);document.getElementById("demoReset")?.addEventListener("click",resetDemoLab);document.getElementById("demoClose")?.addEventListener("click",closeDemoLab);initHomeExplorer();document.getElementById("visitorFeeSimulate")?.addEventListener("click",simulateVisitorFees);
 document.getElementById("walletBuy")?.addEventListener("click",()=>openTrade("buy"));
 document.getElementById("walletSell")?.addEventListener("click",()=>openTrade("sell"));
