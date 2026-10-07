@@ -313,6 +313,28 @@
   </div>
   <div class="footer-bottom"><span>© 2026 BitGold · Tous droits réservés.</span><span>Les crypto-actifs sont risqués. Informez-vous avant d'investir.</span></div>
 </footer>
+
+<section id="botComparatorPanel" class="section comparator-section">
+  <div class="section-title"><div><span class="eyebrow">BACKTEST IA</span><h2>Comparateur de bots</h2><p class="section-subtitle">Comparer les stratégies sur un historique identique, avec frais, slippage et analyse de robustesse. <strong>Simulation uniquement.</strong></p></div></div>
+  <div class="comparator-controls">
+    <label>Période
+      <select id="botComparatorDays"><option value="30">30 jours</option><option value="90" selected>90 jours</option><option value="180">180 jours</option></select>
+    </label>
+    <div id="botComparatorBots" class="comparator-checks">
+      <label><input type="checkbox" value="shield" checked> Shield</label>
+      <label><input type="checkbox" value="adaptive-ai" checked> Adaptive AI</label>
+      <label><input type="checkbox" value="quant-pulse" checked> Quant Pulse</label>
+      <label><input type="checkbox" value="silver"> Silver</label>
+      <label><input type="checkbox" value="gold"> Gold</label>
+      <label><input type="checkbox" value="macro-rotation"> Macro Rotation</label>
+    </div>
+    <button class="btn btn-primary" type="button" data-comparator-run>Comparer</button>
+  </div>
+  <div data-comparator-body class="comparator-results"><div class="comparator-empty">Lancez une comparaison pour calculer les résultats simulés.</div></div>
+</section>
+<style>
+.comparator-section{padding-top:18px}.comparator-controls{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin:18px 0}.comparator-controls label{display:flex;flex-direction:column;gap:6px;font-size:.85rem}.comparator-checks{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.comparator-checks label{display:inline-flex;flex-direction:row;align-items:center;gap:5px}.comparator-results{display:grid;gap:10px}.comparator-card{display:grid;grid-template-columns:auto minmax(150px,1fr) repeat(4,minmax(90px,1fr));gap:14px;align-items:center;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.03)}.comparator-card small,.comparator-card span{display:block;opacity:.65;font-size:.78rem}.comparator-card strong{display:block;margin-top:3px}.comparator-rank{font-size:1.15rem;font-weight:800}.comparator-loading,.comparator-empty{padding:22px;border:1px dashed rgba(255,255,255,.15);border-radius:14px;opacity:.75}@media(max-width:900px){.comparator-card{grid-template-columns:auto 1fr 1fr 1fr}.comparator-card>div:nth-last-child(-n+2){grid-column:span 2}}
+</style>
 </main>
 <footer><span>© 2026 BitGold</span><span>Prototype — aucun investissement réel</span></footer>
 <div id="demoModal" class="modal" hidden>

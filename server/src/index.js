@@ -18,7 +18,7 @@ import { createAgentPayments } from "./agent-payment-policy.js";
 import { buildPaymentRequirements, hashPaymentRequirements, acceptedMatchesRequirements, requirementsMatch } from "./x402-quote.js";
 import { createOpenFacilitator } from "./openfacilitator.js";
 import { evaluateBot, getBotAIConfig } from "./bot-ai-engine.js";
-import { simulateBacktest } from "./bot-ai-backtest.js";
+import { simulateBacktest, compareBacktests, analyzeBacktestRobustness } from "./bot-ai-backtest.js";
 
 const { Pool } = pg;
 const app = express();
@@ -1004,6 +1004,20 @@ app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
     const backtest=simulateBacktest({botType,histories,initialCash:10000});
     res.json({ok:true,source:"CoinGecko",days,backtest});
   }catch(e){console.error("[BOT-AI] backtest error",e.message);res.status(502).json({error:"Backtest IA temporairement indisponible."})}
+});
+app.get("/api/bots/comparator",auth,async(req,res)=>{
+  try{
+    const days=Math.min(Math.max(Number(req.query.days||90),14),180);
+    const requested=String(req.query.bots||"adaptive-ai,quant-pulse,shield").split(",").map(value=>value.trim().toLowerCase()).filter(Boolean);
+    const botTypes=[...new Set(requested)].filter(botType=>botDefinition(botType)).slice(0,6);
+    if(botTypes.length<2)return res.status(400).json({error:"Sélectionnez au moins deux bots valides."});
+    const symbols=Object.keys(marketIds).filter(symbol=>symbol!=="USDC");
+    const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)])));
+    const results=compareBacktests({botTypes,histories,initialCash:10000});
+    const robustness=results.map(result=>({botType:result.botType,robustness:analyzeBacktestRobustness({curve:result.curve,paths:250,seed:42})}));
+    const byBot=new Map(robustness.map(item=>[item.botType,item.robustness]));
+    res.json({ok:true,mode:"simulation",source:"CoinGecko",days,bots:results.map(({curve,...result})=>({...result,robustness:byBot.get(result.botType)||null}))});
+  }catch(e){console.error("[BOT-AI] comparator error",e.message);res.status(502).json({error:"Comparateur IA temporairement indisponible."})}
 });
 app.get("/api/bots/:botType/decision",auth,async(req,res)=>{try{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});const sub=(await pool.query("SELECT min_cash_pct FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||{min_cash_pct:20};res.json(await botSignal(botType,req.user.sub,sub))}catch(e){console.error("[BOT-AI] decision error",e.message);res.status(500).json({error:"Impossible de calculer la décision IA."})}});
 app.get("/api/bots/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(404).json({error:"Bot inconnu."});const row=(await pool.query("SELECT bot_type,portfolio_name,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,created_at,last_run FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||null;res.json({bot:def,subscription:row})});
