@@ -344,7 +344,7 @@
   <div class="modal-box demo-modal-box">
     <button class="close" id="demoClose" type="button" aria-label="Fermer">×</button>
     <div class="demo-modal-head"><div><span class="eyebrow">BITGOLD DEMO LAB</span><h3>Testez la plateforme sans argent réel.</h3><p>Un portefeuille local de démonstration, réinitialisable à tout moment. Aucun achat réel n'est exécuté.</p></div><span class="demo-pill">SIMULATION</span></div>
-    <div class="demo-kpis"><div><span>Cash disponible</span><strong id="demoCash">10 000,00 €</strong></div><div><span>Bitcoin détenu</span><strong id="demoBtcQty">0 BTC</strong></div><div><span>Valeur du portefeuille</span><strong id="demoTotal">10 000,00 €</strong></div></div>
+    <div class="demo-kpis"><div><span>Cash disponible</span><strong id="demoCash">10 000,00 €</strong></div><div><span>Positions démo</span><strong id="demoHoldings">Aucune</strong></div><div><span>Valeur du portefeuille</span><strong id="demoTotal">10 000,00 €</strong></div></div>
     <div class="demo-lab-grid">
       <section class="demo-panel"><div class="demo-panel-head"><div><span class="eyebrow">01 · ACHAT SIMULÉ</span><h4>Acheter du Bitcoin</h4></div><span id="demoBtcPrice" class="demo-market-price">Cours live</span></div>
         <label>Montant en €<input id="demoBuyAmount" type="number" min="10" step="10" value="500"></label>
@@ -354,7 +354,7 @@
       <section class="demo-panel"><div class="demo-panel-head"><div><span class="eyebrow">02 · BOTS</span><h4>Appliquer une stratégie</h4></div><span class="demo-market-price">Garde-fous actifs</span></div>
         <label>Bot<select id="demoBotSelect"><option value="shield">Shield Bot · prudent</option><option value="silver">Silver Bot · équilibré</option><option value="gold">Gold Bot · offensif</option><option value="adaptive-ai">Adaptive AI · adaptatif</option><option value="quant-pulse">Quant Pulse · quantitatif</option><option value="macro-rotation">Macro Rotation · institutionnel</option></select></label>
         <button id="demoApplyBot" class="btn btn-primary full" type="button">Appliquer au portefeuille démo</button>
-        <div id="demoBotResult" class="demo-result">Le bot proposera une action simulée et l'appliquera uniquement à ce portefeuille local.</div>
+        <div id="demoBotResult" class="demo-result">Le bot proposera une action simulée et l'appliquera uniquement à ce portefeuille local.</div><div id="demoDecision" class="demo-decision" hidden></div>
       </section>
     </div>
     <div class="demo-guardrails"><span>🛡️ Limite par opération</span><strong>250 €</strong><span>Réserve cash</span><strong>30 %</strong><span>Stop de protection</span><strong>8 %</strong><button id="demoReset" class="btn btn-ghost" type="button">Réinitialiser</button></div>
