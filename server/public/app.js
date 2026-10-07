@@ -356,11 +356,108 @@ let marketHistoryPreview={};
 function formatPrice(value){
   return Number(value).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:value<10?4:2})+" €";
 }
-const HISTORY_RANGES={"5m":{label:"5 min",days:1},"1h":{label:"1 h",days:1},"24h":{label:"24 h",days:1},"7d":{label:"7 jours",days:7},"30d":{label:"30 jours",days:30},"1y":{label:"1 an",days:365},"5y":{label:"5 ans",days:1825}};
+const HISTORY_RANGES={"5m":{label:"5 min",days:1},"1h":{label:"1 h",days:1},"24h":{label:"24 h",days:1},"7d":{label:"7 jours",days:7},"30d":{label:"30 jours",days:30},"1y":{label:"1 an",days:365},"5y":{label:"5 ans",days:"max"}};
 let historyState={symbol:"BTC",range:"24h",points:[]};
 let cryptoDetailRefreshTimer=null;
 function chartPeriodLabel(range){return HISTORY_RANGES[range]?.label||"24 h";}
 function formatChartValue(value){return formatMoney(value,{maximumFractionDigits:Number(value)<10?4:Number(value)>=1000?0:2})}
+function hasEliteChartTools(){
+  return !!apiToken && botState.plan?.plan==="elite" && botState.plan?.features?.chartAdvanced===true;
+}
+let eliteChartZoom=1;
+let eliteChartPanX=0;
+let eliteChartPanY=0;
+function resetEliteChartTransform(){
+  eliteChartZoom=1;eliteChartPanX=0;eliteChartPanY=0;
+  const svg=document.querySelector("#cryptoDetailChart .history-chart");
+  if(svg)svg.style.transform="";
+}
+function applyEliteChartTransform(){
+  const svg=document.querySelector("#cryptoDetailChart .history-chart");
+  if(!svg)return;
+  svg.style.transform="translate("+eliteChartPanX+"px,"+eliteChartPanY+"px) scale("+eliteChartZoom+")";
+  svg.style.transformOrigin="50% 50%";
+  svg.style.cursor=eliteChartZoom>1?"grab":"crosshair";
+}
+function bindEliteChartTools(){
+  const chart=document.getElementById("cryptoDetailChart");
+  if(!chart||!hasEliteChartTools())return;
+  const wrap=chart.querySelector(".history-chart-wrap");
+  const svg=chart.querySelector(".history-chart");
+  if(!wrap||!svg)return;
+  wrap.classList.add("elite-chart-enabled");
+  wrap.style.position="relative";
+  const oldToolbar=wrap.querySelector(".elite-chart-toolbar"); if(oldToolbar)oldToolbar.remove();
+  const oldOverlay=wrap.querySelector(".elite-chart-overlay"); if(oldOverlay)oldOverlay.remove();
+  const toolbar=document.createElement("div");
+  toolbar.className="elite-chart-toolbar";
+  toolbar.innerHTML='<span class="elite-chart-badge">ELITE · OUTILS TRADING</span><button type="button" data-chart-tool="crosshair" aria-pressed="true">Curseur</button><button type="button" data-chart-tool="zoom-in">Zoom +</button><button type="button" data-chart-tool="zoom-out">Zoom −</button><button type="button" data-chart-tool="reset">Réinitialiser</button><span class="elite-chart-hint">Molette = zoom · glisser = déplacer</span>';
+  wrap.insertBefore(toolbar,wrap.querySelector(".chart-labels")||svg);
+  const overlay=document.createElement("div");
+  overlay.className="elite-chart-overlay";
+  overlay.innerHTML='<div class="elite-crosshair-v"></div><div class="elite-crosshair-h"></div><div class="elite-chart-tooltip"></div>';
+  wrap.appendChild(overlay);
+  const tooltip=overlay.querySelector(".elite-chart-tooltip"),vLine=overlay.querySelector(".elite-crosshair-v"),hLine=overlay.querySelector(".elite-crosshair-h");
+  let crosshair=true,dragging=false,lastX=0,lastY=0;
+  const points=historyState.points||[];
+  const clean=points.map(p=>({timestamp:Number(p.timestamp),price:Number(p.price)})).filter(p=>Number.isFinite(p.timestamp)&&Number.isFinite(p.price)&&p.price>0);
+  const nearest=(ratio)=>{
+    if(!clean.length)return null;
+    const index=Math.max(0,Math.min(clean.length-1,Math.round(ratio*(clean.length-1))));
+    return clean[index];
+  };
+  const show=(event)=>{
+    if(!crosshair||!clean.length)return;
+    const rect=svg.getBoundingClientRect();
+    const x=Math.max(0,Math.min(rect.width,event.clientX-rect.left));
+    const y=Math.max(0,Math.min(rect.height,event.clientY-rect.top));
+    const point=nearest(x/Math.max(rect.width,1));
+    if(!point)return;
+    vLine.style.left=(x/Math.max(rect.width,1)*100)+"%";
+    hLine.style.top=(y/Math.max(rect.height,1)*100)+"%";
+    const d=new Date(point.timestamp);
+    const date=d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    const time=d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+    tooltip.innerHTML="<strong>"+formatPrice(point.price)+"</strong><span>"+date+" · "+time+"</span>";
+    tooltip.style.left=Math.min(78,Math.max(2,x/Math.max(rect.width,1)*100+2))+"%";
+    tooltip.style.top=Math.min(82,Math.max(4,y/Math.max(rect.height,1)*100-12))+"%";
+    overlay.classList.add("visible");
+  };
+  const hide=()=>overlay.classList.remove("visible");
+  svg.addEventListener("pointermove",show);
+  svg.addEventListener("pointerleave",hide);
+  svg.addEventListener("wheel",event=>{
+    event.preventDefault();
+    const factor=event.deltaY<0?1.12:.89;
+    eliteChartZoom=Math.min(4,Math.max(1,eliteChartZoom*factor));
+    applyEliteChartTransform();
+  },{passive:false});
+  svg.addEventListener("pointerdown",event=>{
+    if(eliteChartZoom<=1)return;
+    dragging=true;lastX=event.clientX;lastY=event.clientY;svg.setPointerCapture?.(event.pointerId);svg.style.cursor="grabbing";
+  });
+  svg.addEventListener("pointermove",event=>{
+    if(!dragging)return;
+    eliteChartPanX+=event.clientX-lastX;eliteChartPanY+=event.clientY-lastY;lastX=event.clientX;lastY=event.clientY;applyEliteChartTransform();
+  });
+  const stopDrag=()=>{dragging=false;applyEliteChartTransform()};
+  svg.addEventListener("pointerup",stopDrag);svg.addEventListener("pointercancel",stopDrag);
+  toolbar.querySelectorAll("button").forEach(button=>button.addEventListener("click",()=>{
+    const tool=button.dataset.chartTool;
+    if(tool==="crosshair"){
+      crosshair=!crosshair;button.setAttribute("aria-pressed",String(crosshair));if(!crosshair)hide();
+    }else if(tool==="zoom-in"){eliteChartZoom=Math.min(4,eliteChartZoom*1.25);applyEliteChartTransform();}
+    else if(tool==="zoom-out"){eliteChartZoom=Math.max(1,eliteChartZoom/1.25);if(eliteChartZoom===1){eliteChartPanX=0;eliteChartPanY=0}applyEliteChartTransform();}
+    else if(tool==="reset"){resetEliteChartTransform();}
+  }));
+  applyEliteChartTransform();
+  if(!clean.length)return;
+  const indicators=calculateIndicators(clean);
+  const panel=document.createElement("div");
+  panel.className="elite-chart-indicators";
+  panel.innerHTML="<span><b>Momentum</b> "+(indicators.momentum==null?"—":(indicators.momentum>=0?"+":"")+indicators.momentum.toFixed(2).replace(".",",")+"%</span><span><b>RSI</b> "+(indicators.rsi==null?"—":indicators.rsi.toFixed(0))+"</span><span><b>Volatilité</b> "+(indicators.volatility==null?"—":indicators.volatility.toFixed(2).replace(".",",")+"%")+"</span><span><b>Repère</b> date/heure au survol</span>";
+  wrap.appendChild(panel);
+}
 function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.range){
   if(!points?.length) return "<div class=\"history-empty\">Aucune donnée historique disponible.</div>";
   const clean=points.map(p=>({timestamp:Number(p.timestamp),price:Number(p.price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
@@ -466,7 +563,10 @@ async function loadCryptoDetailRange(range,options={}){
     setDetailText("detailPeriodLabel","Min / Max · "+HISTORY_RANGES[safeRange].label);
     setDetailText("detailPeriodMin",data.history?.min!=null?formatPrice(data.history.min):"—");
     setDetailText("detailPeriodMax",data.history?.max!=null?formatPrice(data.history.max):"—");
-    if(chart)chart.innerHTML=points.length?buildHistoryChart(points,historyState.symbol,safeRange):"<div class=\"history-empty\">Historique indisponible.</div>";
+    if(chart){
+      chart.innerHTML=points.length?buildHistoryChart(points,historyState.symbol,safeRange):"<div class=\"history-empty\">Historique indisponible.</div>";
+      bindEliteChartTools();
+    }
     syncCryptoDetailRefresh();
   }catch(e){if(chart&&!silent)chart.innerHTML='<div class="history-empty">'+e.message+"</div>";}
 }
@@ -489,6 +589,7 @@ async function openCryptoDetail(symbol){
     setDetailText("detailPeriodMin",data.history?.min!=null?formatPrice(data.history.min):"—"); setDetailText("detailPeriodMax",data.history?.max!=null?formatPrice(data.history.max):"—");
     setDetailText("detailMarketCap",formatCompactMoney(data.marketCap)); setDetailText("detailVolume",formatCompactMoney(data.volume24h));
     document.getElementById("cryptoDetailChart").innerHTML=(data.history?.points||[]).length?buildHistoryChart(data.history.points,symbol,"24h"):"<div class=\"history-empty\">Historique indisponible.</div>";
+    bindEliteChartTools();
     setDetailText("cryptoDetailSource","Source : CoinGecko · données mises à jour automatiquement");
     document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
   }catch(e){document.getElementById("cryptoDetailChart").innerHTML='<div class="history-empty">'+e.message+"</div>";setDetailText("cryptoDetailSource","Données temporairement indisponibles");}
@@ -702,9 +803,9 @@ function openModal(type){authMode=type==="inscription"?"signup":"login";setAuthF
 function switchAuth(){openModal(authMode==="signup"?"connexion":"inscription")}
 async function submitAuth(){const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value,result=document.getElementById("authResult");result.textContent=authMode==="signup"?"Création du compte…":"Connexion…";result.className="result";try{const payload={email,password};if(authMode==="signup")Object.assign(payload,collectSignupProfile());const d=await apiFetch("/api/auth/"+(authMode==="signup"?"signup":"login"),{method:"POST",body:JSON.stringify(payload)});if(d.requires2FA){const verified=await requestBitGold2FA(d.challengeToken);if(!verified||!verified.token)return;Object.assign(d,verified)}apiToken=d.token;safeStorageSet("bitgold-token",apiToken);setConnected(true);closeModal();await loadProfileAfterAuth(d.profile);document.getElementById("dashboard")?.scrollIntoView({behavior:"smooth",block:"start"});try{await loadPortfolio()}catch(e){console.warn("Portfolio après authentification:",e.message)}}catch(e){result.textContent=e.message;result.className="result error"}}
 function closeModal(){document.getElementById("modal").hidden=true;document.body.classList.remove("modal-open")}
-async function loadBots(){removeHomepageActivity();try{botState=apiToken?await apiFetch("/api/bots"):await apiFetch("/api/bots/catalog");if(!botState.plan)botState.plan={plan:"free"};renderBots()}catch(e){console.warn("Bots:",e.message)}}
+async function loadBots(){removeHomepageActivity();try{botState=apiToken?await apiFetch("/api/bots"):await apiFetch("/api/bots/catalog");if(!botState.plan)botState.plan={plan:"free"};renderBots();if(hasEliteChartTools()&&document.getElementById("cryptoDetailModal")&&!document.getElementById("cryptoDetailModal").hidden&&historyState.points?.length)bindEliteChartTools()}catch(e){console.warn("Bots:",e.message)}}
 function botCatalogOrder(catalog){const order=["shield","silver","gold","adaptive-ai","quant-pulse","macro-rotation"];return (catalog||[]).slice().sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id))}
-function renderPlan(){const plan=botState.plan?.plan==="elite"?"elite":botState.plan?.plan==="pro"?"pro":"free",label=document.getElementById("botPlanLabel"),desc=document.getElementById("botPlanDescription"),mode=document.getElementById("botsMode");if(label)label.textContent=plan==="elite"?"BitGold Elite":plan==="pro"?"BitGold Pro":"BitGold Free";if(desc)desc.textContent=plan==="elite"?"5 bots actifs · Quant + IA + rotation macro · garde-fous Elite":plan==="pro"?"3 bots actifs · stratégies avancées · IA Adaptive + Quant Pulse":"1 bot actif · Shield inclus · passez Pro pour débloquer Silver, Gold et IA";if(mode)mode.textContent=plan==="elite"?"ELITE":plan==="pro"?"PRO":"FREE";document.querySelectorAll("[data-plan-demo]").forEach(b=>{b.hidden=false;const active=b.dataset.planDemo===plan;b.classList.toggle("active",active);b.setAttribute("aria-pressed",active?"true":"false");b.disabled=!!apiToken&&active;const card=b.closest("[data-pricing-card]");if(card)card.classList.toggle("current",active);b.textContent=active?"Niveau actuel":b.dataset.planDemo==="elite"?"Passer à Elite":b.dataset.planDemo==="pro"?"Passer à Pro":"Choisir Free"})}
+function renderPlan(){const plan=botState.plan?.plan==="elite"?"elite":botState.plan?.plan==="pro"?"pro":"free",label=document.getElementById("botPlanLabel"),desc=document.getElementById("botPlanDescription"),mode=document.getElementById("botsMode");if(label)label.textContent=plan==="elite"?"BitGold Elite":plan==="pro"?"BitGold Pro":"BitGold Free";if(desc)desc.textContent=plan==="elite"?"5 bots actifs · Quant + IA + rotation macro · garde-fous Elite · outils trading avancés":plan==="pro"?"3 bots actifs · stratégies avancées · IA Adaptive + Quant Pulse":"1 bot actif · Shield inclus · passez Pro pour débloquer Silver, Gold et IA";if(mode)mode.textContent=plan==="elite"?"ELITE":plan==="pro"?"PRO":"FREE";document.querySelectorAll("[data-plan-demo]").forEach(b=>{b.hidden=false;const active=b.dataset.planDemo===plan;b.classList.toggle("active",active);b.setAttribute("aria-pressed",active?"true":"false");b.disabled=!!apiToken&&active;const card=b.closest("[data-pricing-card]");if(card)card.classList.toggle("current",active);b.textContent=active?"Niveau actuel":b.dataset.planDemo==="elite"?"Passer à Elite":b.dataset.planDemo==="pro"?"Passer à Pro":"Choisir Free"})}
 function renderBots(){removeHomepageActivity();const grid=document.getElementById("botGrid"),title=document.getElementById("botsTitle"),summary=document.getElementById("botsSummary");if(!grid)return;const active=new Set((botState.items||[]).filter(b=>b.active!==false).map(b=>b.bot_type)),connected=!!apiToken,plan=botState.plan?.plan==="elite"?"elite":botState.plan?.plan==="pro"?"pro":"free",catalog=botCatalogOrder(botState.catalog);if(title)title.textContent=connected?"Votre centre d'automatisation":"Les bots BitGold";if(summary)summary.textContent=connected?"Free pour commencer, Pro pour l'IA/Quant, Elite pour la rotation macro et jusqu'à 5 bots.":"Découvrez six stratégies distinctes. Créez un compte pour activer un bot.";renderPlan();grid.innerHTML=catalog.map((bot,index)=>{const subscribed=active.has(bot.id),planRank={free:0,pro:1,elite:2},locked=planRank[plan]<planRank[bot.plan],character=bot.id==="shield"?"🛡️":bot.id==="silver"?"🤖":bot.id==="gold"?"🦾":bot.id==="quant-pulse"?"◌":bot.id==="macro-rotation"?"◈":"✦",accent=bot.id==="adaptive-ai"?"Intelligence":bot.id==="quant-pulse"?"Quant":bot.id==="macro-rotation"?"Macro":bot.id==="shield"?"Gardien":bot.id==="silver"?"Analyste":"Chasseur",assets=(bot.compatible_assets||[]).join(" · ");return '<article class="bot-card bot-'+bot.id+(locked?" bot-locked":"")+'"><div class="bot-visual"><div class="bot-character"><span class="bot-character-face">'+character+'</span><span class="bot-character-label">'+accent+'</span></div><div class="bot-badge">'+escapeHtml(bot.tier)+'</div><span class="bot-level">'+(bot.plan==="elite"?"ELITE":bot.plan==="pro"?"PRO":"FREE")+' · Niveau '+(index+1)+'</span><span class="bot-price">'+(bot.plan==="elite"?"Inclus dans Elite":bot.plan==="pro"?"Inclus dans Pro":"Inclus dans Free")+'</span></div><div class="bot-card-head"><div><span class="bot-tier">'+escapeHtml(bot.tier)+'</span><h3>'+escapeHtml(bot.name.replace(/ Bot$/,""))+'</h3></div><span class="bot-status '+(subscribed?"active":"")+'">'+(subscribed?"Actif":locked?"Pro requis":"Disponible")+'</span></div><p class="bot-card-summary">'+escapeHtml(bot.summary||bot.description)+'</p><div class="bot-stats"><span><b>Risque</b>'+escapeHtml(bot.risk)+'</span><span><b>Allocation</b>'+bot.allocation+'%</span><span><b>Rythme</b>'+escapeHtml(bot.frequency)+'</span></div><div class="bot-compatible"><b>CRYPTO COMPATIBLE</b><span>'+escapeHtml(assets)+'</span></div><div class="bot-card-more">'+escapeHtml(bot.description||bot.strategy)+'</div><button class="btn '+(locked?"btn-ghost":subscribed?"btn-ghost":"btn-primary")+' full" data-bot-open="'+bot.id+'">'+(subscribed?"Gérer":"Découvrir")+'</button></article>'}).join("")}
 async function openBotDetail(type){const allowed=["shield","silver","gold","adaptive-ai","quant-pulse","macro-rotation"];if(!allowed.includes(type))return;history.pushState({}, "", "/bot/"+type);await renderBotDetail(type)}
 async function renderBotDetail(type){const detail=document.getElementById("bot-detail");if(!detail)return;const catalogData=await apiFetch("/api/bots/catalog");const bot=(catalogData.catalog||[]).find(item=>item.id===type);if(!bot)return;let subscription=(botState.items||[]).find(item=>item.bot_type===type);if(apiToken){try{const data=await apiFetch("/api/bots");botState=data;subscription=(data.items||[]).find(item=>item.bot_type===type)}catch(e){console.warn("Bot detail:",e.message)}}const plan=botState.plan?.plan==="elite"?"elite":botState.plan?.plan==="pro"?"pro":"free",planRank={free:0,pro:1,elite:2},locked=planRank[plan]<planRank[bot.plan];document.body.classList.add("bot-detail-mode");detail.hidden=false;const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};const title=bot.name.replace(/ Bot$/,"");set("botDetailTier",bot.tier);set("botDetailName",title);set("botDetailSummary",bot.summary);set("botDetailDescription",bot.description);set("botDetailStrategy",bot.strategy);set("botDetailAlgorithm",bot.algorithm||bot.strategy);set("botDetailCompatible",(bot.compatible_assets||[]).join(" · "));set("botDetailRisk",bot.risk);set("botDetailAllocation",bot.allocation+"%");set("botDetailFrequency",bot.frequency);set("botDetailPrice",bot.plan==="elite"?"Inclus dans BitGold Elite":bot.plan==="pro"?"Inclus dans BitGold Pro":"Inclus dans BitGold Free");const accent=detail.querySelector(".bot-detail-hero");if(accent)accent.dataset.bot=bot.id;const defaults=plan==="elite"?{botMaxTrade:2500,botMaxPosition:15000,botStopLoss:3,botReserve:10}:plan==="pro"?{botMaxTrade:1000,botMaxPosition:5000,botStopLoss:5,botReserve:15}:{botMaxTrade:250,botMaxPosition:1000,botStopLoss:8,botReserve:30};["botMaxTrade","botMaxPosition","botStopLoss","botReserve"].forEach(id=>{const el=document.getElementById(id);if(el)el.value=subscription?.[({botMaxTrade:"max_trade_eur",botMaxPosition:"max_position_eur",botStopLoss:"stop_loss_pct",botReserve:"min_cash_pct"}[id])]??defaults[id]});const action=document.getElementById("botActivate"),unsubscribe=document.getElementById("botUnsubscribe"),upgrade=document.getElementById("botUpgrade");if(action){action.textContent=locked?"Pro requis":subscription?.active?"Enregistrer mes paramètres":"Activer "+title;action.dataset.botType=bot.id;action.disabled=locked}if(unsubscribe){unsubscribe.hidden=!subscription?.active;unsubscribe.dataset.botType=bot.id}if(upgrade){upgrade.hidden=!locked;upgrade.onclick=()=>startStripeCheckout("pro")}const note=document.getElementById("botConfigNote");if(note)note.textContent=locked?"Ce bot est réservé au plan Pro. Activez le mode Pro de démonstration pour le tester.":subscription?.active?"Votre bot est actif. Modifiez les limites puis enregistrez-les.":"Aucun engagement réel : cette version pilote uniquement le portefeuille démo BitGold."}
