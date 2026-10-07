@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { buildPaymentRequirements, hashPaymentRequirements, acceptedMatchesRequirements } from "../src/x402-quote.js";
 
 const root=path.resolve(process.cwd());
 const index=fs.readFileSync(path.join(root,"src/index.js"),"utf8");
@@ -47,4 +48,19 @@ test("x402 quote binds atomic amount and requirements to the server quote",()=>{
   assert.match(index,/requirements_hash TEXT NOT NULL/);
   assert.match(index,/hashPaymentRequirements\(requirements\)/);
   assert.match(index,/acceptedMatchesRequirements\(body\.paymentPayload,requirements\)/);
+});
+
+test("x402 quote helper binds amount, network, asset and recipient",()=>{
+  const requirements=buildPaymentRequirements({
+    protocolVersion:2,
+    network:"eip155:84532",
+    amountAtomic:"1000000",
+    asset:"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    payTo:"0x1111111111111111111111111111111111111111"
+  });
+  assert.equal(requirements.amount,"1000000");
+  assert.equal(hashPaymentRequirements(requirements),hashPaymentRequirements({...requirements}));
+  assert.notEqual(hashPaymentRequirements(requirements),hashPaymentRequirements({...requirements,amount:"2000000"}));
+  assert.equal(acceptedMatchesRequirements({accepted:requirements},requirements),true);
+  assert.equal(acceptedMatchesRequirements({accepted:{...requirements,network:"eip155:1"}},requirements),false);
 });
