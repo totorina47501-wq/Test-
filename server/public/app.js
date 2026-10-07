@@ -872,15 +872,18 @@ function renderNews(items,sourceLabel="Sources crypto"){
     const source=escapeHtml(item.source||"Crypto");
     const category=escapeHtml(item.category||"Crypto");
     const age=escapeHtml(formatNewsAge(item.publishedAt));
-    return `<article class="news-rail-item ${index===0?"featured":""}">
+    return `<article class="news-rail-item ${index===0?"featured":"compact"}">
       <a class="news-rail-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" aria-label="Lire : ${escapeHtml(item.title)}">
-        <div class="news-rail-image-wrap">${image?`<img class="news-rail-image" src="${escapeHtml(image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`:`<div class="news-rail-image news-rail-image-placeholder" aria-hidden="true">BITGOLD</div>`}</div>
-        <div class="news-rail-item-meta"><span class="news-category">${category}</span><span class="news-age">${age}</span></div>
-        <h3>${escapeHtml(item.title)}</h3>
-        <div class="news-rail-source"><span>${source}</span><span>Lire l’article →</span></div>
+        <div class="news-rail-item-media">
+          <div class="news-rail-image-wrap">${image?`<img class="news-rail-image" src="${escapeHtml(image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`:`<div class="news-rail-image news-rail-image-placeholder" aria-hidden="true">BG</div>`}</div>
+          <div class="news-rail-item-body">
+            <div class="news-rail-item-meta"><span class="news-category">${category}</span><span class="news-age">${age}</span></div>
+            <h3>${escapeHtml(item.title)}</h3>
+            <div class="news-rail-source"><span>${source}</span><span>Lire →</span></div>
+          </div>
+        </div>
       </a>
-    </article>`
-  }).join("");
+    </article>` }).join("");
   const intro=document.querySelector(".news-rail-intro");
   if(intro)intro.textContent=sourceLabel+" · sélection actualisée automatiquement.";
 }
