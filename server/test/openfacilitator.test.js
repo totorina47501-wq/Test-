@@ -65,3 +65,22 @@ test("x402 quote helper binds amount, network, asset and recipient",()=>{
   assert.equal(acceptedMatchesRequirements({accepted:requirements},requirements),true);
   assert.equal(acceptedMatchesRequirements({accepted:{...requirements,network:"eip155:1"}},requirements),false);
 });
+
+
+test("x402 quote is fail-closed behind a server allowlist",()=>{
+  assert.match(index,/X402_ALLOWED_NETWORK/);
+  assert.match(index,/X402_ALLOWED_ASSET/);
+  assert.match(index,/X402_ALLOWED_ASSET_SYMBOL/);
+  assert.match(index,/X402_PAY_TO/);
+  assert.match(index,/X402_ALLOWLIST_NOT_CONFIGURED/);
+  assert.match(index,/X402_TARGET_DENIED/);
+});
+
+test("x402 settlement requires idempotency and audits lifecycle states",()=>{
+  assert.match(index,/Idempotency-Key requis/);
+  assert.match(index,/idempotency_key TEXT/);
+  assert.match(index,/status='verified'/);
+  assert.match(index,/status='settled',settled_at=CURRENT_TIMESTAMP/);
+  assert.match(index,/status='failed',failed_at=CURRENT_TIMESTAMP/);
+  assert.match(index,/quote\.status==="settled"&&quote\.idempotency_key===idempotencyKey/);
+});
