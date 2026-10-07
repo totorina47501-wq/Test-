@@ -920,7 +920,21 @@ async function executeBotDecision(subscription,signal){
 async function runBots(){
  try{const r=await pool.query("SELECT * FROM bot_subscriptions WHERE active=TRUE AND (last_run IS NULL OR last_run<CURRENT_TIMESTAMP-INTERVAL '15 minutes') ORDER BY id");for(const sub of r.rows){try{await executeBotDecision(sub,await botSignal(sub.bot_type))}catch(e){console.error("[BOT] signal error",sub.bot_type,e.message);await pool.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[sub.id])}}}catch(e){console.error("[BOT] scheduler error",e.message)}
 }
-async function getUserPlan(userId){const r=await pool.query("SELECT plan,pro_since FROM users WHERE id=$1",[userId]);const row=r.rows[0]||{plan:"free",pro_since:null};const plan=row.plan==="elite"?"elite":row.plan==="pro"?"pro":"free";return{plan,pro_since:row.pro_since};}
+const PLAN_FEATURES={
+  free:{chartAdvanced:false,chartCrosshair:false,chartTooltip:false,chartZoom:false,chartTimeMarkers:false,chartIndicators:false,chartOHLC:false},
+  pro:{chartAdvanced:false,chartCrosshair:false,chartTooltip:false,chartZoom:false,chartTimeMarkers:false,chartIndicators:false,chartOHLC:false},
+  elite:{chartAdvanced:true,chartCrosshair:true,chartTooltip:true,chartZoom:true,chartTimeMarkers:true,chartIndicators:true,chartOHLC:false}
+};
+function getPlanFeatures(plan){
+  const key=plan==="elite"?"elite":plan==="pro"?"pro":"free";
+  return {...PLAN_FEATURES[key]};
+}
+async function getUserPlan(userId){
+  const r=await pool.query("SELECT plan,pro_since FROM users WHERE id=$1",[userId]);
+  const row=r.rows[0]||{plan:"free",pro_since:null};
+  const plan=row.plan==="elite"?"elite":row.plan==="pro"?"pro":"free";
+  return{plan,pro_since:row.pro_since,features:getPlanFeatures(plan)};
+}
 const TRANSFER_FEE_POLICY={
   free:{label:"Free",cashin:{rate:0.015,fixed:0.50},cashout:{rate:0.0199,fixed:0.50},dailyLimit:2000},
   pro:{label:"Pro",cashin:{rate:0.009,fixed:0.35},cashout:{rate:0.0125,fixed:0.35},dailyLimit:10000},
@@ -990,7 +1004,10 @@ app.post("/api/stripe/portal",auth,async(req,res)=>{
   }catch(e){console.error("[STRIPE] portal error",e.message);res.status(500).json({error:"Impossible d'ouvrir le portail Stripe."})}
 });
 
-app.get("/api/plan",auth,async(req,res)=>{try{res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de charger le plan."})}});
+app.get("/api/plan",auth,async(req,res)=>{
+  try{res.json(await getUserPlan(req.user.sub))}
+  catch(e){res.status(500).json({error:"Impossible de charger le plan."})}
+});
 app.post("/api/plan/demo",auth,async(req,res)=>{try{const plan=String(req.body.plan||"free").toLowerCase();if(!["free","pro","elite"].includes(plan))return res.status(400).json({error:"Plan invalide."});await pool.query("UPDATE users SET plan=$1,pro_since=CASE WHEN $1='pro' THEN COALESCE(pro_since,CURRENT_TIMESTAMP) ELSE NULL END WHERE id=$2",[plan,req.user.sub]);res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de modifier le plan de démonstration."})}});
 app.get("/api/bots/catalog",(req,res)=>res.json({catalog:BOT_CATALOG}));
 app.get("/api/bots/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(404).json({error:"Bot inconnu."});const row=(await pool.query("SELECT bot_type,portfolio_name,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,created_at,last_run FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||null;res.json({bot:def,subscription:row})});
