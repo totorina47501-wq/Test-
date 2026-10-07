@@ -134,6 +134,24 @@
           <div><span>Drawdown estimé</span><b id="dashStressDrawdown">—</b></div>
         </div>
         <p class="risk-stress-note">Scénario pédagogique : le choc est appliqué aux actifs risqués détenus, le cash reste inchangé.</p>
+      <div class="risk-stress-advanced">
+        <div class="risk-stress-advanced-head"><div><span class="eyebrow">MATRICE DE STRESS</span><strong>Tester plusieurs chocs simultanément</strong></div><span id="dashStressAdvancedStatus">SIMULATION</span></div>
+        <div class="risk-stress-advanced-controls" role="group" aria-label="Matrice de stress">
+          <button type="button" class="risk-stress-advanced-btn active" data-advanced-stress="-10">−10 %</button>
+          <button type="button" class="risk-stress-advanced-btn" data-advanced-stress="-20">−20 %</button>
+          <button type="button" class="risk-stress-advanced-btn" data-advanced-stress="-30">−30 %</button>
+          <button type="button" class="risk-stress-advanced-btn" data-advanced-stress="-40">−40 %</button>
+        </div>
+        <div class="risk-stress-advanced-grid">
+          <div><span>Choc appliqué</span><b id="dashStressAdvancedShock">−10 %</b></div>
+          <div><span>Perte actifs risqués</span><b id="dashStressAdvancedLoss">—</b></div>
+          <div><span>Valeur portefeuille</span><b id="dashStressAdvancedValue">—</b></div>
+          <div><span>Cash préservé</span><b id="dashStressAdvancedCash">—</b></div>
+          <div><span>Exposition résiduelle</span><b id="dashStressAdvancedExposure">—</b></div>
+          <div><span>Risque post-choc</span><b id="dashStressAdvancedRisk">—</b></div>
+        </div>
+        <p class="risk-stress-note">Lecture complémentaire : le choc est appliqué aux actifs risqués détenus. Le cash et les soldes disponibles ne sont jamais consommés par le scénario.</p>
+      </div>
       </div>
     </article>
     <article class="pro-panel autopilot-panel">
