@@ -1089,7 +1089,7 @@ function renderBotComparator(rows){
   if(!body)return;
   if(!rows.length){
     if(summary)summary.hidden=true;
-    body.innerHTML="<div class="comparator-empty">Aucun résultat.</div>";
+    body.innerHTML='<div class="comparator-empty">Aucun résultat.</div>';
     return;
   }
   const sort=document.getElementById("botComparatorSort")?.value||"return";
@@ -1101,23 +1101,13 @@ function renderBotComparator(rows){
   if(summary){
     summary.hidden=false;
     const medianRobustness=robustValues.length?robustValues[Math.floor(robustValues.length/2)]:null;
-    summary.innerHTML="<div><span>Leader selon le tri</span><strong>"+escapeHtml(comparatorBotNames[best.botType]||best.botType)+"</strong></div><div><span>Rendement moyen</span><strong>"+comparatorPct(avgReturn)+"</strong></div><div><span>Drawdown moyen</span><strong>−"+avgDrawdown.toFixed(2)+" %</strong></div><div><span>Robustesse médiane</span><strong>"+(medianRobustness!==null?comparatorPct(medianRobustness):"—")+"</strong></div>";
+    summary.innerHTML=`<div><span>Leader selon le tri</span><strong>${escapeHtml(comparatorBotNames[best.botType]||best.botType)}</strong></div><div><span>Rendement moyen</span><strong>${comparatorPct(avgReturn)}</strong></div><div><span>Drawdown moyen</span><strong>−${avgDrawdown.toFixed(2)} %</strong></div><div><span>Robustesse médiane</span><strong>${medianRobustness!==null?comparatorPct(medianRobustness):"—"}</strong></div>`;
   }
   body.innerHTML=ranked.map((row,index)=>{
     const robust=row.robustness||{},conf=robust.confidence||{};
     const name=comparatorBotNames[row.botType]||row.botType;
-    const badge=index===0?"<span class="comparator-badge">Leader</span>":"";
-    return "<article class="comparator-card"+(index===0?" highlight":"")+"">"+
-      "<div class="comparator-rank">#"+(index+1)+"</div>"+
-      "<div class="comparator-main"><strong>"+escapeHtml(name)+"</strong><span>"+row.trades+" trades · "+row.periodPoints+" points"+badge+"</span></div>"+
-      "<div><small>Rendement</small><strong>"+comparatorPct(row.totalReturn)+"</strong></div>"+
-      "<div><small>vs BTC</small><strong>"+comparatorPct(row.benchmarkBTC)+"</strong></div>"+
-      "<div><small>Sharpe</small><strong>"+comparatorNumber(row.sharpe).toFixed(2)+"</strong></div>"+
-      "<div><small>Sortino</small><strong>"+comparatorNumber(row.sortino).toFixed(2)+"</strong></div>"+
-      "<div><small>Volatilité</small><strong>"+comparatorPct(row.volatility)+"</strong></div>"+
-      "<div><small>Drawdown max</small><strong>−"+comparatorNumber(row.maxDrawdown).toFixed(2)+" %</strong></div>"+
-      "<div><small>Robustesse P05/P50/P95</small><strong>"+comparatorPct(conf.p05)+" / "+comparatorPct(conf.p50)+" / "+comparatorPct(conf.p95)+"</strong></div>"+
-      "</article>";
+    const badge=index===0?'<span class="comparator-badge">Leader</span>':"";
+    return `<article class="comparator-card${index===0?" highlight":""}"><div class="comparator-rank">#${index+1}</div><div class="comparator-main"><strong>${escapeHtml(name)}</strong><span>${row.trades} trades · ${row.periodPoints} points${badge}</span></div><div><small>Rendement</small><strong>${comparatorPct(row.totalReturn)}</strong></div><div><small>vs BTC</small><strong>${comparatorPct(row.benchmarkBTC)}</strong></div><div><small>Sharpe</small><strong>${comparatorNumber(row.sharpe).toFixed(2)}</strong></div><div><small>Sortino</small><strong>${comparatorNumber(row.sortino).toFixed(2)}</strong></div><div><small>Volatilité</small><strong>${comparatorPct(row.volatility)}</strong></div><div><small>Drawdown max</small><strong>−${comparatorNumber(row.maxDrawdown).toFixed(2)} %</strong></div><div><small>Robustesse P05/P50/P95</small><strong>${comparatorPct(conf.p05)} / ${comparatorPct(conf.p50)} / ${comparatorPct(conf.p95)}</strong></div></article>`;
   }).join("");
 }
 async function loadBotComparator(){
@@ -1129,10 +1119,10 @@ async function loadBotComparator(){
   const status=document.getElementById("botComparatorStatus");
   if(selected.length<2){
     if(status)status.textContent="Sélectionnez au moins 2 stratégies.";
-    if(body)body.innerHTML="<div class="comparator-empty">Sélectionnez au moins deux stratégies pour comparer leurs profils.</div>";
+    if(body)body.innerHTML='<div class="comparator-empty">Sélectionnez au moins deux stratégies pour comparer leurs profils.</div>';
     return;
   }
-  if(body)body.innerHTML="<div class="comparator-loading">Calcul des backtests simulés · "+days+" jours · frais + slippage…</div>";
+  if(body)body.innerHTML=`<div class="comparator-loading">Calcul des backtests simulés · ${days} jours · frais + slippage…</div>`;
   if(status)status.textContent="Calcul en cours…";
   try{
     const data=await apiFetch("/api/bots/comparator?days="+encodeURIComponent(days)+"&bots="+encodeURIComponent(selected.join(",")));
@@ -1140,7 +1130,7 @@ async function loadBotComparator(){
     renderBotComparator(rows);
     if(status)status.textContent=rows.length+" stratégies · historique identique · simulation uniquement.";
   }catch(error){
-    if(body)body.innerHTML="<div class="comparator-empty">"+escapeHtml(error.message||"Comparateur indisponible.")+"</div>";
+    if(body)body.innerHTML=`<div class="comparator-empty">${escapeHtml(error.message||"Comparateur indisponible.")}</div>`;
     if(status)status.textContent="Calcul indisponible.";
   }
 }
