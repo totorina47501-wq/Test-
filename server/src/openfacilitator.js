@@ -7,7 +7,7 @@ function baseUrl(value){
 async function post(url,body){
   const response=await fetch(url,{
     method:"POST",
-    headers:{accept:"application/json","content-type":"application/json","user-agent:"BitGold-OpenFacilitator/1.0"},
+    headers:{accept:"application/json","content-type":"application/json","user-agent":"BitGold-OpenFacilitator/1.0"},
     body:JSON.stringify(body)
   });
   const text=await response.text();
