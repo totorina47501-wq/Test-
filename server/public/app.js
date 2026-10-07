@@ -358,6 +358,7 @@ function formatPrice(value){
 }
 const HISTORY_RANGES={"5m":{label:"5 min",days:1},"1h":{label:"1 h",days:1},"24h":{label:"24 h",days:1},"7d":{label:"7 jours",days:7},"30d":{label:"30 jours",days:30},"1y":{label:"1 an",days:365},"5y":{label:"5 ans",days:1825}};
 let historyState={symbol:"BTC",range:"24h",points:[]};
+let cryptoDetailRefreshTimer=null;
 function chartPeriodLabel(range){return HISTORY_RANGES[range]?.label||"24 h";}
 function formatChartValue(value){return formatMoney(value,{maximumFractionDigits:Number(value)<10?4:Number(value)>=1000?0:2})}
 function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.range){
@@ -369,6 +370,7 @@ function buildHistoryChart(points,symbol=historyState.symbol,range=historyState.
   const chartRange=HISTORY_RANGES[range]?range:"24h";
   const targetCount=pointCounts[chartRange]||24;
   const sampled=clean.length>targetCount?Array.from({length:targetCount},(_,i)=>clean[Math.round(i*(clean.length-1)/Math.max(targetCount-1,1))]):clean;
+  if(chartRange==="5m"&&sampled.length<2) return "<div class=\"history-empty\">Acquisition des relevés en temps réel…</div>";
   const values=sampled.map(p=>p.price);
   const minValue=Math.min(...values),maxValue=Math.max(...values);
   const spread=Math.max(maxValue-minValue,0.0000001);
@@ -443,13 +445,20 @@ async function setMarketPreviewRange(days){
 }
 function formatCompactEuro(value){return formatCompactMoney(value)}
 function setDetailText(id,value){const el=document.getElementById(id);if(el)el.textContent=value}
-async function loadCryptoDetailRange(range){
+function syncCryptoDetailRefresh(){
+  if(cryptoDetailRefreshTimer){clearInterval(cryptoDetailRefreshTimer);cryptoDetailRefreshTimer=null;}
+  const modal=document.getElementById("cryptoDetailModal");
+  if(!modal||modal.hidden||historyState.range!=="5m")return;
+  cryptoDetailRefreshTimer=setInterval(()=>loadCryptoDetailRange("5m",{silent:true}),15000);
+}
+async function loadCryptoDetailRange(range,options={}){
   if(!historyState.symbol)return;
   const safeRange=HISTORY_RANGES[range]?range:"24h";
+  const silent=Boolean(options.silent);
   historyState.range=safeRange;
   document.querySelectorAll(".crypto-detail-ranges button").forEach(b=>b.classList.toggle("active",b.dataset.range===safeRange));
   const chart=document.getElementById("cryptoDetailChart");
-  if(chart)chart.innerHTML="<div class=\"history-loading\">Chargement de "+HISTORY_RANGES[safeRange].label+"…</div>";
+  if(chart&&!silent)chart.innerHTML="<div class=\"history-loading\">Chargement de "+HISTORY_RANGES[safeRange].label+"…</div>";
   try{
     const data=await apiFetch("/api/market/details/"+encodeURIComponent(historyState.symbol)+"?range="+encodeURIComponent(safeRange));
     const points=data.history?.points||[];
@@ -458,7 +467,8 @@ async function loadCryptoDetailRange(range){
     setDetailText("detailPeriodMin",data.history?.min!=null?formatPrice(data.history.min):"—");
     setDetailText("detailPeriodMax",data.history?.max!=null?formatPrice(data.history.max):"—");
     if(chart)chart.innerHTML=points.length?buildHistoryChart(points,historyState.symbol,safeRange):"<div class=\"history-empty\">Historique indisponible.</div>";
-  }catch(e){if(chart)chart.innerHTML='<div class="history-empty">'+e.message+"</div>";}
+    syncCryptoDetailRefresh();
+  }catch(e){if(chart&&!silent)chart.innerHTML='<div class="history-empty">'+e.message+"</div>";}
 }
 async function openCryptoDetail(symbol){
   const modal=document.getElementById("cryptoDetailModal"); if(!modal)return;
@@ -483,7 +493,7 @@ async function openCryptoDetail(symbol){
     document.getElementById("detailBuy").onclick=()=>{closeCryptoDetail();openTrade("buy",symbol)};
   }catch(e){document.getElementById("cryptoDetailChart").innerHTML='<div class="history-empty">'+e.message+"</div>";setDetailText("cryptoDetailSource","Données temporairement indisponibles");}
 }
-function closeCryptoDetail(){const modal=document.getElementById("cryptoDetailModal");if(modal)modal.hidden=true;document.body.classList.remove("modal-open")}
+function closeCryptoDetail(){if(cryptoDetailRefreshTimer){clearInterval(cryptoDetailRefreshTimer);cryptoDetailRefreshTimer=null;}const modal=document.getElementById("cryptoDetailModal");if(modal)modal.hidden=true;document.body.classList.remove("modal-open")}
 function setConnected(connected){removeHomepageActivity();document.getElementById("authState").textContent=connected?"● Connecté":"● Mode visiteur";const accountStatus=document.getElementById("accountStatus");if(accountStatus)accountStatus.textContent=connected?"Compte connecté":"Compte démo";document.body.classList.toggle("is-authenticated",connected);document.body.classList.toggle("is-visitor",!connected);document.querySelectorAll(".auth-only:not(#activite)").forEach(el=>{el.hidden=!connected;el.setAttribute("aria-hidden",String(!connected))});document.querySelectorAll(".visitor-only").forEach(el=>{el.hidden=connected;el.setAttribute("aria-hidden",String(connected))});const activityPage=document.getElementById("activite");if(activityPage && window.location.pathname!=="/activite")activityPage.hidden=true;const topLogin=document.getElementById("topLogin");if(topLogin){topLogin.classList.toggle("is-connected",connected);topLogin.setAttribute("aria-label",connected?"Ouvrir mon profil":"Se connecter");topLogin.setAttribute("title",connected?"Mon profil":"Se connecter")}loadBots().catch(e=>console.warn("Bots:",e.message))}
 function logout(){apiToken="";safeStorageRemove("bitgold-token");botState={catalog:[],items:[],activity:[]};state={cash:10000,holdings:{BTC:0,ETH:0,SOL:0,USDC:0,LINK:0,AVAX:0}};setConnected(false);renderWallet();loadBots();loadNews();window.scrollTo({top:0,behavior:"smooth"})}
 function coinIcon(symbol){const icons={BTC:"btc",ETH:"eth",SOL:"sol",USDC:"usdc",LINK:"link",AVAX:"avax"};const icon=icons[symbol];return `<span class="coin-icon coin-${symbol.toLowerCase()}" aria-hidden="true">${icon?`<img src="/icons/${icon}.svg" alt="" loading="eager" decoding="async"><span class="coin-fallback">${symbol.slice(0,1)}</span>`:`<span class="coin-fallback">${symbol.slice(0,1)}</span>`}</span>`}
