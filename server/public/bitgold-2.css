@@ -38,3 +38,23 @@ html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,r
 #marketGrid .market-sparkline{overflow:hidden;max-width:100%}
 #marketGrid .market button{min-height:42px}
 @media(max-width:640px){#compte .portfolio-hero{padding:16px;border-radius:17px}#compte .portfolio-heading{display:block}#compte .portfolio-overview{grid-template-columns:minmax(0,1fr);gap:10px}#compte .portfolio-total,#compte .portfolio-cash{padding:18px;border-radius:15px}#compte .portfolio-total strong,#compte .portfolio-cash strong{font-size:clamp(1.75rem,8vw,2.5rem)}#compte .holdings-card{padding:12px}#marketGrid{grid-template-columns:minmax(0,1fr);gap:10px}#marketGrid .market{padding:15px}#marketGrid .market:hover{transform:none}}
+
+
+/* BitGold 2.0 lot 3: bot discovery, strategy and settings on small screens. */
+#bots .section-title{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+#bots .bot-engine-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#bots .bot-engine-legend-item{min-width:0;border:1px solid var(--bg2-line);border-radius:17px;padding:18px;background:linear-gradient(145deg,#1a2137,#10182a)}
+#bots .bot-engine-legend-item.ai{background:radial-gradient(ellipse at 100% 0%,rgba(135,95,250,.18),transparent 70%),#151a30}
+#bots .bot-comparison-wrap{max-width:100%;min-width:0}
+#botGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}
+#botGrid > *{min-width:0;border-radius:19px;overflow-wrap:anywhere}
+#botGrid button,#botGrid a{min-height:44px}
+#bot-detail .bot-detail-shell{max-width:1200px;margin-inline:auto}
+#bot-detail .bot-detail-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-radius:22px;padding:clamp(18px,3vw,32px);background:radial-gradient(ellipse at 100% 0%,rgba(210,164,80,.12),transparent 65%),linear-gradient(140deg,#222040,#111a2b);border:1px solid var(--bg2-line)}
+#bot-detail .bot-detail-hero h2{font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.045em}
+#bot-detail .bot-detail-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(270px,1fr);gap:18px;align-items:start}
+#bot-detail .bot-detail-main,#bot-detail .bot-detail-grid > *{min-width:0}
+#bot-detail .bot-detail-card{border-radius:18px;overflow-wrap:anywhere}
+#bot-detail button,#bot-detail input,#bot-detail select{max-width:100%}
+#bot-detail button{min-height:44px}
+@media(max-width:720px){#bots .section-title{display:block}#bots .bots-section-meta{margin-top:12px}#bots .bot-engine-legend{grid-template-columns:minmax(0,1fr);gap:10px}#bots .bot-engine-legend-item{padding:14px}#botGrid{grid-template-columns:minmax(0,1fr);gap:12px}#bot-detail .bot-detail-hero{display:block;padding:18px;border-radius:17px}#bot-detail .bot-detail-price{margin-top:16px}#bot-detail .bot-detail-grid{grid-template-columns:minmax(0,1fr);gap:12px}#bot-detail .bot-detail-card{padding:16px}#bot-detail .bot-back{margin-bottom:12px}}
