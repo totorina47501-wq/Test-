@@ -194,12 +194,24 @@ test("signup -> login -> enable 2FA -> login challenge -> TOTP/recovery -> disab
   });
   assert.equal(reusedRecovery.response.status, 401);
 
-  const disableCode = await generate({ secret });
-  const disable = await request("/api/security/2fa/disable", {
-    method: "POST",
-    headers: { authorization: `Bearer ${verified.body.token}` },
-    body: JSON.stringify({ password, code: disableCode })
-  });
+  // TOTP codes can expire between generation and the HTTP request on slow CI runners.
+  // Retry only a rejected TOTP with a fresh code after the next time step.
+  let disable;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const disableCode = await generate({ secret });
+    disable = await request("/api/security/2fa/disable", {
+      method: "POST",
+      headers: { authorization: `Bearer ${verified.body.token}` },
+      body: JSON.stringify({ password, code: disableCode })
+    });
+    if (disable.response.status === 200) break;
+    assert.equal(disable.response.status, 400);
+    assert.match(String(disable.body.error || ""), /Code Google Authenticator invalide/i);
+    if (attempt === 0) {
+      const remainingMs = 30000 - (Date.now() % 30000);
+      await new Promise(resolve => setTimeout(resolve, remainingMs + 250));
+    }
+  }
   assert.equal(disable.response.status, 200);
   assert.equal(disable.body.ok, true);
 
