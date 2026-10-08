@@ -70,3 +70,17 @@ html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,r
 #demoModal input,#cryptoDetailModal input,#tradeModal input,#modal input,#profileModal input{max-width:100%;box-sizing:border-box}
 @media(max-width:640px){#demoModal,#cryptoDetailModal,#tradeModal,#modal,#profileModal{padding:8px;align-items:center}#demoModal .modal-box,#cryptoDetailModal .modal-box,#tradeModal .modal-box,#modal .modal-box,#profileModal .modal-box{max-height:calc(100dvh - 16px);padding:clamp(14px,4vw,20px);border-radius:16px}#cryptoDetailModal .crypto-detail-box{width:100%}#demoModal button,#cryptoDetailModal button,#tradeModal button,#modal button,#profileModal button{min-height:40px}}
 @media(prefers-reduced-motion:reduce){#marketGrid .market{transition:none!important;transform:none!important}}
+
+
+/* BitGold 2.1: concise, portfolio-first cockpit without hiding financial risk context. */
+#dashboard .dashboard-section-title h2{font-size:clamp(1.65rem,3vw,2.5rem);letter-spacing:-.04em}
+#dashboard .dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#dashboard .dashboard-kpis .pro-kpi{min-width:0;padding:clamp(14px,2vw,22px);border:1px solid var(--bg2-line);border-radius:17px;background:linear-gradient(145deg,#192239,#11182a)}
+#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2;background:radial-gradient(ellipse at 100% 0%,rgba(211,170,83,.16),transparent 68%),linear-gradient(135deg,#242341,#151b30)}
+#dashboard .dashboard-kpis .pro-kpi strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-size:clamp(1.35rem,2.7vw,2.2rem);letter-spacing:-.04em}
+#dashboard .bg2-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#dashboard .bg2-shortcuts a{min-width:0;min-height:80px;padding:15px;border-radius:16px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+#dashboard .bg2-shortcuts a:focus-visible{outline:3px solid #c4a8ff;outline-offset:2px}
+#dashboard .dashboard-cockpit-strip{min-width:0}
+@media(max-width:800px){#dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2}#dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){#dashboard .dashboard-kpis{gap:8px}#dashboard .dashboard-kpis .pro-kpi{padding:13px;border-radius:14px}#dashboard .dashboard-kpis .pro-kpi strong{font-size:clamp(1.1rem,5.3vw,1.55rem)}#dashboard .dashboard-kpis .pro-kpi:first-child strong{font-size:clamp(1.7rem,8vw,2.25rem)}#dashboard .bg2-shortcuts{gap:9px}#dashboard .bg2-shortcuts a{padding:12px;min-height:72px}}
