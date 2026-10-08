@@ -315,3 +315,19 @@ test("BitGold V3 landing is a functional app-first clean slate", () => {
   assert.ok(design.includes("@media(max-width:430px)"));
   assert.ok(design.includes("prefers-reduced-motion:reduce"));
 });
+
+
+test("BitGold V3 app shell retains critical hooks and accessible navigation", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-v3.css", import.meta.url), "utf8");
+  for (const section of ["dashboard", "marches", "bots", "portefeuille"]) {
+    assert.match(html, new RegExp('id="' + section + '"[^>]*bg3-'));
+  }
+  for (const hook of ["marketGrid", "botGrid", "dashTotal", "simulateButton", "amount", "asset"]) {
+    assert.ok(html.includes('id="' + hook + '"'), "missing functional hook " + hook);
+  }
+  for (const klass of ["bg3-dashboard", "bg3-markets", "bg3-bots", "bg3-portfolio"]) {
+    assert.ok(css.includes("." + klass), "missing V3 design rules: " + klass);
+  }
+  assert.ok(css.includes("@media(max-width:760px)"), "mobile breakpoint required");
+  assert.ok(html.includes("Aucun ordre réel"), "clear simulation disclaimer required");
+});

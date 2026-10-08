@@ -10,7 +10,7 @@ const server=fs.readFileSync(path.join(root,"src/index.js"),"utf8");
 const backtest=fs.readFileSync(path.join(root,"src/bot-ai-backtest.js"),"utf8");
 
 test("visitor bot comparison is public and ordered",()=>{
-  assert.match(html,/id="bots" class="section bots-section"/);
+  assert.match(html,/id="bots" class="section bots-section(?: bg3-bots)?"/);
   assert.doesNotMatch(html,/id="bots"[^>]*auth-only/);
   assert.ok(app.includes("/api/bots/catalog"));
   assert.match(server,/app\.get\("\/api\/bots\/catalog"/);
@@ -95,7 +95,7 @@ test("Pro dashboard exposes performance risk and Autopilot",()=>{
   assert.match(server,/returnPct/);
   assert.match(server,/riskScore/);
   assert.match(server,/autopilot/);
-  assert.match(html,/DASHBOARD PRO/);
+  assert.match(html,/VOTRE ESPACE · SIMULATION/);
   assert.match(html,/RISK CENTER/);
   assert.match(html,/BITGOLD AUTOPILOT/);
   assert.match(html,/href="#dashboard"/);

@@ -70,3 +70,58 @@ body{background:var(--v3-bg);color:var(--v3-ink)}
 @media(max-width:800px){.bg3-home{padding:32px 17px 20px!important}.bg3-hero-grid{grid-template-columns:1fr;gap:30px}.bg3-hero-copy h1{font-size:clamp(3.25rem,10vw,5.8rem)!important}.bg3-app-window{max-width:650px;width:100%;margin-inline:auto}.bg3-feature-row{margin-top:28px;grid-template-columns:1fr;gap:10px}.bg3-feature-row>a{padding:14px}.bg3-home .home-explorer{margin-top:42px!important}}
 @media(max-width:430px){.bg3-home{padding:25px 12px 18px!important}.bg3-kicker{font-size:.59rem;letter-spacing:.09em}.bg3-hero-copy h1{font-size:clamp(2.9rem,12vw,4.2rem)!important}.bg3-hero-actions .btn{padding:11px 14px!important;min-height:48px;font-size:.81rem}.bg3-trust{gap:7px 12px;font-size:.7rem}.bg3-app-body{grid-template-columns:43px minmax(0,1fr)}.bg3-app-sidebar{padding:17px 3px;gap:13px}.bg3-app-sidebar span{width:29px;height:29px}.bg3-app-content{padding:15px 10px 18px}.bg3-app-wallet{padding:13px;margin:14px 0}.bg3-app-wallet>strong{font-size:1.65rem}.bg3-tool-grid{gap:5px}.bg3-tool{padding:10px 7px}.bg3-tool strong{font-size:.67rem}.bg3-tool small{font-size:.59rem}.bg3-wallet-buttons a{font-size:.64rem;padding:8px}.bg3-app-pill{font-size:.55rem}.bg3-feature-glyph{width:38px;height:38px;flex-basis:38px}}
 @media(prefers-reduced-motion:reduce){.bg3-home *{transition:none!important;animation:none!important}}
+
+
+/* V3 app screens — unified markets, bots, portfolio & cockpit */
+.bg3-dashboard,.bg3-markets,.bg3-bots,.bg3-portfolio{--bg3-lime:#b3ffca;--bg3-border:#344637;--bg3-panel:#121b16;--bg3-muted:#a5b7ab;max-width:1440px!important;margin-inline:auto!important;padding:clamp(18px,3vw,40px)!important;color:#f3faf5}
+.bg3-page-intro{display:flex;justify-content:space-between;align-items:center;gap:20px;background:#111a14;border:1px solid #29392d;border-radius:15px;padding:21px 25px;margin:0 0 25px}
+.bg3-page-overline{display:block;color:#b3ffca;font-size:.7rem;letter-spacing:.15em;font-weight:850;margin-bottom:7px}
+.bg3-page-intro p{color:#b4c9b8;margin:0;line-height:1.55;font-size:.9rem}
+.bg3-page-chip{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border:1px solid #3d5543;background:#202d23;border-radius:10px;color:#d3ffdd!important;font-weight:800;font-size:.78rem;padding:11px 16px;text-decoration:none!important;transition:border-color .2s}
+.bg3-page-chip:hover{border-color:#b3ffca}
+.bg3-dashboard .section-title,.bg3-markets .section-title,.bg3-bots>.section-title{margin:0 0 26px!important}
+.bg3-dashboard .section-title h2,.bg3-markets .section-title h2,.bg3-bots>.section-title h2,.bg3-portfolio h2{font-size:clamp(1.9rem,3.4vw,3.2rem)!important;font-weight:850!important;letter-spacing:-.06em!important;line-height:1.14!important;color:#f2faf4!important;margin:6px 0 12px!important}
+.bg3-dashboard .section-subtitle,.bg3-markets .section-subtitle,.bg3-bots .section-subtitle{color:#adc0b1!important;line-height:1.65}
+.bg3-dashboard .eyebrow,.bg3-markets .eyebrow,.bg3-bots .eyebrow,.bg3-portfolio .eyebrow{color:#b3ffca!important;letter-spacing:.1em;font-size:.69rem}
+.bg3-dashboard .bg2-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.bg3-dashboard .bg2-shortcuts a{background:#18241b!important;border:1px solid #344b38!important;border-radius:14px!important;box-shadow:none!important;padding:19px!important;text-decoration:none!important;min-width:0}
+.bg3-dashboard .bg2-shortcuts a:hover{background:#243729!important;border-color:#b3ffca!important}
+.bg3-dashboard .bg2-shortcuts a strong{color:#f3faf5!important}
+.bg3-dashboard .bg2-shortcuts a span{color:#b3ffca!important}
+.bg3-dashboard .bg2-shortcuts a small{color:#acc3b1!important}
+.bg3-dashboard .dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:20px 0}
+.bg3-dashboard .pro-kpi,.bg3-dashboard .pro-panel{background:#152019!important;border:1px solid #324635!important;box-shadow:none!important;border-radius:16px!important;color:#e9f5ec!important}
+.bg3-dashboard .pro-kpi{padding:19px!important;min-width:0}
+.bg3-dashboard .pro-kpi>span,.bg3-dashboard .pro-kpi small{color:#a7bda9!important}
+.bg3-dashboard .pro-kpi strong{color:#f5fff6!important;font-size:clamp(1.35rem,2.3vw,2rem)!important;letter-spacing:-.045em}
+.bg3-dashboard .pro-panel h3{color:#f2fff4!important;letter-spacing:-.035em}
+.bg3-dashboard .dashboard-cockpit-strip,.bg3-dashboard .dashboard-pro-grid{gap:13px}
+.bg3-dashboard .ux15-quickstart{border:1px solid #3b5540!important;background:#1b2b20!important;border-radius:16px!important;box-shadow:none!important}
+.bg3-markets .market-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.bg3-markets .market{background:#152019!important;border:1px solid #334838!important;border-radius:16px!important;padding:21px!important;box-shadow:none!important;min-width:0;transition:border-color .18s,transform .18s}
+.bg3-markets .market:hover{border-color:#b3ffca!important;transform:translateY(-2px)}
+.bg3-markets .market .market-top strong{font-weight:850;letter-spacing:-.03em}
+.bg3-markets .market .price{font-size:clamp(1.4rem,2.3vw,2rem)!important;letter-spacing:-.06em!important;color:#f1fff4!important;font-weight:850}
+.bg3-markets .market .market-sparkline{margin-block:14px}
+.bg3-markets .market-toolbar,.bg3-markets .market-periods,.bg3-markets .investir-filters{border-color:#354838}
+.bg3-markets .investir-market-intro,.bg3-markets .investir-market-tools,.bg3-markets .investir-market-footer{border-radius:12px;background:#121d16!important;border:1px solid #2d4132!important}
+.bg3-markets .market-btn,.bg3-dashboard .btn-primary,.bg3-bots .btn-primary,.bg3-portfolio .btn-primary{background:#b3ffca!important;border-color:#b3ffca!important;color:#112719!important;border-radius:10px!important;font-weight:850!important}
+.bg3-markets .investir-search input{background:#19261d!important;border:1px solid #3a5140!important;color:#f2fff4!important;border-radius:10px}
+.bg3-bots .bot-engine-legend,.bg3-bots .ux15-bot-guide,.bg3-bots .visitor-final-cta{background:#131e16!important;border:1px solid #304436!important;border-radius:17px!important;box-shadow:none!important}
+.bg3-bots .bot-engine-legend-item{background:#1a2920!important;border:1px solid #344e3a!important;border-radius:12px!important}
+.bg3-bots .ux15-bot-guide-item{background:#1c2b20!important;border:1px solid #3a5140!important;border-radius:13px!important;text-decoration:none!important}
+.bg3-bots .ux15-bot-guide-item:hover{border-color:#b3ffca!important}
+.bg3-bots .bot-grid{gap:15px}
+.bg3-bots .bot-card,.bg3-bots [class*="bot-card"]{box-shadow:none!important}
+.bg3-bots .visitor-final-cta h2{letter-spacing:-.05em!important}
+.bg3-portfolio{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:25px;align-items:start}
+.bg3-portfolio .bg3-page-intro{grid-column:1/-1;margin-bottom:0}
+.bg3-portfolio .features{color:#adc4b2;line-height:2}
+.bg3-portfolio .simulator{background:#152019!important;border:1px solid #344a39!important;border-radius:17px!important;box-shadow:none!important;padding:25px!important;max-width:100%}
+.bg3-portfolio .simulator h3{color:#f2fff5!important;font-size:1.3rem;letter-spacing:-.035em}
+.bg3-portfolio .simulator input,.bg3-portfolio .simulator select{background:#1d2c21!important;border:1px solid #3b5842!important;color:#f0fbf2!important;border-radius:10px!important}
+.bg3-portfolio .simulator .result{border-radius:10px}
+@media(max-width:1050px){.bg3-markets .market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bg3-dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.bg3-dashboard,.bg3-markets,.bg3-bots,.bg3-portfolio{padding:19px 12px!important}.bg3-page-intro{padding:15px;align-items:flex-start;flex-direction:column;gap:12px}.bg3-dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.bg3-dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.bg3-markets .market-grid{grid-template-columns:1fr;gap:11px}.bg3-markets .market{padding:17px!important}.bg3-portfolio{grid-template-columns:1fr}.bg3-portfolio .simulator{padding:19px!important}.bg3-bots .ux15-bot-guide-grid{grid-template-columns:1fr!important}}
+@media(max-width:380px){.bg3-dashboard .bg2-shortcuts a{padding:12px!important}.bg3-dashboard .pro-kpi{padding:12px!important}.bg3-dashboard .pro-kpi strong{font-size:1.35rem!important}.bg3-page-chip{width:100%}}
+@media(prefers-reduced-motion:reduce){.bg3-markets .market{transition:none!important}.bg3-markets .market:hover{transform:none!important}}
