@@ -1156,3 +1156,27 @@ img,svg,video,canvas{max-width:100%}
   .activity-page-shell{padding-inline:clamp(12px,4vw,24px)}
 }
 @media(prefers-reduced-motion:reduce){html:focus-within{scroll-behavior:auto}}
+
+
+/* BitGold V1.3 — accueil accessible, valeurs et cockpit lisible */
+.bg-values{position:relative;max-width:1240px;margin:0 auto;padding-block:clamp(40px,6vw,88px)}
+.bg-values-intro{max-width:780px;margin-bottom:26px}
+.bg-values-intro h2{font-size:clamp(1.8rem,3.7vw,3rem);line-height:1.14;letter-spacing:-.035em;margin:12px 0}
+.bg-values-intro p{max-width:660px;color:#a9b9b0;line-height:1.7}
+.bg-values-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.bg-value-card{min-width:0;padding:clamp(18px,2.3vw,28px);border:1px solid #294236;border-radius:18px;background:linear-gradient(150deg,#14231a,#0a1510);transition:border-color .2s ease,transform .2s ease}
+.bg-value-card:hover{border-color:#6b9b49;transform:translateY(-2px)}
+.bg-value-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:#203525;color:#c8ff45;font-weight:800;font-size:.8rem}
+.bg-value-card h3{font-size:1.15rem;margin:20px 0 10px;color:#f0f8ee}
+.bg-value-card p{margin:0;color:#a9b9b0;line-height:1.65;font-size:.94rem}
+.bg-values-footer{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-top:20px;padding:22px;border:1px solid #294236;border-radius:16px;background:#0e1b13}
+.bg-values-footer p{margin:0;max-width:650px;color:#bdcbbf;line-height:1.6}
+.bg-values-footer strong{color:#f0f8ee}
+.bg-dashboard-disclaimer{padding:13px 16px;margin:12px 0 20px;border:1px solid #3d5630;border-radius:12px;background:#152419;color:#c2d3c1;line-height:1.5;font-size:.88rem}
+.bg-dashboard-disclaimer strong{color:#e5f5da}
+.bitgold-home-hero .hero-copy h1{letter-spacing:-.04em;text-wrap:balance}
+.bitgold-home-hero .hero-copy>p{line-height:1.7}
+.bitgold-home-hero .hero-actions{flex-wrap:wrap;gap:10px}
+@media(max-width:950px){.bg-values-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.bg-values{padding-block:36px}.bg-values-grid{grid-template-columns:minmax(0,1fr)}.bg-values-footer{align-items:stretch}.bg-values-footer .btn{width:100%;text-align:center}.bitgold-home-hero .hero-actions .btn{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.bg-value-card{transition:none}.bg-value-card:hover{transform:none}}
