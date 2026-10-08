@@ -1,5 +1,5 @@
 /* BitGold 2.0 — mobile-first progressive visual system. Existing business logic untouched. */
-:root{--bg2-ink:#090d18;--bg2-panel:#111729;--bg2-panel-alt:#171d33;--bg2-purple:#7954f5;--bg2-gold:#e0b55a;--bg2-green:#35d4b0;--bg2-line:rgba(159,174,206,.15)}
+:root{--bg2-ink:#090d18;--bg2-panel:#111729;--bg2-panel-alt:#171d33;--bg2-purple:#7954f5;--bg2-gold:#e0b55a;--bg2-green:#c8a5ff;--bg2-line:rgba(159,174,206,.15)}
 html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,rgba(102,65,189,.12),transparent 42%),var(--bg2-ink);color:#f3f5fc;-webkit-font-smoothing:antialiased}
 .topbar{background:rgba(9,13,24,.96)!important;border-bottom:1px solid var(--bg2-line)!important;backdrop-filter:blur(18px)}
 .topbar-inner{max-width:1600px}.brand-copy strong{letter-spacing:-.04em}.brand-mark{filter:drop-shadow(0 0 12px rgba(224,181,90,.18))}
@@ -10,8 +10,8 @@ html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,r
 .pro-dashboard{max-width:1440px;margin-inline:auto}.pro-dashboard .dashboard-section-title{padding:12px 0 4px}.pro-dashboard .dashboard-section-title h2{font-size:clamp(1.7rem,3.2vw,2.75rem)}.pro-dashboard .dashboard-section-title .section-subtitle{max-width:670px}
 .pro-dashboard .bg2-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0 22px}
 .bg2-shortcuts>a{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;padding:19px 18px;border:1px solid var(--bg2-line);border-radius:18px;background:linear-gradient(145deg,#191f35,#111827);color:#f3f5fc;text-decoration:none;transition:transform .18s,border-color .18s}
-.bg2-shortcuts>a:hover,.bg2-shortcuts>a:focus-visible{transform:translateY(-2px);border-color:rgba(121,84,245,.65)}.bg2-shortcuts>a>span{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(121,84,245,.2);color:#b5a3ff;font-size:23px}.bg2-shortcuts>a:nth-child(2)>span{color:var(--bg2-green);background:rgba(53,212,176,.12)}.bg2-shortcuts>a:nth-child(3)>span{color:#f3c871;background:rgba(224,181,90,.12)}.bg2-shortcuts strong{font-size:1.05rem}.bg2-shortcuts small{font-size:.82rem;color:#a7b1c7}
-.pro-dashboard .dashboard-kpis{gap:14px}.pro-dashboard .pro-kpi,.pro-dashboard .pro-panel,.pro-dashboard .ux15-quickstart{background:linear-gradient(150deg,rgba(26,31,52,.96),rgba(14,21,36,.98));border:1px solid var(--bg2-line);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.12)}.pro-dashboard .pro-kpi strong{letter-spacing:-.04em}.pro-dashboard #dashTotal{color:#f5f7ff}.pro-dashboard #dashReturn{color:var(--bg2-green)}
+.bg2-shortcuts>a:hover,.bg2-shortcuts>a:focus-visible{transform:translateY(-2px);border-color:rgba(121,84,245,.65)}.bg2-shortcuts>a>span{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(121,84,245,.2);color:#b5a3ff;font-size:23px}.bg2-shortcuts>a:nth-child(2)>span{color:#c8a5ff;background:rgba(121,84,245,.15)}.bg2-shortcuts>a:nth-child(3)>span{color:#f3c871;background:rgba(224,181,90,.12)}.bg2-shortcuts strong{font-size:1.05rem}.bg2-shortcuts small{font-size:.82rem;color:#a7b1c7}
+.pro-dashboard .dashboard-kpis{gap:14px}.pro-dashboard .pro-kpi,.pro-dashboard .pro-panel,.pro-dashboard .ux15-quickstart{background:linear-gradient(150deg,rgba(26,31,52,.96),rgba(14,21,36,.98));border:1px solid var(--bg2-line);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.12)}.pro-dashboard .pro-kpi strong{letter-spacing:-.04em}.pro-dashboard #dashTotal{color:#f5f7ff}.pro-dashboard #dashReturn{color:#e0b55a}
 .pro-dashboard .ux15-quickstart{padding:18px 22px}.pro-dashboard .cockpit-customizer,.pro-dashboard .cockpit-visibility{opacity:.83}.bot-grid>*{border-radius:18px}.bot-comparison-wrap{overflow-x:auto}
 .bg2-mobile-tabs{display:none}
 @media(max-width:900px){.pro-dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}.hero.visitor-hero{margin:12px;padding:26px 20px}.pro-dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -70,3 +70,121 @@ html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,r
 #demoModal input,#cryptoDetailModal input,#tradeModal input,#modal input,#profileModal input{max-width:100%;box-sizing:border-box}
 @media(max-width:640px){#demoModal,#cryptoDetailModal,#tradeModal,#modal,#profileModal{padding:8px;align-items:center}#demoModal .modal-box,#cryptoDetailModal .modal-box,#tradeModal .modal-box,#modal .modal-box,#profileModal .modal-box{max-height:calc(100dvh - 16px);padding:clamp(14px,4vw,20px);border-radius:16px}#cryptoDetailModal .crypto-detail-box{width:100%}#demoModal button,#cryptoDetailModal button,#tradeModal button,#modal button,#profileModal button{min-height:40px}}
 @media(prefers-reduced-motion:reduce){#marketGrid .market{transition:none!important;transform:none!important}}
+
+
+/* BitGold 2.1: concise, portfolio-first cockpit without hiding financial risk context. */
+#dashboard .dashboard-section-title h2{font-size:clamp(1.65rem,3vw,2.5rem);letter-spacing:-.04em}
+#dashboard .dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#dashboard .dashboard-kpis .pro-kpi{min-width:0;padding:clamp(14px,2vw,22px);border:1px solid var(--bg2-line);border-radius:17px;background:linear-gradient(145deg,#192239,#11182a)}
+#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2;background:radial-gradient(ellipse at 100% 0%,rgba(211,170,83,.16),transparent 68%),linear-gradient(135deg,#242341,#151b30)}
+#dashboard .dashboard-kpis .pro-kpi strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-size:clamp(1.35rem,2.7vw,2.2rem);letter-spacing:-.04em}
+#dashboard .bg2-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#dashboard .bg2-shortcuts a{min-width:0;min-height:80px;padding:15px;border-radius:16px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+#dashboard .bg2-shortcuts a:focus-visible{outline:3px solid #c4a8ff;outline-offset:2px}
+#dashboard .dashboard-cockpit-strip{min-width:0}
+@media(max-width:800px){#dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2}#dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){#dashboard .dashboard-kpis{gap:8px}#dashboard .dashboard-kpis .pro-kpi{padding:13px;border-radius:14px}#dashboard .dashboard-kpis .pro-kpi strong{font-size:clamp(1.1rem,5.3vw,1.55rem)}#dashboard .dashboard-kpis .pro-kpi:first-child strong{font-size:clamp(1.7rem,8vw,2.25rem)}#dashboard .bg2-shortcuts{gap:9px}#dashboard .bg2-shortcuts a{padding:12px;min-height:72px}}
+
+/* BitGold 2.1 brand palette: violet + or, no green status/accent UI. */
+:root{--bg2-green:#c8a5ff}
+#dashboard .positive,#compte .positive,#marketGrid .positive,.positive{color:#e0b55a!important}
+#dashboard .negative,#compte .negative,#marketGrid .negative,.negative{color:#ff889f!important}
+#dashboard .live,#bots .bot-ai-status,.bot-ai-status{color:#c8a5ff}
+#dashboard .live i,#bots .bot-ai-status i{background:#a887f8;box-shadow:0 0 0 3px rgba(121,84,245,.17)}
+#dashboard .status-pill{border-color:rgba(224,181,90,.38)}
+
+
+/* BitGold 2.1 / bots: refined trading-terminal presentation with genuine backtest data. */
+#bots .section-title{max-width:1440px;margin-inline:auto}
+#bots .bot-engine-legend{gap:12px}
+#bots .bot-engine-legend-item{border-radius:18px;border:1px solid var(--bg2-line);background:linear-gradient(145deg,#191d35,#101726)}
+#bot-detail .bot-detail-hero{border-radius:22px;background:radial-gradient(ellipse at 90% 0%,rgba(121,84,245,.18),transparent 65%),linear-gradient(135deg,#1b2037,#101522)}
+#bot-detail .bot-analytics-card{border:1px solid var(--bg2-line);border-radius:18px}
+.bot-performance-visual{margin:18px 0 20px;padding:18px;border:1px solid rgba(160,140,235,.22);border-radius:16px;background:linear-gradient(135deg,#171b31,#101726)}
+.bot-performance-visual-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.bot-performance-visual-head strong{color:#f2ecff}.bot-performance-visual-head span{color:#aeb7cb;font-size:.8rem}
+.bot-performance-chart{display:grid;gap:16px;min-height:96px}
+.bot-performance-row{display:grid;grid-template-columns:80px minmax(0,1fr) 90px;align-items:center;gap:12px;font-size:.83rem}
+.bot-performance-row>strong{font-variant-numeric:tabular-nums;text-align:right;color:#e0b55a}
+.bot-performance-track{height:24px;position:relative;border-radius:5px;background:rgba(160,170,204,.07)}
+.bot-performance-zero{position:absolute;left:50%;height:100%;width:1px;background:rgba(223,227,243,.45)}
+.bot-performance-bar{position:absolute;top:5px;height:14px;border-radius:3px;background:linear-gradient(90deg,#7954f5,#c8a5ff)}
+.bot-performance-bar.benchmark{background:linear-gradient(90deg,#a77d34,#e0b55a)}
+.bot-performance-bar.negative{background:linear-gradient(90deg,#a8466c,#ff889f)!important}
+@media(max-width:520px){.bot-performance-visual{padding:12px}.bot-performance-row{grid-template-columns:62px minmax(0,1fr) 70px;gap:7px;font-size:.72rem}.bot-performance-visual-head span{font-size:.72rem}}
+
+
+/* BitGold 2.1: approved visual direction — black + mint, no purple. */
+:root{--bg2-ink:#080e0e;--bg2-panel:#111d1b;--bg2-panel-alt:#182824;--bg2-purple:#43e5b8;--bg2-gold:#86f3d0;--bg2-green:#43e5b8;--bg2-line:rgba(132,204,183,.17)}
+body{background:radial-gradient(ellipse at 90% 0%,rgba(37,152,117,.10),transparent 42%),#080e0e;color:#eaf8f3}
+.topbar{background:rgba(8,16,15,.97)!important}
+.main-nav a:hover,.main-nav a.active{background:rgba(67,229,184,.12)!important;color:#8cf7d6!important}
+.btn-primary,.hero-actions .btn-primary{background:#43e5b8!important;color:#08211b!important;border-color:#43e5b8!important;box-shadow:0 8px 30px rgba(67,229,184,.12)!important}
+.btn-primary:hover{background:#81f4d2!important}
+a:focus-visible,button:focus-visible{outline:3px solid #80f4d2;outline-offset:3px}
+.bitgold-home-hero{background:radial-gradient(ellipse at 78% 35%,rgba(52,181,143,.12),transparent 50%)!important}
+.bitgold-home-hero h1 span{color:#65e9c2!important;background:none!important;-webkit-text-fill-color:#65e9c2!important}
+.home-explorer,.home-topic-stage,.bot-detail-card,.bot-analytics-card{border-color:var(--bg2-line)!important;background-color:#111c1a!important}
+.home-topic.active,.bot-analytics-period.active{background:rgba(67,229,184,.15)!important;color:#8df5d6!important;border-color:rgba(67,229,184,.5)!important}
+.home-orbit .orbit-core{box-shadow:0 0 40px rgba(67,229,184,.2)}
+#dashboard .dashboard-kpis .pro-kpi:first-child{background:radial-gradient(ellipse at 100% 0%,rgba(67,229,184,.13),transparent 70%),linear-gradient(135deg,#182d28,#111d1b)}
+#dashboard .bg2-shortcuts a:focus-visible{outline-color:#80f4d2}
+#dashboard .bg2-shortcuts>a:nth-child(2)>span{color:#43e5b8!important}
+#dashboard .positive,#compte .positive,#marketGrid .positive,.positive{color:#43e5b8!important}
+#dashboard .negative,#compte .negative,#marketGrid .negative,.negative{color:#ff889f!important}
+#dashboard .live,#bots .bot-ai-status,.bot-ai-status{color:#75eecb!important}
+#dashboard .live i,#bots .bot-ai-status i{background:#43e5b8!important;box-shadow:0 0 0 3px rgba(67,229,184,.17)!important}
+#dashboard .status-pill{border-color:rgba(67,229,184,.38)}
+#bot-detail .bot-detail-hero{background:radial-gradient(ellipse at 90% 0%,rgba(67,229,184,.13),transparent 65%),linear-gradient(135deg,#172722,#0d1715)}
+.bot-performance-visual{border-color:rgba(67,229,184,.2);background:linear-gradient(135deg,#14231f,#0c1715)}
+.bot-performance-visual-head strong{color:#e8fff5}
+.bot-performance-row>strong{color:#70edc7}
+.bot-performance-bar,.bot-performance-bar.benchmark{background:linear-gradient(90deg,#178968,#43e5b8)}
+.bot-performance-bar.negative{background:linear-gradient(90deg,#a8466c,#ff889f)!important}
+.bg2-mobile-tabs{background:#0b1613!important;border-top:1px solid rgba(67,229,184,.19)!important}
+.bg2-mobile-tabs a.active,.bg2-mobile-tabs a:hover{color:#43e5b8!important}
+@media(max-width:760px){.bitgold-home-hero{padding-inline:16px}.bitgold-home-hero .hero-copy h1{font-size:clamp(2.2rem,10vw,3.8rem)}.home-topic-tabs{overflow-x:auto;scroll-snap-type:x mandatory}.home-topic{scroll-snap-align:start}}
+
+
+/* BitGold 2.1 dashboard refinement: portfolio-led terminal, mobile-app-ready. */
+#dashboard{max-width:1500px;margin-inline:auto}
+#dashboard .dashboard-section-title{padding-block:10px 18px}
+#dashboard .dashboard-section-title h2{font-size:clamp(1.6rem,3.1vw,2.65rem);letter-spacing:-.045em}
+#dashboard .dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}
+#dashboard .dashboard-kpis .pro-kpi{min-width:0;min-height:138px;position:relative;padding:22px;border:1px solid rgba(105,203,169,.17);border-radius:20px;background:linear-gradient(155deg,#172824,#101b19);box-shadow:0 12px 34px rgba(0,0,0,.13)}
+#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2;background:radial-gradient(ellipse at 95% 0%,rgba(67,229,184,.16),transparent 68%),linear-gradient(130deg,#1b3530,#101b19)}
+#dashboard .dashboard-kpis .pro-kpi:first-child strong{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.12}
+#dashboard .dashboard-kpis .pro-kpi>span{color:#a8c7bd;font-size:.83rem;font-weight:600}
+#dashboard .dashboard-kpis .pro-kpi small{color:#9fbcb3}
+#dashboard .dashboard-cockpit-strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#dashboard .dashboard-cockpit-strip .pro-panel{min-width:0;border:1px solid rgba(105,203,169,.17);border-radius:19px;background:linear-gradient(145deg,#14241f,#101a18)}
+#dashboard .bg2-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#dashboard .bg2-shortcuts>a{background:linear-gradient(150deg,#172b25,#101d19);border:1px solid rgba(105,203,169,.18);border-radius:18px;transition:transform .18s,border-color .18s}
+#dashboard .bg2-shortcuts>a:hover{transform:translateY(-2px);border-color:rgba(67,229,184,.55)}
+#dashboard .bg2-shortcuts>a span{color:#43e5b8!important}
+#dashboard .bg2-shortcuts>a small{color:#9bbab0}
+@media(max-width:980px){#dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2}#dashboard .dashboard-cockpit-strip{grid-template-columns:1fr}}
+@media(max-width:600px){#dashboard{padding-inline:12px}#dashboard .dashboard-kpis{gap:9px}#dashboard .dashboard-kpis .pro-kpi{min-height:108px;padding:15px;border-radius:15px}#dashboard .dashboard-kpis .pro-kpi:first-child{min-height:145px}#dashboard .dashboard-kpis .pro-kpi:first-child strong{font-size:clamp(1.9rem,8vw,2.5rem)}#dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#dashboard .bg2-shortcuts>a{min-height:74px;padding:12px}#dashboard .dashboard-section-title h2{font-size:1.65rem}}
+@media(prefers-reduced-motion:reduce){#dashboard .bg2-shortcuts>a{transition:none}#dashboard .bg2-shortcuts>a:hover{transform:none}}
+
+
+/* BitGold 2.1 asset details: mobile-first, accessible trading chart. */
+#cryptoDetailModal .crypto-detail-box{width:min(960px,calc(100vw - 24px));max-width:960px;max-height:min(92dvh,980px);overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#3b826d #101c19;border:1px solid rgba(67,229,184,.22);border-radius:22px;background:linear-gradient(155deg,#15251f,#0c1614);box-shadow:0 28px 90px rgba(0,0,0,.6)}
+#cryptoDetailModal .crypto-detail-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:12px 0 22px}
+#cryptoDetailModal .crypto-detail-head h3{font-size:clamp(1.5rem,3.8vw,2.35rem);letter-spacing:-.04em}
+#cryptoDetailModal .crypto-detail-price strong{font-variant-numeric:tabular-nums;font-size:clamp(1.5rem,3.3vw,2.15rem)}
+#cryptoDetailModal .crypto-detail-ranges{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin;scrollbar-color:#326b59 transparent}
+#cryptoDetailModal .crypto-detail-ranges button{flex:0 0 auto;min-height:40px;border-radius:10px;padding:8px 13px;border:1px solid transparent;color:#b5cec5;background:#1b2b25;white-space:nowrap}
+#cryptoDetailModal .crypto-detail-ranges button.active,#cryptoDetailModal .crypto-detail-ranges button[aria-selected="true"]{color:#0b2019!important;background:#43e5b8!important;border-color:#43e5b8!important;font-weight:700}
+#cryptoDetailModal .crypto-detail-ranges button:focus-visible{outline:2px solid #a4ffdf;outline-offset:2px}
+#cryptoDetailChart{position:relative;min-height:260px;overflow:hidden;border:1px solid rgba(67,229,184,.15);border-radius:16px;background:radial-gradient(ellipse at 50% 0%,rgba(67,229,184,.08),transparent 70%),#0b1714}
+#cryptoDetailChart .history-chart{display:block;width:100%;max-width:100%;height:auto;transform-origin:center}
+#cryptoDetailModal .crypto-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-block:16px}
+#cryptoDetailModal .crypto-detail-grid>div{min-width:0;border:1px solid rgba(67,229,184,.12);border-radius:13px;padding:14px;background:#14221e}
+#cryptoDetailModal .crypto-detail-grid strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#cryptoDetailModal .asset-analytics-card{border-color:rgba(67,229,184,.17);border-radius:16px;background:#101c19}
+#cryptoDetailModal .crypto-detail-actions{position:sticky;bottom:-1px;z-index:2;padding:12px 0;background:linear-gradient(0deg,#0c1614 78%,transparent)}
+#cryptoDetailModal .crypto-detail-actions .btn-primary{min-height:46px}
+@media(max-width:680px){#cryptoDetailModal .crypto-detail-box{width:calc(100vw - 12px);max-height:calc(100dvh - 20px);border-radius:16px;padding:16px}#cryptoDetailModal .crypto-detail-head{align-items:flex-start}#cryptoDetailChart{min-height:200px}#cryptoDetailModal .crypto-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#cryptoDetailModal .crypto-detail-grid>div{padding:11px}#cryptoDetailModal .crypto-detail-ranges button{min-height:44px}}
+@media(max-width:360px){#cryptoDetailModal .crypto-detail-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#cryptoDetailModal .history-chart{transition:none!important}}

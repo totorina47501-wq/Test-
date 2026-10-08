@@ -229,3 +229,73 @@ test("BitGold 2.0 lot 4: all existing dialogs have constrained mobile scroll", (
   assert.ok(css.includes('overflow-y:auto'));
   assert.ok(css.includes('overscroll-behavior:contain'));
 });
+
+
+test("BitGold 2.1: cockpit keeps live portfolio KPIs and accessible shortcuts", () => {
+  for (const id of ['dashboard', 'dashTotal', 'dashPerformance', 'dashRisk', 'dashBots']) {
+    assert.ok(html.includes('id="' + id + '"'), 'missing cockpit data hook: ' + id);
+  }
+  for (const target of ['href="/investir"', 'href="#bots"', 'href="#portefeuille"', 'href="/activite"']) {
+    assert.ok(html.includes(target), 'missing cockpit navigation: ' + target);
+  }
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.ok(css.includes('#dashboard .dashboard-kpis .pro-kpi:first-child'));
+  assert.ok(css.includes('#dashboard .bg2-shortcuts a:focus-visible'));
+  assert.ok(css.includes('@media(max-width:480px)'));
+});
+
+
+test("BitGold 2.1 brand palette follows approved black and mint design", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  const mint = css.slice(css.indexOf("/* BitGold 2.1: approved visual direction"));
+  assert.ok(mint.includes("--bg2-purple:#43e5b8"));
+  assert.ok(mint.includes("--bg2-green:#43e5b8"));
+  assert.ok(mint.includes(".bitgold-home-hero"));
+  assert.ok(mint.includes(".bg2-mobile-tabs"));
+  assert.ok(mint.includes(".bot-performance-bar"));
+  assert.ok(mint.includes("#dashboard .positive"));
+  assert.ok(mint.includes("@media(max-width:760px)"));
+  assert.ok(!mint.includes("#7954f5"));
+});
+
+
+test("BitGold 2.1 bots: comparative chart is driven by actual backtest data, never fabricated", () => {
+  const js = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.ok(html.includes('id="botPerformanceChart"'));
+  assert.ok(js.includes("renderBotPerformanceComparison(b,days)"));
+  assert.ok(js.includes("Number(backtest?.totalReturn)"));
+  assert.ok(js.includes("Number(backtest?.benchmarkBTC)"));
+  assert.ok(js.includes("Données historiques insuffisantes"));
+  assert.ok(css.includes(".bot-performance-track"));
+});
+
+
+test("BitGold 2.1 portfolio cockpit keeps accessible mint responsive layout", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  const refinement = css.slice(css.indexOf("/* BitGold 2.1 dashboard refinement"));
+  assert.ok(html.includes('id="dashTotal"'));
+  assert.ok(html.includes('id="dashPerformance"'));
+  assert.ok(html.includes('id="dashPlanBadge"'));
+  assert.ok(refinement.includes("grid-template-columns:repeat(4,minmax(0,1fr))"));
+  assert.ok(refinement.includes("@media(max-width:600px)"));
+  assert.ok(refinement.includes("@media(prefers-reduced-motion:reduce)"));
+  assert.ok(refinement.includes("#43e5b8"));
+});
+
+
+test("BitGold 2.1 asset detail charts remain scrollable and usable on narrow mobile screens", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  const detail = css.slice(css.indexOf("/* BitGold 2.1 asset details"));
+  for (const id of ["cryptoDetailModal", "cryptoDetailChart", "cryptoDetailPrice", "detailBuy"]) {
+    assert.ok(html.includes('id="' + id + '"'));
+  }
+  for (const range of ["5m", "1h", "24h", "7d", "30d", "1y", "5y"]) {
+    assert.ok(html.includes('data-range="' + range + '"'));
+  }
+  assert.ok(detail.includes("overflow-y:auto"));
+  assert.ok(detail.includes("max-height:calc(100dvh - 20px)"));
+  assert.ok(detail.includes("overflow-x:auto"));
+  assert.ok(detail.includes("position:sticky"));
+  assert.ok(detail.includes("prefers-reduced-motion:reduce"));
+});
