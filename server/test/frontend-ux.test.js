@@ -15,10 +15,10 @@ test("landing place les bots avant les tarifs", () => {
 });
 
 test("hero présente les bots comme proposition de valeur principale", () => {
-  assert.match(html, /BITGOLD · L'INVESTISSEMENT CRYPTO/);
+  assert.match(html, /BITGOLD · PLATEFORME CRYPTO SIMULÉE/);
   assert.match(html, /La crypto\./);
   assert.match(html, /À votre rythme\./);
-  assert.match(html, /href="#parcours"[^>]*>Découvrir la plateforme/);
+  assert.match(html, /id="parcours"/);
 });
 
 test("le parcours d'une décision est explicitement expliqué", () => {
@@ -97,8 +97,8 @@ test("le journal affiche des états accessibles et propose de réessayer après 
 
 
 test("l'accueil non connecté présente un parcours accueillant et les valeurs BitGold", () => {
-  assert.match(html, /BITGOLD · L'INVESTISSEMENT CRYPTO/);
-  assert.match(html, /href="#parcours"[^>]*>Découvrir la plateforme/);
+  assert.match(html, /BITGOLD · PLATEFORME CRYPTO SIMULÉE/);
+  assert.match(html, /id="parcours"/);
   assert.match(html, /id="parcours"/);
   assert.match(html, /id="valeurs"/);
   for (const value of ["Clarté", "Transparence", "Contrôle", "Responsabilité"]) {
@@ -128,7 +128,7 @@ test("le journal permet une recherche combinée aux filtres", () => {
 
 
 test("l'accueil invité présente une promesse accueillante et honnête", () => {
-  assert.match(html, /BITGOLD · L'INVESTISSEMENT CRYPTO/);
+  assert.match(html, /BITGOLD · PLATEFORME CRYPTO SIMULÉE/);
   assert.match(html, /La crypto\./);
   assert.match(html, /À votre rythme\./);
   assert.match(html, /href="#parcours"/);
@@ -301,18 +301,17 @@ test("BitGold 2.1 asset detail charts remain scrollable and usable on narrow mob
 });
 
 
-test("BitGold 2.2 landing is product-led, original and clearly simulated", () => {
-  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
-  const design = css.slice(css.indexOf("/* BitGold 2.2"));
-  assert.ok(html.includes('class="bg22-hero-layout"'));
-  assert.ok(html.includes('class="bg22-product-showcase"'));
-  assert.ok(html.includes("courbe fictive, pas de données de marché"));
-  assert.ok(html.includes("aucun dépôt, paiement ou ordre réel"));
+test("BitGold V3 landing is a functional app-first clean slate", () => {
+  const design = fs.readFileSync(new URL("../public/bitgold-v3.css", import.meta.url), "utf8");
+  assert.ok(html.includes('class="bg3-hero-grid"'));
+  assert.ok(html.includes('class="bg3-app-window"'));
+  assert.ok(html.includes("Aperçu illustratif"));
+  assert.ok(html.includes("Aucun ordre réel"));
   assert.ok(html.includes('id="parcours"'));
   assert.equal((html.match(/id="heroSignup"/g) || []).length, 1);
   assert.equal((html.match(/id="heroDemo"/g) || []).length, 1);
-  assert.ok(design.includes("grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr)"));
-  assert.ok(design.includes("@media(max-width:760px)"));
+  assert.ok(design.includes("grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)"));
+  assert.ok(design.includes("@media(max-width:800px)"));
   assert.ok(design.includes("@media(max-width:430px)"));
   assert.ok(design.includes("prefers-reduced-motion:reduce"));
 });
