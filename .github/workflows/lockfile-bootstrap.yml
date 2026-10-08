@@ -1,0 +1,38 @@
+name: Bootstrap deterministic npm lockfile
+
+on:
+  push:
+    branches: [feature/v1.5-npm-lock-ci]
+    paths:
+      - '.github/workflows/lockfile-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-lockfile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate npm lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Validate clean install
+        run: npm ci --no-audit --no-fund
+      - name: Commit lockfile to feature branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: generate npm lockfile for reproducible builds'
+            git push origin HEAD:feature/v1.5-npm-lock-ci
+          fi
