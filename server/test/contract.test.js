@@ -131,7 +131,7 @@ test("portfolio and cockpit use the connected user's holdings with live valuatio
   assert.match(server,/integrity:\{ok:integrity/);
   assert.match(app,/marketPrices\[row\.asset\]=Number\(row\.price\)/);
   assert.match(app,/state\.portfolio=\{/);
-  assert.match(app,/data\.integrity\?\.ok/);
+  assert.match(app,/ledger\?\.ok===false\|\|ledger\?\.reconciliation\?\.ok===false/);
 });
 
 
