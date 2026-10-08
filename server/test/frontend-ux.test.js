@@ -16,7 +16,7 @@ test("landing place les bots avant les tarifs", () => {
 
 test("hero présente les bots comme proposition de valeur principale", () => {
   assert.match(html, /BITGOLD · PLATEFORME CRYPTO SIMULÉE/);
-  assert.match(html, /La crypto\./);
+  assert.match(html, /Explorez la crypto\./);
   assert.match(html, /À votre rythme\./);
   assert.match(html, /id="parcours"/);
 });
@@ -129,7 +129,7 @@ test("le journal permet une recherche combinée aux filtres", () => {
 
 test("l'accueil invité présente une promesse accueillante et honnête", () => {
   assert.match(html, /BITGOLD · PLATEFORME CRYPTO SIMULÉE/);
-  assert.match(html, /La crypto\./);
+  assert.match(html, /Explorez la crypto\./);
   assert.match(html, /À votre rythme\./);
   assert.match(html, /href="#parcours"/);
   assert.match(html, /Sans dépôt/);
