@@ -229,3 +229,17 @@ test("BitGold 2.0 lot 4: all existing dialogs have constrained mobile scroll", (
   assert.ok(css.includes('overflow-y:auto'));
   assert.ok(css.includes('overscroll-behavior:contain'));
 });
+
+
+test("BitGold 2.1: cockpit keeps live portfolio KPIs and accessible shortcuts", () => {
+  for (const id of ['dashboard', 'dashTotal', 'dashPerformance', 'dashRisk', 'dashBots']) {
+    assert.ok(html.includes('id="' + id + '"'), 'missing cockpit data hook: ' + id);
+  }
+  for (const target of ['href="/investir"', 'href="#bots"', 'href="#portefeuille"', 'href="/activite"']) {
+    assert.ok(html.includes(target), 'missing cockpit navigation: ' + target);
+  }
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.ok(css.includes('#dashboard .dashboard-kpis .pro-kpi:first-child'));
+  assert.ok(css.includes('#dashboard .bg2-shortcuts a:focus-visible'));
+  assert.ok(css.includes('@media(max-width:480px)'));
+});
