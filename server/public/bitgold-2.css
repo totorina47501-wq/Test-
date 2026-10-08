@@ -166,3 +166,25 @@ a:focus-visible,button:focus-visible{outline:3px solid #80f4d2;outline-offset:3p
 @media(max-width:980px){#dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2}#dashboard .dashboard-cockpit-strip{grid-template-columns:1fr}}
 @media(max-width:600px){#dashboard{padding-inline:12px}#dashboard .dashboard-kpis{gap:9px}#dashboard .dashboard-kpis .pro-kpi{min-height:108px;padding:15px;border-radius:15px}#dashboard .dashboard-kpis .pro-kpi:first-child{min-height:145px}#dashboard .dashboard-kpis .pro-kpi:first-child strong{font-size:clamp(1.9rem,8vw,2.5rem)}#dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#dashboard .bg2-shortcuts>a{min-height:74px;padding:12px}#dashboard .dashboard-section-title h2{font-size:1.65rem}}
 @media(prefers-reduced-motion:reduce){#dashboard .bg2-shortcuts>a{transition:none}#dashboard .bg2-shortcuts>a:hover{transform:none}}
+
+
+/* BitGold 2.1 asset details: mobile-first, accessible trading chart. */
+#cryptoDetailModal .crypto-detail-box{width:min(960px,calc(100vw - 24px));max-width:960px;max-height:min(92dvh,980px);overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#3b826d #101c19;border:1px solid rgba(67,229,184,.22);border-radius:22px;background:linear-gradient(155deg,#15251f,#0c1614);box-shadow:0 28px 90px rgba(0,0,0,.6)}
+#cryptoDetailModal .crypto-detail-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:12px 0 22px}
+#cryptoDetailModal .crypto-detail-head h3{font-size:clamp(1.5rem,3.8vw,2.35rem);letter-spacing:-.04em}
+#cryptoDetailModal .crypto-detail-price strong{font-variant-numeric:tabular-nums;font-size:clamp(1.5rem,3.3vw,2.15rem)}
+#cryptoDetailModal .crypto-detail-ranges{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin;scrollbar-color:#326b59 transparent}
+#cryptoDetailModal .crypto-detail-ranges button{flex:0 0 auto;min-height:40px;border-radius:10px;padding:8px 13px;border:1px solid transparent;color:#b5cec5;background:#1b2b25;white-space:nowrap}
+#cryptoDetailModal .crypto-detail-ranges button.active,#cryptoDetailModal .crypto-detail-ranges button[aria-selected="true"]{color:#0b2019!important;background:#43e5b8!important;border-color:#43e5b8!important;font-weight:700}
+#cryptoDetailModal .crypto-detail-ranges button:focus-visible{outline:2px solid #a4ffdf;outline-offset:2px}
+#cryptoDetailChart{position:relative;min-height:260px;overflow:hidden;border:1px solid rgba(67,229,184,.15);border-radius:16px;background:radial-gradient(ellipse at 50% 0%,rgba(67,229,184,.08),transparent 70%),#0b1714}
+#cryptoDetailChart .history-chart{display:block;width:100%;max-width:100%;height:auto;transform-origin:center}
+#cryptoDetailModal .crypto-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-block:16px}
+#cryptoDetailModal .crypto-detail-grid>div{min-width:0;border:1px solid rgba(67,229,184,.12);border-radius:13px;padding:14px;background:#14221e}
+#cryptoDetailModal .crypto-detail-grid strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#cryptoDetailModal .asset-analytics-card{border-color:rgba(67,229,184,.17);border-radius:16px;background:#101c19}
+#cryptoDetailModal .crypto-detail-actions{position:sticky;bottom:-1px;z-index:2;padding:12px 0;background:linear-gradient(0deg,#0c1614 78%,transparent)}
+#cryptoDetailModal .crypto-detail-actions .btn-primary{min-height:46px}
+@media(max-width:680px){#cryptoDetailModal .crypto-detail-box{width:calc(100vw - 12px);max-height:calc(100dvh - 20px);border-radius:16px;padding:16px}#cryptoDetailModal .crypto-detail-head{align-items:flex-start}#cryptoDetailChart{min-height:200px}#cryptoDetailModal .crypto-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#cryptoDetailModal .crypto-detail-grid>div{padding:11px}#cryptoDetailModal .crypto-detail-ranges button{min-height:44px}}
+@media(max-width:360px){#cryptoDetailModal .crypto-detail-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#cryptoDetailModal .history-chart{transition:none!important}}
