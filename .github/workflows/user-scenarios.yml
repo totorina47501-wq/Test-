@@ -1,9 +1,17 @@
-name: BitGold scheduled user scenarios
+name: BitGold user journeys (scheduled and UI PR)
 
 on:
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
+  pull_request:
+    branches: [staging]
+    paths:
+      - 'server/public/**'
+      - 'server/e2e/**'
+      - 'server/scripts/user-scenarios.mjs'
+      - 'server/playwright.config.mjs'
+      - '.github/workflows/user-scenarios.yml'
 
 permissions:
   contents: read
@@ -14,7 +22,7 @@ concurrency:
 
 jobs:
   user-scenarios:
-    name: Isolated signup, login, buy and sell
+    name: Signup, login, simulated trades and responsive UI
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
