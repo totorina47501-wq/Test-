@@ -89,9 +89,9 @@ test("le retour du journal cible le tableau de bord et respecte les mouvements r
 test("le journal affiche des états accessibles et propose de réessayer après erreur", () => {
   assert.match(app, /aria-busy/);
   assert.match(app, /role="status"/);
-  assert.match(app, /role="alert"/);
+  assert.match(app, /message\.setAttribute\("role","alert"\)/);
   assert.match(app, /retry\.textContent="Réessayer"/);
-  assert.match(app, /addEventListener\("click",loadActivity\)/);
+  assert.match(app, /retry\.addEventListener\("click",loadActivity\)/);
 });
 
 
