@@ -1,20 +1,25 @@
-name: BitGold scheduled user scenarios
+name: BitGold user journeys (PR, staging, production, daily)
 
 on:
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
+  pull_request:
+    branches: [staging]
+  push:
+    branches: [staging, main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: bitgold-user-scenarios
-  cancel-in-progress: false
+  # Replace superseded PR checks; keep each push, scheduled and manual run independent.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   user-scenarios:
-    name: Isolated signup, login, buy and sell
+    name: Signup, login, simulated trades and responsive UI
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -51,6 +56,8 @@ jobs:
           cache-dependency-path: server/package-lock.json
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Validate Playwright spec syntax
+        run: npm run check:playwright
       - name: Install Playwright test runner
         run: npm install --no-save @playwright/test@1.58.2
       - name: Install Chromium

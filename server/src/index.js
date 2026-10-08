@@ -212,7 +212,7 @@ app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,
 });
 
 app.use(express.json());
-app.use(rateLimit({ windowMs: 60000, max: 120, standardHeaders: true, legacyHeaders: false }));
+app.use(rateLimit({ windowMs: 60000, max: process.env.NODE_ENV === "test" ? 2000 : 120, standardHeaders: true, legacyHeaders: false }));
 const authRateLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 10,

@@ -3,7 +3,10 @@ import { test, expect } from "@playwright/test";
 test("signup and login controls work in the browser", async ({ page }) => {
   await page.route("https://accounts.google.com/**", route => route.abort());
   await page.goto("/");
-  await page.locator("#heroSignup").click();
+  const signup = page.locator("#heroSignup");
+  await expect(signup).toBeVisible();
+  await signup.scrollIntoViewIfNeeded();
+  await signup.click();
   await expect(page.locator("#authEmail")).toBeVisible();
   await expect(page.locator("#authPassword")).toBeVisible();
   await expect(page.locator("#authSubmit")).toBeVisible();

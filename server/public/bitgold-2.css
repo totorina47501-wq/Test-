@@ -1,0 +1,72 @@
+/* BitGold 2.0 — mobile-first progressive visual system. Existing business logic untouched. */
+:root{--bg2-ink:#090d18;--bg2-panel:#111729;--bg2-panel-alt:#171d33;--bg2-purple:#7954f5;--bg2-gold:#e0b55a;--bg2-green:#35d4b0;--bg2-line:rgba(159,174,206,.15)}
+html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,rgba(102,65,189,.12),transparent 42%),var(--bg2-ink);color:#f3f5fc;-webkit-font-smoothing:antialiased}
+.topbar{background:rgba(9,13,24,.96)!important;border-bottom:1px solid var(--bg2-line)!important;backdrop-filter:blur(18px)}
+.topbar-inner{max-width:1600px}.brand-copy strong{letter-spacing:-.04em}.brand-mark{filter:drop-shadow(0 0 12px rgba(224,181,90,.18))}
+.main-nav a{border-radius:11px;transition:background .18s,color .18s}.main-nav a:hover,.main-nav a.active{background:rgba(121,84,245,.13);color:#e8ddff}
+.section,.hero{scroll-margin-top:90px}.section-title h2,.hero h1{letter-spacing:-.045em}.hero.visitor-hero{background:radial-gradient(ellipse at 72% 30%,rgba(113,72,224,.19),transparent 55%),linear-gradient(135deg,#101729,#0a111d);border:1px solid var(--bg2-line);border-radius:26px;margin:24px auto;max-width:1440px;min-height:unset;padding:clamp(26px,5vw,72px)}
+.hero.visitor-hero h1{font-size:clamp(2.25rem,5vw,4.8rem);line-height:1.08;max-width:850px}.hero.visitor-hero h1 span{color:var(--bg2-gold)}.hero.visitor-hero .hero-copy>p{max-width:650px}.hero.visitor-hero .hero-actions{display:flex;flex-wrap:wrap;gap:12px}.hero.visitor-hero .hero-proof{display:flex;flex-wrap:wrap;gap:12px}
+.btn-primary{background:linear-gradient(125deg,#7954f5,#5b40d7)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 28px rgba(104,70,215,.19)}
+.pro-dashboard{max-width:1440px;margin-inline:auto}.pro-dashboard .dashboard-section-title{padding:12px 0 4px}.pro-dashboard .dashboard-section-title h2{font-size:clamp(1.7rem,3.2vw,2.75rem)}.pro-dashboard .dashboard-section-title .section-subtitle{max-width:670px}
+.pro-dashboard .bg2-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0 22px}
+.bg2-shortcuts>a{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;padding:19px 18px;border:1px solid var(--bg2-line);border-radius:18px;background:linear-gradient(145deg,#191f35,#111827);color:#f3f5fc;text-decoration:none;transition:transform .18s,border-color .18s}
+.bg2-shortcuts>a:hover,.bg2-shortcuts>a:focus-visible{transform:translateY(-2px);border-color:rgba(121,84,245,.65)}.bg2-shortcuts>a>span{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(121,84,245,.2);color:#b5a3ff;font-size:23px}.bg2-shortcuts>a:nth-child(2)>span{color:var(--bg2-green);background:rgba(53,212,176,.12)}.bg2-shortcuts>a:nth-child(3)>span{color:#f3c871;background:rgba(224,181,90,.12)}.bg2-shortcuts strong{font-size:1.05rem}.bg2-shortcuts small{font-size:.82rem;color:#a7b1c7}
+.pro-dashboard .dashboard-kpis{gap:14px}.pro-dashboard .pro-kpi,.pro-dashboard .pro-panel,.pro-dashboard .ux15-quickstart{background:linear-gradient(150deg,rgba(26,31,52,.96),rgba(14,21,36,.98));border:1px solid var(--bg2-line);border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.12)}.pro-dashboard .pro-kpi strong{letter-spacing:-.04em}.pro-dashboard #dashTotal{color:#f5f7ff}.pro-dashboard #dashReturn{color:var(--bg2-green)}
+.pro-dashboard .ux15-quickstart{padding:18px 22px}.pro-dashboard .cockpit-customizer,.pro-dashboard .cockpit-visibility{opacity:.83}.bot-grid>*{border-radius:18px}.bot-comparison-wrap{overflow-x:auto}
+.bg2-mobile-tabs{display:none}
+@media(max-width:900px){.pro-dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}.hero.visitor-hero{margin:12px;padding:26px 20px}.pro-dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}.bg2-mobile-tabs{display:none}body:has(#dashboard:not([hidden])) .bg2-mobile-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;bottom:0;left:0;right:0;z-index:1000;padding:8px 5px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(11,15,28,.98);border-top:1px solid var(--bg2-line);box-shadow:0 -10px 30px rgba(0,0,0,.3)}.bg2-mobile-tabs a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#a8b2c9;text-decoration:none;font-size:10px;min-height:49px;border-radius:10px}.bg2-mobile-tabs a span{font-size:22px;color:#c2afff}.bg2-mobile-tabs a:focus-visible,.bg2-mobile-tabs a:hover{background:rgba(121,84,245,.18);color:white}.hero.visitor-hero{border-radius:18px;padding:25px 18px}.hero.visitor-hero h1{font-size:clamp(2rem,9vw,3rem)}.hero.visitor-hero .hero-actions>.btn,.hero.visitor-hero .hero-actions>button{flex:1 1 160px;min-height:46px}.pro-dashboard .dashboard-section-title{display:block}.pro-dashboard .dashboard-section-title .cockpit-customizer,.pro-dashboard .dashboard-section-title .cockpit-visibility{max-width:100%;overflow-x:auto;white-space:nowrap}.pro-dashboard .bg2-shortcuts{gap:10px}.bg2-shortcuts>a{padding:14px 12px;gap:5px;border-radius:14px}.bg2-shortcuts>a>span{width:34px;height:34px;font-size:19px}.bg2-shortcuts strong{font-size:.9rem}.bg2-shortcuts small{font-size:.73rem}.pro-dashboard .dashboard-kpis{gap:9px}.pro-dashboard .pro-kpi{min-width:0;padding:14px 12px}.pro-dashboard .pro-kpi strong{font-size:clamp(1.05rem,5vw,1.55rem)}.pro-dashboard .dashboard-pro-grid,.pro-dashboard .dashboard-cockpit-strip{grid-template-columns:minmax(0,1fr)}.pro-dashboard .ux15-quickstart{padding:15px}.pro-dashboard .pro-panel{min-width:0;overflow-wrap:anywhere}}
+@media(prefers-reduced-motion:reduce){.bg2-shortcuts>a,.main-nav a{transition:none}.bg2-shortcuts>a:hover{transform:none}}
+
+
+/* Lot 2: wallet and market-first responsive surfaces; preserve existing interactions. */
+#compte .portfolio-hero{background:linear-gradient(140deg,#131a2d,#0b1221);border:1px solid var(--bg2-line);border-radius:22px;padding:clamp(18px,3vw,32px)}
+#compte .portfolio-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+#compte .portfolio-heading h2{letter-spacing:-.045em;font-size:clamp(1.7rem,3vw,2.8rem)}
+#compte .portfolio-overview{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px;margin:20px 0}
+#compte .portfolio-total,#compte .portfolio-cash{border:1px solid var(--bg2-line);border-radius:18px;padding:clamp(18px,2.5vw,28px);background:linear-gradient(150deg,#1c2340,#121a2d)}
+#compte .portfolio-total{background:radial-gradient(ellipse at 100% 0%,rgba(224,181,90,.11),transparent 60%),linear-gradient(130deg,#222145,#161c31)}
+#compte .portfolio-total strong,#compte .portfolio-cash strong{display:block;font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.055em;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#compte .wallet-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+#compte .wallet-actions .btn{min-height:44px;flex:1 1 120px}
+#compte .holdings-card{border:1px solid var(--bg2-line);border-radius:18px;background:#12192b;padding:clamp(14px,2vw,24px)}
+#compte .portfolio-asset,#compte .holding-row{border-radius:13px}
+#marketGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:14px}
+#marketGrid .market{min-width:0;background:linear-gradient(155deg,#1b2239,#11192b);border:1px solid var(--bg2-line);border-radius:18px;padding:18px;transition:border-color .18s,transform .18s}
+#marketGrid .market:hover,#marketGrid .market:focus-within{border-color:rgba(121,84,245,.65);transform:translateY(-2px)}
+#marketGrid .market .price{font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+#marketGrid .market-sparkline{overflow:hidden;max-width:100%}
+#marketGrid .market button{min-height:42px}
+@media(max-width:640px){#compte .portfolio-hero{padding:16px;border-radius:17px}#compte .portfolio-heading{display:block}#compte .portfolio-overview{grid-template-columns:minmax(0,1fr);gap:10px}#compte .portfolio-total,#compte .portfolio-cash{padding:18px;border-radius:15px}#compte .portfolio-total strong,#compte .portfolio-cash strong{font-size:clamp(1.75rem,8vw,2.5rem)}#compte .holdings-card{padding:12px}#marketGrid{grid-template-columns:minmax(0,1fr);gap:10px}#marketGrid .market{padding:15px}#marketGrid .market:hover{transform:none}}
+
+
+/* BitGold 2.0 lot 3: bot discovery, strategy and settings on small screens. */
+#bots .section-title{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+#bots .bot-engine-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#bots .bot-engine-legend-item{min-width:0;border:1px solid var(--bg2-line);border-radius:17px;padding:18px;background:linear-gradient(145deg,#1a2137,#10182a)}
+#bots .bot-engine-legend-item.ai{background:radial-gradient(ellipse at 100% 0%,rgba(135,95,250,.18),transparent 70%),#151a30}
+#bots .bot-comparison-wrap{max-width:100%;min-width:0}
+#botGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}
+#botGrid > *{min-width:0;border-radius:19px;overflow-wrap:anywhere}
+#botGrid button,#botGrid a{min-height:44px}
+#bot-detail .bot-detail-shell{max-width:1200px;margin-inline:auto}
+#bot-detail .bot-detail-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-radius:22px;padding:clamp(18px,3vw,32px);background:radial-gradient(ellipse at 100% 0%,rgba(210,164,80,.12),transparent 65%),linear-gradient(140deg,#222040,#111a2b);border:1px solid var(--bg2-line)}
+#bot-detail .bot-detail-hero h2{font-size:clamp(1.8rem,4vw,3rem);letter-spacing:-.045em}
+#bot-detail .bot-detail-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(270px,1fr);gap:18px;align-items:start}
+#bot-detail .bot-detail-main,#bot-detail .bot-detail-grid > *{min-width:0}
+#bot-detail .bot-detail-card{border-radius:18px;overflow-wrap:anywhere}
+#bot-detail button,#bot-detail input,#bot-detail select{max-width:100%}
+#bot-detail button{min-height:44px}
+@media(max-width:720px){#bots .section-title{display:block}#bots .bots-section-meta{margin-top:12px}#bots .bot-engine-legend{grid-template-columns:minmax(0,1fr);gap:10px}#bots .bot-engine-legend-item{padding:14px}#botGrid{grid-template-columns:minmax(0,1fr);gap:12px}#bot-detail .bot-detail-hero{display:block;padding:18px;border-radius:17px}#bot-detail .bot-detail-price{margin-top:16px}#bot-detail .bot-detail-grid{grid-template-columns:minmax(0,1fr);gap:12px}#bot-detail .bot-detail-card{padding:16px}#bot-detail .bot-back{margin-bottom:12px}}
+
+
+/* Lot 4: contained, keyboard-friendly dialogs instead of unbounded pages. */
+#demoModal,#cryptoDetailModal,#tradeModal,#modal,#profileModal{position:fixed;inset:0;z-index:1000;overflow-y:auto;overscroll-behavior:contain;padding:clamp(10px,3vh,30px);align-items:center;justify-content:center}
+#demoModal[hidden],#cryptoDetailModal[hidden],#tradeModal[hidden],#modal[hidden],#profileModal[hidden]{display:none!important}
+#demoModal .modal-box,#cryptoDetailModal .modal-box,#tradeModal .modal-box,#modal .modal-box,#profileModal .modal-box{box-sizing:border-box;max-width:min(100%,960px);width:100%;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border-radius:20px;scrollbar-gutter:stable}
+#cryptoDetailModal .crypto-detail-box{max-width:min(100%,1080px)}
+#cryptoDetailModal .crypto-detail-box svg,#cryptoDetailModal .crypto-detail-box canvas{max-width:100%}
+#demoModal .close,#cryptoDetailModal .close,#tradeModal .close,#modal .close,#profileModal .close{position:sticky;top:0;z-index:3}
+#demoModal input,#cryptoDetailModal input,#tradeModal input,#modal input,#profileModal input{max-width:100%;box-sizing:border-box}
+@media(max-width:640px){#demoModal,#cryptoDetailModal,#tradeModal,#modal,#profileModal{padding:8px;align-items:center}#demoModal .modal-box,#cryptoDetailModal .modal-box,#tradeModal .modal-box,#modal .modal-box,#profileModal .modal-box{max-height:calc(100dvh - 16px);padding:clamp(14px,4vw,20px);border-radius:16px}#cryptoDetailModal .crypto-detail-box{width:100%}#demoModal button,#cryptoDetailModal button,#tradeModal button,#modal button,#profileModal button{min-height:40px}}
+@media(prefers-reduced-motion:reduce){#marketGrid .market{transition:none!important;transform:none!important}}
