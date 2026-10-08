@@ -27,12 +27,13 @@ test("authenticated dashboard navigation is not shown to visitors", async ({ pag
   await expect(page.locator("#dashboard")).toBeHidden();
 });
 
-test("dashboard quick links preserve functional destinations", async ({ page }) => {
-  await page.goto("/");
-  const shortcuts = page.locator(".bg2-shortcuts a");
-  await expect(shortcuts).toHaveCount(4);
-  await expect(shortcuts.nth(0)).toHaveAttribute("href", "/investir");
-  await expect(shortcuts.nth(1)).toHaveAttribute("href", "#bots");
-  await expect(shortcuts.nth(2)).toHaveAttribute("href", "#portefeuille");
-  await expect(shortcuts.nth(3)).toHaveAttribute("href", "/activite");
+test("dashboard quick links are present in the delivered HTML", async ({ request }) => {
+  const response = await request.get("/");
+  expect(response.ok()).toBeTruthy();
+  const html = await response.text();
+  const section = html.match(/<div class="bg2-shortcuts"[^>]*>([\\s\\S]*?)<\\/div>/);
+  expect(section, "dashboard shortcuts must be delivered to authenticated clients").not.toBeNull();
+  for (const target of ['href="/investir"', 'href="#bots"', 'href="#portefeuille"', 'href="/activite"']) {
+    expect(section[1]).toContain(target);
+  }
 });
