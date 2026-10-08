@@ -144,3 +144,25 @@ a:focus-visible,button:focus-visible{outline:3px solid #80f4d2;outline-offset:3p
 .bg2-mobile-tabs{background:#0b1613!important;border-top:1px solid rgba(67,229,184,.19)!important}
 .bg2-mobile-tabs a.active,.bg2-mobile-tabs a:hover{color:#43e5b8!important}
 @media(max-width:760px){.bitgold-home-hero{padding-inline:16px}.bitgold-home-hero .hero-copy h1{font-size:clamp(2.2rem,10vw,3.8rem)}.home-topic-tabs{overflow-x:auto;scroll-snap-type:x mandatory}.home-topic{scroll-snap-align:start}}
+
+
+/* BitGold 2.1 dashboard refinement: portfolio-led terminal, mobile-app-ready. */
+#dashboard{max-width:1500px;margin-inline:auto}
+#dashboard .dashboard-section-title{padding-block:10px 18px}
+#dashboard .dashboard-section-title h2{font-size:clamp(1.6rem,3.1vw,2.65rem);letter-spacing:-.045em}
+#dashboard .dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}
+#dashboard .dashboard-kpis .pro-kpi{min-width:0;min-height:138px;position:relative;padding:22px;border:1px solid rgba(105,203,169,.17);border-radius:20px;background:linear-gradient(155deg,#172824,#101b19);box-shadow:0 12px 34px rgba(0,0,0,.13)}
+#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2;background:radial-gradient(ellipse at 95% 0%,rgba(67,229,184,.16),transparent 68%),linear-gradient(130deg,#1b3530,#101b19)}
+#dashboard .dashboard-kpis .pro-kpi:first-child strong{font-size:clamp(2rem,3.8vw,3.1rem);line-height:1.12}
+#dashboard .dashboard-kpis .pro-kpi>span{color:#a8c7bd;font-size:.83rem;font-weight:600}
+#dashboard .dashboard-kpis .pro-kpi small{color:#9fbcb3}
+#dashboard .dashboard-cockpit-strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#dashboard .dashboard-cockpit-strip .pro-panel{min-width:0;border:1px solid rgba(105,203,169,.17);border-radius:19px;background:linear-gradient(145deg,#14241f,#101a18)}
+#dashboard .bg2-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#dashboard .bg2-shortcuts>a{background:linear-gradient(150deg,#172b25,#101d19);border:1px solid rgba(105,203,169,.18);border-radius:18px;transition:transform .18s,border-color .18s}
+#dashboard .bg2-shortcuts>a:hover{transform:translateY(-2px);border-color:rgba(67,229,184,.55)}
+#dashboard .bg2-shortcuts>a span{color:#43e5b8!important}
+#dashboard .bg2-shortcuts>a small{color:#9bbab0}
+@media(max-width:980px){#dashboard .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#dashboard .dashboard-kpis .pro-kpi:first-child{grid-column:span 2}#dashboard .dashboard-cockpit-strip{grid-template-columns:1fr}}
+@media(max-width:600px){#dashboard{padding-inline:12px}#dashboard .dashboard-kpis{gap:9px}#dashboard .dashboard-kpis .pro-kpi{min-height:108px;padding:15px;border-radius:15px}#dashboard .dashboard-kpis .pro-kpi:first-child{min-height:145px}#dashboard .dashboard-kpis .pro-kpi:first-child strong{font-size:clamp(1.9rem,8vw,2.5rem)}#dashboard .bg2-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#dashboard .bg2-shortcuts>a{min-height:74px;padding:12px}#dashboard .dashboard-section-title h2{font-size:1.65rem}}
+@media(prefers-reduced-motion:reduce){#dashboard .bg2-shortcuts>a{transition:none}#dashboard .bg2-shortcuts>a:hover{transform:none}}
