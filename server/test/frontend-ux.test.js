@@ -331,3 +331,15 @@ test("BitGold V3 app shell retains critical hooks and accessible navigation", ()
   assert.ok(css.includes("@media(max-width:760px)"), "mobile breakpoint required");
   assert.ok(html.includes("Aucun ordre réel"), "clear simulation disclaimer required");
 });
+
+test("market provider outage never presents hard-coded quotes as live", () => {
+  const app = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  const start = app.indexOf("async function loadMarket(){");
+  const end = app.indexOf("let marketHistoryPreview=", start);
+  assert.ok(start >= 0 && end > start);
+  const handler = app.slice(start, end);
+  assert.doesNotMatch(handler, /renderMarket\(fallbackMarkets\.map/);
+  assert.match(handler, /market-unavailable/);
+  assert.match(handler, /market-stale/);
+  assert.match(handler, /Dernières données disponibles/);
+});
