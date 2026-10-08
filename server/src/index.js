@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS user_2fa(user_id INTEGER PRIMARY KEY REFERENCES users
 CREATE TABLE IF NOT EXISTS wallets(user_id INTEGER PRIMARY KEY REFERENCES users(id),cash DOUBLE PRECISION NOT NULL DEFAULT 10000);
 CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id),asset TEXT NOT NULL,quantity DOUBLE PRECISION NOT NULL DEFAULT 0,PRIMARY KEY(user_id,asset));
 CREATE TABLE IF NOT EXISTS trades(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),side TEXT NOT NULL,asset TEXT NOT NULL,amount_eur DOUBLE PRECISION NOT NULL,price_eur DOUBLE PRECISION NOT NULL,quantity DOUBLE PRECISION NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS trade_idempotency(user_id INTEGER NOT NULL REFERENCES users(id),request_key TEXT NOT NULL,request_hash TEXT NOT NULL,trade_id INTEGER REFERENCES trades(id),created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(user_id,request_key));
 CREATE TABLE IF NOT EXISTS bot_subscriptions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,portfolio_name TEXT NOT NULL DEFAULT 'Portefeuille principal',active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,last_run TIMESTAMPTZ,UNIQUE(user_id,bot_type));
 CREATE TABLE IF NOT EXISTS bot_activity(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,action TEXT NOT NULL DEFAULT 'hold',asset TEXT,message TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS bot_ai_decisions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,engine TEXT NOT NULL,provider TEXT NOT NULL,model TEXT,action TEXT NOT NULL,asset TEXT,confidence DOUBLE PRECISION NOT NULL DEFAULT 0,regime TEXT,reason TEXT,features JSONB,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -1277,26 +1278,47 @@ app.get("/api/dashboard",auth,async(req,res)=>{
 });
 
 app.post("/api/trades",auth,compliance.requireTransactionClearance,async(req,res)=>{
-  await refreshMarket();
-  const side=req.body.side, asset=req.body.asset, amount=Number(req.body.amount);
-  if(!["buy","sell"].includes(side)||!prices[asset]||!Number.isFinite(amount)||amount<=0) return res.status(400).json({error:"Ordre invalide."});
-  const price=prices[asset], qty=amount/price, client=await pool.connect();
+  const side=req.body?.side, asset=req.body?.asset, amount=req.body?.amount;
+  const key=req.get("Idempotency-Key");
+  if(key!==undefined&&(!/^[A-Za-z0-9_-]{8,128}$/.test(key))) return res.status(400).json({error:"Clé d'idempotence invalide."});
+  if(!["buy","sell"].includes(side)||typeof asset!=="string"||typeof amount!=="number"||!Number.isFinite(amount)||amount<=0) return res.status(400).json({error:"Ordre invalide."});
+  const requestHash=crypto.createHash("sha256").update(JSON.stringify([side,asset,amount])).digest("hex");
+  const client=await pool.connect();
+  let committed=false;
   try {
     await client.query("BEGIN");
+    // The wallet lock serializes all manual orders for one user, including repeated keys.
     const w=await client.query("SELECT cash FROM wallets WHERE user_id=$1 FOR UPDATE",[req.user.sub]);
+    if(!w.rows.length) throw Error("Portefeuille introuvable.");
+    if(key){
+      const prior=await client.query("SELECT request_hash,trade_id FROM trade_idempotency WHERE user_id=$1 AND request_key=$2",[req.user.sub,key]);
+      if(prior.rows.length){
+        await client.query("COMMIT");committed=true;
+        if(prior.rows[0].request_hash!==requestHash) return res.status(409).json({error:"Clé déjà utilisée pour un autre ordre."});
+        return res.status(200).json({ok:true,replayed:true,tradeId:prior.rows[0].trade_id});
+      }
+    }
+    await refreshMarket();
+    const price=Number(prices[asset]);
+    if(!Number.isFinite(price)||price<=0) throw Error("Actif indisponible.");
+    const qty=amount/price;
+    if(!Number.isFinite(qty)||qty<=0) throw Error("Ordre invalide.");
     const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[req.user.sub,asset]);
-    const cash=Number(w.rows[0]?.cash??0), currentQty=Number(h.rows[0]?.quantity??0);
-    if(side==="buy"&&amount>cash) throw Error("Solde insuffisant.");
-    if(side==="sell"&&qty>currentQty) throw Error("Quantité insuffisante.");
-    await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2",[side==="buy"?-amount:amount,req.user.sub]);
-    await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3",[side==="buy"?qty:-qty,req.user.sub,asset]);
-    await client.query("INSERT INTO trades(user_id,side,asset,amount_eur,price_eur,quantity) VALUES($1,$2,$3,$4,$5,$6)",[req.user.sub,side,asset,amount,price,qty]);
-    await client.query("COMMIT");
-    res.status(201).json({ok:true});
+    const cash=Number(w.rows[0].cash),currentQty=Number(h.rows[0]?.quantity??0);
+    if(side==="buy"&&amount>cash+1e-9) throw Error("Solde insuffisant.");
+    if(side==="sell"&&qty>currentQty+1e-12) throw Error("Quantité insuffisante.");
+    const updatedWallet=await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2 RETURNING cash",[side==="buy"?-amount:amount,req.user.sub]);
+    const updatedHolding=await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3 RETURNING quantity",[side==="buy"?qty:-qty,req.user.sub,asset]);
+    if(!updatedHolding.rows.length||Number(updatedWallet.rows[0].cash)<-1e-7||Number(updatedHolding.rows[0].quantity)<-1e-9) throw Error("Incohérence de solde.");
+    const trade=await client.query("INSERT INTO trades(user_id,side,asset,amount_eur,price_eur,quantity) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",[req.user.sub,side,asset,amount,price,qty]);
+    if(key) await client.query("INSERT INTO trade_idempotency(user_id,request_key,request_hash,trade_id) VALUES($1,$2,$3,$4)",[req.user.sub,key,requestHash,trade.rows[0].id]);
+    await client.query("COMMIT");committed=true;
+    res.status(201).json({ok:true,tradeId:trade.rows[0].id});
   } catch(e) {
-    await client.query("ROLLBACK");
+    if(!committed) await client.query("ROLLBACK").catch(()=>{});
+    console.error("[TRADES] rejected",e.message);
     res.status(400).json({error:e.message||"Erreur serveur."});
-  } finally { client.release(); }
+  } finally {client.release();}
 });
 
 const port=Number(process.env.PORT||3000);
