@@ -9,7 +9,8 @@
     "check:html": "html-validate public/**/*.html",
     "check:css": "stylelint \"public/**/*.css\"",
     "check:js": "node --check src/index.js && node --check public/app.js",
-    "test:js": "node --check src/index.js && node --check public/app.js"
+    "test:js": "node --check src/index.js && node --check public/app.js && npm run check:playwright",
+    "check:playwright": "node --check playwright.config.mjs && node --check e2e/*.spec.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
