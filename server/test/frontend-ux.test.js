@@ -269,3 +269,16 @@ test("BitGold 2.1 bots: comparative chart is driven by actual backtest data, nev
   assert.ok(js.includes("Données historiques insuffisantes"));
   assert.ok(css.includes(".bot-performance-track"));
 });
+
+
+test("BitGold 2.1 portfolio cockpit keeps accessible mint responsive layout", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  const refinement = css.slice(css.indexOf("/* BitGold 2.1 dashboard refinement"));
+  assert.ok(html.includes('id="dashTotal"'));
+  assert.ok(html.includes('id="dashPerformance"'));
+  assert.ok(html.includes('id="dashPlanBadge"'));
+  assert.ok(refinement.includes("grid-template-columns:repeat(4,minmax(0,1fr))"));
+  assert.ok(refinement.includes("@media(max-width:600px)"));
+  assert.ok(refinement.includes("@media(prefers-reduced-motion:reduce)"));
+  assert.ok(refinement.includes("#43e5b8"));
+});
