@@ -16,7 +16,8 @@ test("landing place les bots avant les tarifs", () => {
 
 test("hero présente les bots comme proposition de valeur principale", () => {
   assert.match(html, /Bienvenue sur BitGold/);
-  assert.match(html, /La crypto, plus simple à comprendre/);
+  assert.match(html, /Votre crypto\. Vos stratégies/);
+  assert.match(html, /En toute clarté/);
   assert.match(html, /href="#parcours"[^>]*>Découvrir BitGold/);
 });
 
@@ -128,7 +129,8 @@ test("le journal permet une recherche combinée aux filtres", () => {
 
 test("l'accueil invité présente une promesse accueillante et honnête", () => {
   assert.match(html, /Bienvenue sur BitGold/);
-  assert.match(html, /La crypto, plus simple à comprendre/);
+  assert.match(html, /Votre crypto\. Vos stratégies/);
+  assert.match(html, /En toute clarté/);
   assert.match(html, /href="#parcours"/);
   assert.match(html, /Sans dépôt/);
   assert.match(html, /100 %/);
@@ -179,4 +181,17 @@ test("V1.4: journal affiche une erreur accessible sans HTML non fiable", () => {
   assert.match(v14Frontend, /message\.textContent=e\.message\|\|"Journal temporairement indisponible\."/);
   assert.match(v14Frontend, /log\.replaceChildren\(message\)/);
   assert.match(v14Frontend, /retry\.addEventListener\("click",loadActivity\)/);
+});
+
+
+test("BitGold 2.0: navigation mobile et thème chargés sans toucher aux parcours métier", () => {
+  assert.match(html, /bitgold-2\\.css\\?v=1/);
+  assert.match(html, /class="bg2-mobile-tabs"/);
+  assert.match(html, /class="bg2-shortcuts"/);
+  for (const target of ['href="#dashboard"', 'href="/investir"', 'href="#bots"', 'href="#portefeuille"', 'href="/activite"']) {
+    assert.ok(html.includes(target), `lien mobile absent: ${target}`);
+  }
+  const visualCss = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.match(visualCss, /@media\\(max-width:640px\\)/);
+  assert.match(visualCss, /prefers-reduced-motion/);
 });
