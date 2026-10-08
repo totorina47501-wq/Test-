@@ -53,6 +53,36 @@ jobs:
           grep -q 'TWO_FACTOR_ENCRYPTION_KEY must be configured' src/index.js
       - name: Build production container
         run: docker build -t bitgold-ci:${{ github.sha }} .
+      - name: Smoke-test production container and health endpoint
+        run: |
+          set -eu
+          docker network create bitgold-ci-net
+          docker run -d --name bitgold-ci-db --network bitgold-ci-net \
+            -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=bitgold_test postgres:16
+          for i in $(seq 1 30); do
+            if docker exec bitgold-ci-db pg_isready -U postgres -d bitgold_test; then break; fi
+            sleep 2
+          done
+          docker run -d --name bitgold-ci-app --network bitgold-ci-net \
+            -e NODE_ENV=production \
+            -e DATABASE_SSL=false \
+            -e DATABASE_URL=postgresql://postgres:postgres@bitgold-ci-db:5432/bitgold_test \
+            -e JWT_SECRET=ci-smoke-jwt-secret-32-characters-long \
+            -e TWO_FACTOR_ENCRYPTION_KEY=ci-smoke-2fa-key-32-characters-long \
+            bitgold-ci:${{ github.sha }}
+          ok=0
+          for i in $(seq 1 40); do
+            if docker run --rm --network bitgold-ci-net curlimages/curl:8.12.1 -fsS http://bitgold-ci-app:3000/api/health; then
+              ok=1
+              break
+            fi
+            sleep 2
+          done
+          if [ "$ok" -ne 1 ]; then
+            docker logs bitgold-ci-app
+            exit 1
+          fi
       - name: Run quality checks and tests in parallel
         run: |
           set +e
