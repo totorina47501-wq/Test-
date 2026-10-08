@@ -12,6 +12,10 @@ async function request(path,{method="GET",token,body,headers={}}={}){
 }
 async function main(){
   const health=await request("/api/health");assert.equal(health.status,200,"health");
+  const demoPlans=await request("/api/plans/demo");assert.equal(demoPlans.status,200,"demo plan catalog");
+  assert.equal(demoPlans.data.mode,"simulation","subscriptions marked as simulation");
+  assert.equal(demoPlans.data.requiresPayment,false,"demo subscriptions require no external provider");
+  assert.equal(demoPlans.data.plans?.find(plan=>plan.id==="free")?.maxActiveBots,1,"Free bot cap");
   const signup=await request("/api/auth/signup",{method:"POST",body:{email,password,first_name:"Scenario",last_name:"Test",country:"France",city:"Paris",postal_code:"75001"}});
   assert.equal(signup.status,201,`signup: ${JSON.stringify(signup.data)}`);
   assert.ok(signup.data.token,"signup token");
