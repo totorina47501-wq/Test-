@@ -282,3 +282,20 @@ test("BitGold 2.1 portfolio cockpit keeps accessible mint responsive layout", ()
   assert.ok(refinement.includes("@media(prefers-reduced-motion:reduce)"));
   assert.ok(refinement.includes("#43e5b8"));
 });
+
+
+test("BitGold 2.1 asset detail charts remain scrollable and usable on narrow mobile screens", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  const detail = css.slice(css.indexOf("/* BitGold 2.1 asset details"));
+  for (const id of ["cryptoDetailModal", "cryptoDetailChart", "cryptoDetailPrice", "detailBuy"]) {
+    assert.ok(html.includes('id="' + id + '"'));
+  }
+  for (const range of ["5m", "1h", "24h", "7d", "30d", "1y", "5y"]) {
+    assert.ok(html.includes('data-range="' + range + '"'));
+  }
+  assert.ok(detail.includes("overflow-y:auto"));
+  assert.ok(detail.includes("max-height:calc(100dvh - 20px)"));
+  assert.ok(detail.includes("overflow-x:auto"));
+  assert.ok(detail.includes("position:sticky"));
+  assert.ok(detail.includes("prefers-reduced-motion:reduce"));
+});
