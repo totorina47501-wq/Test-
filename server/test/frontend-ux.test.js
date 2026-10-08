@@ -171,3 +171,12 @@ test("V1.4: tableau de bord accessible avec réessai après erreur", () => {
   assert.match(v14Frontend, /retry\.addEventListener\("click",\(\)=>loadDashboard\(\)\)/);
   assert.match(v14Frontend, /message\.setAttribute\("role","alert"\)/);
 });
+
+test("V1.4: journal conserve le filtre actif au rechargement", () => {
+  assert.match(v14Frontend, /document\.querySelector\("\[data-activity-filter\]\.active"\)/);
+});
+test("V1.4: journal affiche une erreur accessible sans HTML non fiable", () => {
+  assert.match(v14Frontend, /message\.textContent=e\.message\|\|"Journal temporairement indisponible\."/);
+  assert.match(v14Frontend, /log\.replaceChildren\(message\)/);
+  assert.match(v14Frontend, /retry\.addEventListener\("click",loadActivity\)/);
+});
