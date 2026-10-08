@@ -51,6 +51,8 @@ jobs:
           grep -q 'NODE_ENV=production' Dockerfile
           grep -q 'JWT_SECRET must be configured' src/index.js
           grep -q 'TWO_FACTOR_ENCRYPTION_KEY must be configured' src/index.js
+      - name: Build production container
+        run: docker build -t bitgold-ci:${{ github.sha }} .
       - name: Run quality checks and tests in parallel
         run: |
           set +e
