@@ -15,10 +15,10 @@ test("landing place les bots avant les tarifs", () => {
 });
 
 test("hero présente les bots comme proposition de valeur principale", () => {
-  assert.match(html, /Bienvenue sur BitGold/);
-  assert.match(html, /Votre crypto\. Vos stratégies/);
-  assert.match(html, /En toute clarté/);
-  assert.match(html, /href="#parcours"[^>]*>Découvrir BitGold/);
+  assert.match(html, /BITGOLD · L'INVESTISSEMENT CRYPTO/);
+  assert.match(html, /La crypto\./);
+  assert.match(html, /À votre rythme\./);
+  assert.match(html, /href="#parcours"[^>]*>Découvrir la plateforme/);
 });
 
 test("le parcours d'une décision est explicitement expliqué", () => {
@@ -97,8 +97,8 @@ test("le journal affiche des états accessibles et propose de réessayer après 
 
 
 test("l'accueil non connecté présente un parcours accueillant et les valeurs BitGold", () => {
-  assert.match(html, /Bienvenue sur BitGold/);
-  assert.match(html, /href="#parcours">Découvrir BitGold/);
+  assert.match(html, /BITGOLD · L'INVESTISSEMENT CRYPTO/);
+  assert.match(html, /href="#parcours"[^>]*>Découvrir la plateforme/);
   assert.match(html, /id="parcours"/);
   assert.match(html, /id="valeurs"/);
   for (const value of ["Clarté", "Transparence", "Contrôle", "Responsabilité"]) {
@@ -128,9 +128,9 @@ test("le journal permet une recherche combinée aux filtres", () => {
 
 
 test("l'accueil invité présente une promesse accueillante et honnête", () => {
-  assert.match(html, /Bienvenue sur BitGold/);
-  assert.match(html, /Votre crypto\. Vos stratégies/);
-  assert.match(html, /En toute clarté/);
+  assert.match(html, /BITGOLD · L'INVESTISSEMENT CRYPTO/);
+  assert.match(html, /La crypto\./);
+  assert.match(html, /À votre rythme\./);
   assert.match(html, /href="#parcours"/);
   assert.match(html, /Sans dépôt/);
   assert.match(html, /100 %/);
