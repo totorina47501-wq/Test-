@@ -206,3 +206,14 @@ test("BitGold 2.0 lot 2: wallet and markets retain their functional controls", (
   assert.ok(css.includes('#marketGrid .market'));
   assert.ok(css.includes('@media(max-width:640px)'));
 });
+
+
+test("BitGold 2.0 lot 3: bot comparison and details keep existing interactions", () => {
+  for (const id of ['botGrid', 'botBack', 'botDetailName', 'botDetailPrice', 'botDetailStrategy', 'botDetailAlgorithm']) {
+    assert.ok(html.includes('id="' + id + '"'), 'missing bot UI hook: ' + id);
+  }
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.ok(css.includes('#botGrid{display:grid'));
+  assert.ok(css.includes('#bot-detail .bot-detail-grid'));
+  assert.ok(css.includes('@media(max-width:720px)'));
+});
