@@ -89,9 +89,9 @@ test("le retour du journal cible le tableau de bord et respecte les mouvements r
 test("le journal affiche des états accessibles et propose de réessayer après erreur", () => {
   assert.match(app, /aria-busy/);
   assert.match(app, /role="status"/);
-  assert.match(app, /role="alert"/);
-  assert.match(app, /id="activityRetry"/);
-  assert.match(app, /addEventListener\("click",loadActivity\)/);
+  assert.match(app, /message\.setAttribute\("role","alert"\)/);
+  assert.match(app, /retry\.textContent="Réessayer"/);
+  assert.match(app, /retry\.addEventListener\("click",loadActivity\)/);
 });
 
 
@@ -148,4 +148,35 @@ test("le cockpit distingue explicitement les simulations des cours externes", ()
   assert.match(html, /Portefeuille de démonstration/);
   assert.match(html, /Les cours de marché peuvent provenir de fournisseurs externes/);
   assert.match(css, /bg-values-grid/);
+});
+
+const backend = fs.readFileSync(new URL("../src/index.js", import.meta.url), "utf8");
+test("V1.4: un jeton de challenge 2FA ne donne pas accès aux routes authentifiées", () => {
+  assert.match(backend, /if\(payload\.purpose\|\|!Number\.isSafeInteger/);
+  assert.match(backend, /jwt\.verify\(match\[1\],secret,\{algorithms:\["HS256"\]\}\)/);
+  assert.match(backend, /\^Bearer \(\[\^\\s\]\+\)\$/);
+});
+
+const v14Frontend = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+const v14Backend = fs.readFileSync(new URL("../src/index.js", import.meta.url), "utf8");
+test("V1.4: inscription protégée contre les tentatives répétées", () => {
+  assert.match(v14Backend, /app\.post\("\/api\/auth\/signup", authRateLimit/);
+});
+test("V1.4: session expirée déconnecte et propose une reconnexion", () => {
+  assert.match(v14Frontend, /r\.status===401 && apiToken/);
+  assert.match(v14Frontend, /Votre session a expiré\. Reconnectez-vous/);
+});
+test("V1.4: tableau de bord accessible avec réessai après erreur", () => {
+  assert.match(v14Frontend, /chart\.setAttribute\("aria-busy","true"\)/);
+  assert.match(v14Frontend, /retry\.addEventListener\("click",\(\)=>loadDashboard\(\)\)/);
+  assert.match(v14Frontend, /message\.setAttribute\("role","alert"\)/);
+});
+
+test("V1.4: journal conserve le filtre actif au rechargement", () => {
+  assert.match(v14Frontend, /document\.querySelector\("\[data-activity-filter\]\.active"\)/);
+});
+test("V1.4: journal affiche une erreur accessible sans HTML non fiable", () => {
+  assert.match(v14Frontend, /message\.textContent=e\.message\|\|"Journal temporairement indisponible\."/);
+  assert.match(v14Frontend, /log\.replaceChildren\(message\)/);
+  assert.match(v14Frontend, /retry\.addEventListener\("click",loadActivity\)/);
 });
