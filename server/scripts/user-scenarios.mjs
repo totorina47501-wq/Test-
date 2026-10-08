@@ -29,6 +29,24 @@ async function main(){
   assert.equal(sell.status,201,`demo sell: ${JSON.stringify(sell.data)}`);
   const afterSell=await request("/api/portfolio",{token});assert.equal(afterSell.status,200,"portfolio after sell");
   assert.ok(Number(afterSell.data.cash)>Number(afterBuy.data.cash),"sell credits cash");
+  // Invalid orders must never change demo balances or holdings.
+  const beforeRejected=await request("/api/portfolio",{token});
+  assert.equal(beforeRejected.status,200,"portfolio before rejected orders");
+  for(const invalid of [
+    {side:"buy",asset:"BTC",amount:-1},
+    {side:"buy",asset:"BTC",amount:0},
+    {side:"buy",asset:"BTC",amount:1e12},
+    {side:"sell",asset:"BTC",amount:1e12},
+    {side:"buy",asset:"INVALID",amount:10},
+  ]){
+    const rejected=await request("/api/trades",{method:"POST",token,body:invalid});
+    assert.equal(rejected.status,400,`invalid order must fail: ${JSON.stringify(invalid)}`);
+  }
+  const afterRejected=await request("/api/portfolio",{token});
+  assert.equal(afterRejected.status,200,"portfolio after rejected orders");
+  assert.ok(Math.abs(Number(afterRejected.data.cash)-Number(beforeRejected.data.cash))<0.000001,"rejected orders preserve cash");
+  const holdingsByAsset=(portfolio)=>Object.fromEntries((portfolio.holdings||[]).map(h=>[h.asset,Number(h.quantity)]));
+  assert.deepEqual(holdingsByAsset(afterRejected.data),holdingsByAsset(beforeRejected.data),"rejected orders preserve holdings");
   const activity=await request("/api/activity",{token});assert.equal(activity.status,200,"activity");
   assert.ok(activity.data.trades?.some(t=>t.side==="buy"&&t.asset==="BTC"),"buy recorded");
   assert.ok(activity.data.trades?.some(t=>t.side==="sell"&&t.asset==="BTC"),"sell recorded");
