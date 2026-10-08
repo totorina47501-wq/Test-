@@ -37,3 +37,34 @@ test("dashboard quick links are present in the delivered HTML", async ({ request
     expect(section).toContain(target);
   }
 });
+
+test("visitor demo opens and closes with Escape without leaving a blocking overlay", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.locator("#heroDemo").click();
+  await expect(page.locator("#demoModal")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#demoModal")).toBeHidden();
+  await expect(page.locator("body")).not.toHaveClass(/modal-open/);
+  await page.locator("#heroSignup").click();
+  await expect(page.locator("#authEmail")).toBeVisible();
+});
+
+test("mobile navigation closes on Escape and keeps its ARIA state in sync", async ({ page, isMobile }) => {
+  test.skip(!isMobile, "mobile navigation only");
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const toggle = page.locator("#menuToggle");
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#mainNav")).not.toHaveClass(/menu-open/);
+});
+
+test("visitor can reach markets and bots without authentication", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#marches")).toBeAttached();
+  await expect(page.locator("#bots")).toBeAttached();
+  await page.locator('.bg3-feature-row a[href="#bots"]').click();
+  await expect(page).toHaveURL(/#bots$/);
+});
