@@ -51,7 +51,11 @@ jobs:
           cache-dependency-path: server/package.json
       - name: Install dependencies
         run: npm install --prefer-offline --no-audit --no-fund
-      - name: Install Playwright test runner\n        run: npm install --no-save @playwright/test@1.58.2\n      - name: Install Chromium\n        run: npx playwright install --with-deps chromium\n      - name: Start isolated BitGold server
+      - name: Install Playwright test runner
+        run: npm install --no-save @playwright/test@1.58.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start isolated BitGold server
         run: |
           node src/index.js > /tmp/bitgold-scenarios-server.log 2>&1 &
           echo $! > /tmp/bitgold-scenarios-server.pid
@@ -63,6 +67,18 @@ jobs:
           exit 1
       - name: Execute user scenarios (simulation only)
         run: node scripts/user-scenarios.mjs
-      - name: Browser E2E (desktop and mobile)\n        run: npx playwright test --config=playwright.config.mjs\n      - name: Upload scenario reports\n        if: always()\n        uses: actions/upload-artifact@v4\n        with:\n          name: bitgold-scenario-reports\n          path: |\n            server/playwright-report/\n            server/test-results/\n          if-no-files-found: ignore\n          retention-days: 14\n      - name: Print server diagnostics on failure
+      - name: Browser E2E (desktop and mobile)
+        run: npx playwright test --config=playwright.config.mjs
+      - name: Upload scenario reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitgold-scenario-reports
+          path: |
+            server/playwright-report/
+            server/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Print server diagnostics on failure
         if: failure()
         run: tail -n 120 /tmp/bitgold-scenarios-server.log || true
