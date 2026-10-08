@@ -15,9 +15,9 @@ test("landing place les bots avant les tarifs", () => {
 });
 
 test("hero présente les bots comme proposition de valeur principale", () => {
-  assert.match(html, /BitGold AI · bots intelligents/);
-  assert.match(html, /Des bots intelligents pour/);
-  assert.match(html, /href="#bots"[^>]*>Découvrir les Bots IA/);
+  assert.match(html, /Bienvenue sur BitGold/);
+  assert.match(html, /La crypto, plus simple à comprendre/);
+  assert.match(html, /href="#parcours"[^>]*>Découvrir BitGold/);
 });
 
 test("le parcours d'une décision est explicitement expliqué", () => {
@@ -92,4 +92,35 @@ test("le journal affiche des états accessibles et propose de réessayer après 
   assert.match(app, /role="alert"/);
   assert.match(app, /id="activityRetry"/);
   assert.match(app, /addEventListener\("click",loadActivity\)/);
+});
+
+
+test("l'accueil non connecté présente un parcours accueillant et les valeurs BitGold", () => {
+  assert.match(html, /Bienvenue sur BitGold/);
+  assert.match(html, /href="#parcours">Découvrir BitGold/);
+  assert.match(html, /id="parcours"/);
+  assert.match(html, /id="valeurs"/);
+  for (const value of ["Clarté", "Transparence", "Contrôle", "Responsabilité"]) {
+    assert.match(html, new RegExp("<h3>" + value + "</h3>"));
+  }
+  assert.match(html, /Aucun bot ne passe d’ordre réel/);
+  assert.match(html, /aucune promesse de rendement/);
+  assert.match(css, /bg-values-grid/);
+  assert.match(css, /max-width:560px/);
+});
+
+test("le cockpit précise explicitement le caractère simulé des chiffres", () => {
+  assert.match(html, /bg-dashboard-disclaimer/);
+  assert.match(html, /Soldes, opérations et performances sont simulés/);
+  assert.match(html, /Les cours de marché peuvent provenir de fournisseurs externes/);
+});
+
+
+test("le journal permet une recherche combinée aux filtres", () => {
+  assert.match(html, /id="activitySearch" type="search"/);
+  assert.match(html, /id="activitySearchCount" role="status"/);
+  assert.match(app, /getElementById\("activitySearch"\)/);
+  assert.match(app, /toLocaleLowerCase\("fr"\)/);
+  assert.match(app, /addEventListener\("input",\(\)=>renderActivity/);
+  assert.match(css, /bg-activity-tools/);
 });
