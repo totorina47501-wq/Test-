@@ -4,10 +4,10 @@ test.beforeEach(async ({ page }) => {
   await page.route("https://accounts.google.com/**", route => route.abort());
 });
 
-test("visitor sees the BitGold 2.2 product landing and can open signup", async ({ page }) => {
+test("visitor sees the BitGold V3 clean-slate landing and can open signup", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page.locator(".visitor-hero h1")).toContainText("La crypto.");
-  await expect(page.locator(".visitor-hero")).toContainText("Un portefeuille clair.");
+  await expect(page.locator(".visitor-hero h1")).toContainText("Explorez la crypto.");
+  await expect(page.locator(".visitor-hero")).toContainText("Les marchés, votre portefeuille");
   await expect(page.locator("#heroSignup")).toBeVisible();
   await page.locator("#heroSignup").click();
   await expect(page.locator("#authEmail")).toBeVisible();
