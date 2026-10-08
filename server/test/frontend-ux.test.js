@@ -78,3 +78,18 @@ test("les panneaux et le journal sont contraints à la largeur mobile", () => {
   assert.match(css, /focus-visible/);
   assert.match(css, /activity-page-shell/);
 });
+
+
+test("le retour du journal cible le tableau de bord et respecte les mouvements réduits", () => {
+  assert.match(app, /function closeActivity\(\)/);
+  assert.match(app, /history\.pushState\(\{\}, "", "\/#dashboard"\)/);
+  assert.match(app, /prefers-reduced-motion: reduce/);
+});
+
+test("le journal affiche des états accessibles et propose de réessayer après erreur", () => {
+  assert.match(app, /aria-busy/);
+  assert.match(app, /role="status"/);
+  assert.match(app, /role="alert"/);
+  assert.match(app, /id="activityRetry"/);
+  assert.match(app, /addEventListener\("click",loadActivity\)/);
+});
