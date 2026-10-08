@@ -1,0 +1,72 @@
+/* BitGold V3 — clean-slate app-first design, black/mint. Existing product functionality retained. */
+:root{--v3-bg:#090e0c;--v3-panel:#121b16;--v3-surface:#17221c;--v3-line:#26382d;--v3-mint:#b3ffca;--v3-ink:#f5faf6;--v3-muted:#9bac9f}
+body{background:var(--v3-bg);color:var(--v3-ink)}
+.topbar{background:rgba(9,14,12,.97)!important;border-bottom:1px solid #26382d!important;backdrop-filter:blur(16px)}
+.topbar-inner{max-width:1440px!important;min-height:72px}
+.topbar .brand-mark{background:var(--v3-mint)!important;color:#092115!important;border-radius:12px}
+.topbar .brand-copy strong{letter-spacing:-.055em;font-weight:850}
+.topbar .main-nav{gap:clamp(8px,1.8vw,25px)}
+.topbar .main-nav a{color:#d6e2d8;font-weight:650;font-size:.85rem}
+.topbar .main-nav a:hover,.topbar .main-nav a.active{color:var(--v3-mint)!important}
+.bg3-home{max-width:1440px!important;display:block!important;width:100%!important;min-height:0!important;margin:0 auto!important;padding:65px 28px 25px!important;background:none!important}
+.bg3-home:before,.bg3-home:after{display:none!important}
+.bg3-hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:clamp(30px,5vw,85px);align-items:center}
+.bg3-hero-copy{min-width:0;padding:12px 0}
+.bg3-kicker{display:flex;align-items:center;gap:10px;font-size:.69rem;font-weight:800;letter-spacing:.14em;color:var(--v3-mint);margin-bottom:24px}
+.bg3-kicker-dot{width:8px;height:8px;border-radius:50%;background:var(--v3-mint);box-shadow:0 0 0 5px rgba(179,255,202,.09)}
+.bg3-hero-copy h1{margin:0!important;font-size:clamp(3.3rem,5.7vw,6.25rem)!important;line-height:1.03!important;font-weight:850!important;letter-spacing:-.075em!important;color:var(--v3-ink)!important}
+.bg3-hero-copy h1 span{color:var(--v3-mint)!important;-webkit-text-fill-color:var(--v3-mint)!important;background:none!important}
+.bg3-hero-copy>p:not(.risk){font-size:clamp(1.02rem,1.35vw,1.19rem);line-height:1.8;color:#b4c4b8;max-width:540px;margin:26px 0 27px}
+.bg3-hero-actions{display:flex;flex-wrap:wrap;gap:12px}
+.bg3-hero-actions .btn{min-height:55px;border-radius:11px!important;font-weight:800!important;padding:13px 22px!important}
+.bg3-hero-actions .btn-primary{background:var(--v3-mint)!important;border-color:var(--v3-mint)!important;color:#102417!important}
+.bg3-hero-actions .btn-primary:hover{background:#d1ffdc!important}
+.bg3-hero-actions .btn-ghost{background:#18221c!important;border:1px solid #425749!important;color:#f3faf4!important}
+.bg3-trust{display:flex;gap:10px 18px;flex-wrap:wrap;margin:30px 0 15px;color:#b6cdbb;font-size:.77rem;font-weight:650}
+.bg3-hero-copy .risk{font-size:.72rem;color:#819789;max-width:510px;line-height:1.6}
+.bg3-app-window{min-width:0;border:1px solid #344d3a;background:#0f1812;border-radius:23px;overflow:hidden;box-shadow:0 35px 100px rgba(0,0,0,.48)}
+.bg3-app-header{display:flex;align-items:center;justify-content:space-between;padding:17px 21px;background:#18251b;border-bottom:1px solid #2b3c2f}
+.bg3-app-brand{display:flex;align-items:center;gap:9px;font-size:1.03rem;letter-spacing:-.035em}
+.bg3-app-brand>span{width:29px;height:29px;border-radius:8px;display:grid;place-items:center;background:var(--v3-mint);color:#0b2617;font-weight:850}
+.bg3-app-pill{display:flex;align-items:center;gap:7px;border:1px solid #416349;border-radius:30px;padding:6px 10px;font-size:.64rem;font-weight:800;letter-spacing:.08em;color:#c4f5cd}
+.bg3-app-pill i{width:7px;height:7px;border-radius:50%;background:var(--v3-mint)}
+.bg3-app-body{display:grid;grid-template-columns:65px minmax(0,1fr)}
+.bg3-app-sidebar{display:flex;flex-direction:column;gap:16px;align-items:center;padding:22px 9px;background:#131f16;border-right:1px solid #29392c;color:#8eac96}
+.bg3-app-sidebar span{width:36px;height:36px;display:grid;place-items:center;border-radius:9px;font-size:1.22rem}
+.bg3-app-sidebar .bg3-selected{background:#304938;color:var(--v3-mint)}
+.bg3-app-content{padding:24px 27px 29px;min-width:0}
+.bg3-app-greeting{display:flex;flex-direction:column;gap:5px}
+.bg3-app-greeting small{font-size:.63rem;letter-spacing:.13em;color:#a0b3a2;font-weight:800}
+.bg3-app-greeting strong{font-size:1.3rem;letter-spacing:-.045em}
+.bg3-app-wallet{margin:20px 0 22px;padding:23px;border-radius:16px;background:linear-gradient(130deg,#263b2a,#1c2b20);border:1px solid #416147;display:flex;flex-direction:column;gap:7px}
+.bg3-app-wallet>small{font-size:.78rem;color:#b6d1b9}
+.bg3-app-wallet>strong{font-size:clamp(1.55rem,2.8vw,2.3rem);letter-spacing:-.055em}
+.bg3-app-wallet>span{font-size:.75rem;color:#b1c9b4}
+.bg3-wallet-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.bg3-wallet-buttons a{display:flex;gap:14px;align-items:center;justify-content:space-between;background:#b3ffca;color:#102719!important;border-radius:8px;text-decoration:none;padding:10px 13px;font-size:.73rem;font-weight:850}
+.bg3-wallet-buttons a+a{background:#334a38;color:#e9ffec!important}
+.bg3-app-label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
+.bg3-app-label strong{font-size:.91rem}
+.bg3-app-label small{color:#9aafa0;font-size:.69rem}
+.bg3-tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bg3-tool{display:flex;flex-direction:column;gap:6px;min-width:0;border:1px solid #334839;background:#18241b;border-radius:12px;padding:15px 12px;text-decoration:none!important;color:#f4fcf5!important;transition:background .2s,border-color .2s}
+.bg3-tool:hover{background:#263b2b;border-color:#b3ffca}
+.bg3-tool-icon{font-size:1.2rem;color:#b3ffca}
+.bg3-tool strong{font-size:.8rem}
+.bg3-tool small{font-size:.66rem;color:#a2b5a5;line-height:1.35}
+.bg3-app-caption{border-top:1px solid #273a2d;color:#82998a;padding:12px 18px;font-size:.67rem;text-align:center}
+.bg3-feature-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:48px}
+.bg3-feature-row>a{display:flex;align-items:center;gap:14px;min-width:0;border:1px solid #2e4133;background:#131d16;padding:22px;border-radius:14px;color:#effaf1!important;text-decoration:none!important;transition:border-color .2s,background .2s}
+.bg3-feature-row>a:hover{border-color:#b3ffca;background:#1b2b20}
+.bg3-feature-row>a>span:nth-child(2){display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.bg3-feature-row strong{font-size:.94rem;letter-spacing:-.02em}
+.bg3-feature-row small{color:#a2b8a7;font-size:.75rem}
+.bg3-feature-row>a>span:last-child{color:#b3ffca}
+.bg3-feature-glyph{display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:11px;background:#304535;color:#b3ffca;font-size:1.3rem}
+.bg3-home .home-explorer{position:relative!important;inset:auto!important;width:100%!important;max-width:1300px!important;margin:70px auto 20px!important}
+.bg3-home .home-explorer-head{border-bottom-color:#304b38}
+.bg3-home .home-topic.active{border-color:#b3ffca!important}
+@media(max-width:1100px){.bg3-home{padding:45px 21px 20px!important}.bg3-hero-grid{gap:28px}.bg3-hero-copy h1{font-size:clamp(3rem,6vw,5rem)!important}.bg3-app-content{padding:18px}.bg3-app-wallet{padding:16px}.bg3-feature-row>a{padding:16px}}
+@media(max-width:800px){.bg3-home{padding:32px 17px 20px!important}.bg3-hero-grid{grid-template-columns:1fr;gap:30px}.bg3-hero-copy h1{font-size:clamp(3.25rem,10vw,5.8rem)!important}.bg3-app-window{max-width:650px;width:100%;margin-inline:auto}.bg3-feature-row{margin-top:28px;grid-template-columns:1fr;gap:10px}.bg3-feature-row>a{padding:14px}.bg3-home .home-explorer{margin-top:42px!important}}
+@media(max-width:430px){.bg3-home{padding:25px 12px 18px!important}.bg3-kicker{font-size:.59rem;letter-spacing:.09em}.bg3-hero-copy h1{font-size:clamp(2.9rem,12vw,4.2rem)!important}.bg3-hero-actions .btn{padding:11px 14px!important;min-height:48px;font-size:.81rem}.bg3-trust{gap:7px 12px;font-size:.7rem}.bg3-app-body{grid-template-columns:43px minmax(0,1fr)}.bg3-app-sidebar{padding:17px 3px;gap:13px}.bg3-app-sidebar span{width:29px;height:29px}.bg3-app-content{padding:15px 10px 18px}.bg3-app-wallet{padding:13px;margin:14px 0}.bg3-app-wallet>strong{font-size:1.65rem}.bg3-tool-grid{gap:5px}.bg3-tool{padding:10px 7px}.bg3-tool strong{font-size:.67rem}.bg3-tool small{font-size:.59rem}.bg3-wallet-buttons a{font-size:.64rem;padding:8px}.bg3-app-pill{font-size:.55rem}.bg3-feature-glyph{width:38px;height:38px;flex-basis:38px}}
+@media(prefers-reduced-motion:reduce){.bg3-home *{transition:none!important;animation:none!important}}
