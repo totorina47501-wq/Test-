@@ -996,6 +996,9 @@ function botMomentum(points){const v=(points||[]).map(p=>Number(p.price)).filter
 function botRsi(points){const v=(points||[]).map(p=>Number(p.price)).filter(Number.isFinite);if(v.length<3)return 50;const start=Math.max(1,v.length-14),g=[],l=[];for(let i=start;i<v.length;i++){const d=v[i]-v[i-1];if(d>0)g.push(d);else if(d<0)l.push(Math.abs(d))}const ag=g.reduce((a,b)=>a+b,0)/(g.length||1),al=l.reduce((a,b)=>a+b,0)/(l.length||1);return al===0?100:100-(100/(1+ag/al))}
 async function botSignal(type,userId,subscription={}){
  await refreshMarket();
+ if(!marketUpdatedAt||Date.now()-marketUpdatedAt>120000){
+  return {action:"hold",asset:null,message:"Cours de marché indisponibles ou périmés : aucun ordre simulé exécuté.",fraction:0,engine:"risk-guard",provider:"BitGold",model:"quote-freshness",confidence:0,regime:{name:"data-unavailable"}};
+ }
  const symbols=Object.keys(marketIds);
  const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,7)])));
  const wallet=await pool.query("SELECT cash FROM wallets WHERE user_id=$1",[userId]);
@@ -1029,8 +1032,14 @@ async function executeBotDecision(subscription,signal){
     await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);
     await client.query("COMMIT");return;
   }
-  const price=Number(prices[asset]);
+  const quote=marketSnapshot.find(row=>row.symbol===asset);
+  const price=Number(quote?.price);
   const fraction=Number(signal.fraction);
+  if(!marketUpdatedAt||Date.now()-marketUpdatedAt>120000||!quote||!Number.isFinite(price)||price<=0){
+    await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",asset||null,"Ordre simulé ignoré : cotation absente ou périmée."]);
+    await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);
+    await client.query("COMMIT");return;
+  }
   if(!asset||!Object.hasOwn(marketIds,asset)||!Number.isFinite(price)||price<=0||!Number.isFinite(fraction)||fraction<=0||fraction>1)throw Error("Bot: invalid trade signal or market quote.");
   await client.query("INSERT INTO holdings(user_id,asset,quantity) VALUES($1,$2,0) ON CONFLICT(user_id,asset) DO NOTHING",[subscription.user_id,asset]);
   const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,asset]);
