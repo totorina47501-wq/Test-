@@ -28,6 +28,8 @@ async function main(){
   const sell=await request("/api/trades",{method:"POST",token,body:{side:"sell",asset:"BTC",amount:5}});
   assert.equal(sell.status,201,`demo sell: ${JSON.stringify(sell.data)}`);
   const afterSell=await request("/api/portfolio",{token});assert.equal(afterSell.status,200,"portfolio after sell");
+  assert.equal(afterSell.data.integrity?.reconciliation?.ok,true,"trade history matches portfolio quantities");
+  assert.equal(afterSell.data.integrity?.reconciliation?.tradeCount,2,"reconciliation includes all trades");
   assert.ok(Number(afterSell.data.cash)>Number(afterBuy.data.cash),"sell credits cash");
   // Invalid orders must never change demo balances or holdings.
   const beforeRejected=await request("/api/portfolio",{token});
