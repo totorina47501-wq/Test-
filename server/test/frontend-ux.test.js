@@ -90,7 +90,7 @@ test("le journal affiche des états accessibles et propose de réessayer après 
   assert.match(app, /aria-busy/);
   assert.match(app, /role="status"/);
   assert.match(app, /role="alert"/);
-  assert.match(app, /id="activityRetry"/);
+  assert.match(app, /retry\.textContent="Réessayer"/);
   assert.match(app, /addEventListener\("click",loadActivity\)/);
 });
 
