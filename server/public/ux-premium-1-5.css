@@ -1,0 +1,14 @@
+/* BitGold UX 1.5 — progressive premium visual layer */
+:root{--bg-gold:#d6ad57;--bg-surface:#101b1b;--bg-stroke:rgba(214,173,87,.18)}
+body{font-synthesis:none;-webkit-font-smoothing:antialiased}
+button,a,[role="button"]{touch-action:manipulation}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--bg-gold);outline-offset:3px}
+.pro-dashboard .pro-panel,.pro-dashboard .dashboard-cockpit-strip>*,.pro-dashboard .portfolio-hero{border-radius:18px;border-color:var(--bg-stroke);box-shadow:0 14px 42px rgba(0,0,0,.12)}
+.pro-dashboard .dashboard-section-title{margin-bottom:22px}
+.pro-dashboard .dashboard-cockpit-strip{gap:16px}
+.pro-dashboard .dashboard-cockpit-strip strong{font-variant-numeric:tabular-nums}
+.pro-dashboard .btn-primary{box-shadow:0 6px 24px rgba(214,173,87,.12)}
+.pro-dashboard .btn,.pro-dashboard button{transition:transform .18s ease,background-color .18s ease,border-color .18s ease}
+@media(hover:hover){.pro-dashboard .btn:hover{transform:translateY(-1px)}}
+@media(max-width:768px){.pro-dashboard .dashboard-cockpit-strip{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.pro-dashboard .pro-panel{min-width:0;border-radius:14px}.pro-dashboard .dashboard-section-title{margin-bottom:14px}.pro-dashboard .btn{min-height:44px}.pro-dashboard{overflow-wrap:anywhere}}
+@media(prefers-reduced-motion:reduce){.pro-dashboard .btn,.pro-dashboard button{transition:none!important;transform:none!important}}
