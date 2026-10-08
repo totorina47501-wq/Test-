@@ -283,8 +283,18 @@ test("bot HOLD bypasses quote/position requirements and trades provision missing
   assert.ok(start>=0&&end>start,"bot execution handler exists");
   const handler=server.slice(start,end);
   const hold=handler.indexOf('if(action==="hold")');
-  const quote=handler.indexOf("const price=Number(prices[asset])");
+  const quote=handler.indexOf("const price=Number(quote?.price)");
   assert.ok(hold>=0&&quote>hold,"hold is processed before requiring a quote");
   assert.match(handler,/ON CONFLICT\(user_id,asset\) DO NOTHING/);
   assert.match(handler,/UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP/);
+});
+
+test("bot trading requires a recent real quote and degrades to hold",()=>{
+  const signal=server.slice(server.indexOf("async function botSignal("),server.indexOf("async function executeBotDecision("));
+  const execution=server.slice(server.indexOf("async function executeBotDecision("),server.indexOf("async function runBots("));
+  assert.match(signal,/Date\.now\(\)-marketUpdatedAt>120000/);
+  assert.match(signal,/action:"hold"/);
+  assert.match(execution,/marketSnapshot\.find\(row=>row\.symbol===asset\)/);
+  assert.match(execution,/Ordre simulé ignoré : cotation absente ou périmée/);
+  assert.match(execution,/UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP/);
 });
