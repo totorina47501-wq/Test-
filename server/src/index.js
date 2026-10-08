@@ -911,13 +911,13 @@ async function fetchHistory(symbol, days) {
   }
   if(!response?.ok) {
     console.warn("[MARKET] history unavailable",symbol,days,lastError?.message||"CoinGecko indisponible");
-    return [];
+    return cached?.prices||[];
   }
   const data=await response.json();
   const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
   if(!pricesHistory.length) {
     console.warn("[MARKET] history unavailable",symbol,days,"Aucune donnée historique");
-    return [];
+    return cached?.prices||[];
   }
   historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
   return pricesHistory;
@@ -1021,7 +1021,7 @@ async function executeBotDecision(subscription,signal){
   const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,signal.asset]);
   const cash=Number(w.rows[0]?.cash||0),qty=Number(h.rows[0]?.quantity||0),price=Number(prices[signal.asset]||0);
   // Fail closed when an AI signal or market quote is invalid; never book a fabricated trade.
-  if(!def||!w.rows.length||!h.rows.length||!["buy","sell","hold"].includes(signal.action)||!Number.isFinite(price)||price<=0||!Number.isFinite(cash)||cash<0||!Number.isFinite(qty)||qty<0||!Number.isFinite(Number(signal.fraction))||Number(signal.fraction)<0||Number(signal.fraction)>1)throw Error("Bot: invalid signal or market state.");
+  if(!def||!w.rows.length||!h.rows.length||!["buy","sell","hold"].includes(signal.action)||!Number.isFinite(price)||price<=0||!Number.isFinite(cash)||cash<0||!Number.isFinite(qty)||qty<0||(signal.action!=="hold"&&(!Number.isFinite(Number(signal.fraction))||Number(signal.fraction)<=0||Number(signal.fraction)>1)))throw Error("Bot: invalid signal or market state.");
   let amount=0,quantity=0;
   if(signal.action==="buy"){const maxTrade=Number(subscription.max_trade_eur||250);const maxPosition=Number(subscription.max_position_eur||1000);const currentPosition=qty*price;const remaining=Math.max(0,maxPosition-currentPosition);const reserve=Math.max(0,Math.min(90,Number(subscription.min_cash_pct||20)))/100;const spendable=Math.max(0,cash*(1-reserve));amount=Math.min(cash*signal.fraction,cash*def.allocation/100,maxTrade,remaining,spendable);quantity=price?amount/price:0}
   if(signal.action==="sell"){amount=Math.min(qty*price,(qty*price)*signal.fraction);quantity=price?amount/price:0}
@@ -1110,6 +1110,11 @@ app.post("/api/stripe/portal",auth,async(req,res)=>{
 
 app.get("/api/plan",auth,async(req,res)=>{try{res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de charger le plan."})}});
 app.post("/api/plan/demo",auth,async(req,res)=>{try{const plan=String(req.body.plan||"free").toLowerCase();if(!["free","pro","elite"].includes(plan))return res.status(400).json({error:"Plan invalide."});await pool.query("UPDATE users SET plan=$1,pro_since=CASE WHEN $1='pro' THEN COALESCE(pro_since,CURRENT_TIMESTAMP) ELSE NULL END WHERE id=$2",[plan,req.user.sub]);res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de modifier le plan de démonstration."})}});
+app.get("/api/plans/demo",(_req,res)=>res.json({mode:"simulation",requiresPayment:false,plans:[
+  {id:"free",label:"Free",maxActiveBots:1,botTypes:BOT_CATALOG.filter(bot=>bot.plan==="free").map(bot=>bot.id)},
+  {id:"pro",label:"Pro",maxActiveBots:3,botTypes:BOT_CATALOG.filter(bot=>bot.plan==="free"||bot.plan==="pro").map(bot=>bot.id)},
+  {id:"elite",label:"Elite",maxActiveBots:5,botTypes:BOT_CATALOG.map(bot=>bot.id)}
+]}));
 app.get("/api/bots/catalog",(req,res)=>res.json({catalog:BOT_CATALOG,ai:getBotAIConfig()}));
 app.get("/api/bots/ai/status",auth,async(req,res)=>{try{res.json({ok:true,...getBotAIConfig(),sentiment:{enabled:true,source:"BitGold News",windowHours:36}})}catch(e){res.status(500).json({error:"Impossible de charger le moteur IA."})}});
 app.get("/api/bots/ai/sentiment",auth,async(req,res)=>{
