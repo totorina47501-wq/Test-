@@ -149,3 +149,10 @@ test("le cockpit distingue explicitement les simulations des cours externes", ()
   assert.match(html, /Les cours de marché peuvent provenir de fournisseurs externes/);
   assert.match(css, /bg-values-grid/);
 });
+
+const backend = fs.readFileSync(new URL("../src/index.js", import.meta.url), "utf8");
+test("V1.4: un jeton de challenge 2FA ne donne pas accès aux routes authentifiées", () => {
+  assert.match(backend, /if\(payload\.purpose\|\|!Number\.isSafeInteger/);
+  assert.match(backend, /jwt\.verify\(match\[1\],secret,\{algorithms:\["HS256"\]\}\)/);
+  assert.match(backend, /\^Bearer \(\[\^\\s\]\+\)\$/);
+});
