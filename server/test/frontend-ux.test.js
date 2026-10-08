@@ -299,3 +299,20 @@ test("BitGold 2.1 asset detail charts remain scrollable and usable on narrow mob
   assert.ok(detail.includes("position:sticky"));
   assert.ok(detail.includes("prefers-reduced-motion:reduce"));
 });
+
+
+test("BitGold 2.2 landing is product-led, original and clearly simulated", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  const design = css.slice(css.indexOf("/* BitGold 2.2"));
+  assert.ok(html.includes('class="bg22-hero-layout"'));
+  assert.ok(html.includes('class="bg22-product-showcase"'));
+  assert.ok(html.includes("courbe fictive, pas de données de marché"));
+  assert.ok(html.includes("aucun dépôt, paiement ou ordre réel"));
+  assert.ok(html.includes('id="parcours"'));
+  assert.equal((html.match(/id="heroSignup"/g) || []).length, 1);
+  assert.equal((html.match(/id="heroDemo"/g) || []).length, 1);
+  assert.ok(design.includes("grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr)"));
+  assert.ok(design.includes("@media(max-width:760px)"));
+  assert.ok(design.includes("@media(max-width:430px)"));
+  assert.ok(design.includes("prefers-reduced-motion:reduce"));
+});
