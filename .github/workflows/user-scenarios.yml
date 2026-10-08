@@ -1,0 +1,68 @@
+name: BitGold scheduled user scenarios
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bitgold-user-scenarios
+  cancel-in-progress: false
+
+jobs:
+  user-scenarios:
+    name: Isolated signup, login, buy and sell
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bitgold_scenarios
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d bitgold_scenarios"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: server
+    env:
+      NODE_ENV: test
+      COMPLIANCE_ENFORCEMENT: 'false'
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/bitgold_scenarios
+      DATABASE_SSL: 'false'
+      JWT_SECRET: isolated-user-scenario-jwt-secret-32-chars
+      TWO_FACTOR_ENCRYPTION_KEY: isolated-user-scenario-2fa-key-32chars
+      PORT: '3000'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Start isolated BitGold server
+        run: |
+          node src/index.js > /tmp/bitgold-scenarios-server.log 2>&1 &
+          echo $! > /tmp/bitgold-scenarios-server.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/api/health > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/bitgold-scenarios-server.log
+          exit 1
+      - name: Execute user scenarios (simulation only)
+        run: node scripts/user-scenarios.mjs
+      - name: Print server diagnostics on failure
+        if: failure()
+        run: tail -n 120 /tmp/bitgold-scenarios-server.log || true
