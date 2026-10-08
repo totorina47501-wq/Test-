@@ -112,3 +112,35 @@ html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,r
 .bot-performance-bar.benchmark{background:linear-gradient(90deg,#a77d34,#e0b55a)}
 .bot-performance-bar.negative{background:linear-gradient(90deg,#a8466c,#ff889f)!important}
 @media(max-width:520px){.bot-performance-visual{padding:12px}.bot-performance-row{grid-template-columns:62px minmax(0,1fr) 70px;gap:7px;font-size:.72rem}.bot-performance-visual-head span{font-size:.72rem}}
+
+
+/* BitGold 2.1: approved visual direction — black + mint, no purple. */
+:root{--bg2-ink:#080e0e;--bg2-panel:#111d1b;--bg2-panel-alt:#182824;--bg2-purple:#43e5b8;--bg2-gold:#86f3d0;--bg2-green:#43e5b8;--bg2-line:rgba(132,204,183,.17)}
+body{background:radial-gradient(ellipse at 90% 0%,rgba(37,152,117,.10),transparent 42%),#080e0e;color:#eaf8f3}
+.topbar{background:rgba(8,16,15,.97)!important}
+.main-nav a:hover,.main-nav a.active{background:rgba(67,229,184,.12)!important;color:#8cf7d6!important}
+.btn-primary,.hero-actions .btn-primary{background:#43e5b8!important;color:#08211b!important;border-color:#43e5b8!important;box-shadow:0 8px 30px rgba(67,229,184,.12)!important}
+.btn-primary:hover{background:#81f4d2!important}
+a:focus-visible,button:focus-visible{outline:3px solid #80f4d2;outline-offset:3px}
+.bitgold-home-hero{background:radial-gradient(ellipse at 78% 35%,rgba(52,181,143,.12),transparent 50%)!important}
+.bitgold-home-hero h1 span{color:#65e9c2!important;background:none!important;-webkit-text-fill-color:#65e9c2!important}
+.home-explorer,.home-topic-stage,.bot-detail-card,.bot-analytics-card{border-color:var(--bg2-line)!important;background-color:#111c1a!important}
+.home-topic.active,.bot-analytics-period.active{background:rgba(67,229,184,.15)!important;color:#8df5d6!important;border-color:rgba(67,229,184,.5)!important}
+.home-orbit .orbit-core{box-shadow:0 0 40px rgba(67,229,184,.2)}
+#dashboard .dashboard-kpis .pro-kpi:first-child{background:radial-gradient(ellipse at 100% 0%,rgba(67,229,184,.13),transparent 70%),linear-gradient(135deg,#182d28,#111d1b)}
+#dashboard .bg2-shortcuts a:focus-visible{outline-color:#80f4d2}
+#dashboard .bg2-shortcuts>a:nth-child(2)>span{color:#43e5b8!important}
+#dashboard .positive,#compte .positive,#marketGrid .positive,.positive{color:#43e5b8!important}
+#dashboard .negative,#compte .negative,#marketGrid .negative,.negative{color:#ff889f!important}
+#dashboard .live,#bots .bot-ai-status,.bot-ai-status{color:#75eecb!important}
+#dashboard .live i,#bots .bot-ai-status i{background:#43e5b8!important;box-shadow:0 0 0 3px rgba(67,229,184,.17)!important}
+#dashboard .status-pill{border-color:rgba(67,229,184,.38)}
+#bot-detail .bot-detail-hero{background:radial-gradient(ellipse at 90% 0%,rgba(67,229,184,.13),transparent 65%),linear-gradient(135deg,#172722,#0d1715)}
+.bot-performance-visual{border-color:rgba(67,229,184,.2);background:linear-gradient(135deg,#14231f,#0c1715)}
+.bot-performance-visual-head strong{color:#e8fff5}
+.bot-performance-row>strong{color:#70edc7}
+.bot-performance-bar,.bot-performance-bar.benchmark{background:linear-gradient(90deg,#178968,#43e5b8)}
+.bot-performance-bar.negative{background:linear-gradient(90deg,#a8466c,#ff889f)!important}
+.bg2-mobile-tabs{background:#0b1613!important;border-top:1px solid rgba(67,229,184,.19)!important}
+.bg2-mobile-tabs a.active,.bg2-mobile-tabs a:hover{color:#43e5b8!important}
+@media(max-width:760px){.bitgold-home-hero{padding-inline:16px}.bitgold-home-hero .hero-copy h1{font-size:clamp(2.2rem,10vw,3.8rem)}.home-topic-tabs{overflow-x:auto;scroll-snap-type:x mandatory}.home-topic{scroll-snap-align:start}}

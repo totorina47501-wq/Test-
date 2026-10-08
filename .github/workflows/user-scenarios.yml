@@ -1,13 +1,9 @@
 name: BitGold user journeys (PR, staging, production, daily)
 
+# Temporarily manual only during the BitGold 2.1 visual refactor.
+# To restore automatic scenario checks, reinstate schedule, pull_request, and push triggers.
 on:
-  schedule:
-    - cron: '17 4 * * *'
   workflow_dispatch:
-  pull_request:
-    branches: [staging]
-  push:
-    branches: [staging, main]
 
 permissions:
   contents: read
