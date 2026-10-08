@@ -92,3 +92,23 @@ html{scroll-padding-top:88px}body{background:radial-gradient(ellipse at 85% 0%,r
 #dashboard .live,#bots .bot-ai-status,.bot-ai-status{color:#c8a5ff}
 #dashboard .live i,#bots .bot-ai-status i{background:#a887f8;box-shadow:0 0 0 3px rgba(121,84,245,.17)}
 #dashboard .status-pill{border-color:rgba(224,181,90,.38)}
+
+
+/* BitGold 2.1 / bots: refined trading-terminal presentation with genuine backtest data. */
+#bots .section-title{max-width:1440px;margin-inline:auto}
+#bots .bot-engine-legend{gap:12px}
+#bots .bot-engine-legend-item{border-radius:18px;border:1px solid var(--bg2-line);background:linear-gradient(145deg,#191d35,#101726)}
+#bot-detail .bot-detail-hero{border-radius:22px;background:radial-gradient(ellipse at 90% 0%,rgba(121,84,245,.18),transparent 65%),linear-gradient(135deg,#1b2037,#101522)}
+#bot-detail .bot-analytics-card{border:1px solid var(--bg2-line);border-radius:18px}
+.bot-performance-visual{margin:18px 0 20px;padding:18px;border:1px solid rgba(160,140,235,.22);border-radius:16px;background:linear-gradient(135deg,#171b31,#101726)}
+.bot-performance-visual-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.bot-performance-visual-head strong{color:#f2ecff}.bot-performance-visual-head span{color:#aeb7cb;font-size:.8rem}
+.bot-performance-chart{display:grid;gap:16px;min-height:96px}
+.bot-performance-row{display:grid;grid-template-columns:80px minmax(0,1fr) 90px;align-items:center;gap:12px;font-size:.83rem}
+.bot-performance-row>strong{font-variant-numeric:tabular-nums;text-align:right;color:#e0b55a}
+.bot-performance-track{height:24px;position:relative;border-radius:5px;background:rgba(160,170,204,.07)}
+.bot-performance-zero{position:absolute;left:50%;height:100%;width:1px;background:rgba(223,227,243,.45)}
+.bot-performance-bar{position:absolute;top:5px;height:14px;border-radius:3px;background:linear-gradient(90deg,#7954f5,#c8a5ff)}
+.bot-performance-bar.benchmark{background:linear-gradient(90deg,#a77d34,#e0b55a)}
+.bot-performance-bar.negative{background:linear-gradient(90deg,#a8466c,#ff889f)!important}
+@media(max-width:520px){.bot-performance-visual{padding:12px}.bot-performance-row{grid-template-columns:62px minmax(0,1fr) 70px;gap:7px;font-size:.72rem}.bot-performance-visual-head span{font-size:.72rem}}

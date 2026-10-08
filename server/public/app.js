@@ -1015,9 +1015,35 @@ async function loadBotAnalytics(type,days=30){
     set("botMetricTradeSplit","achats "+Number(b.buyTrades||0)+" · ventes "+Number(b.sellTrades||0));
     set("botMetricFees",Number.isFinite(Number(b.fees))?Number(b.fees).toFixed(2)+" €":"—");
     set("botMetricTurnover",Number.isFinite(Number(b.turnover))?Number(b.turnover).toFixed(2)+" €":"—");
+    renderBotPerformanceComparison(b,days);
     if(status)status.textContent="Simulation "+days+" jours · historique marché · frais + slippage inclus.";
   }catch(e){
     if(status)status.textContent=e.message||"Métriques temporairement indisponibles.";
+  }
+}
+function renderBotPerformanceComparison(backtest,days){
+  const root=document.getElementById("botPerformanceChart");
+  if(!root)return;
+  const strategy=Number(backtest?.totalReturn),benchmark=Number(backtest?.benchmarkBTC);
+  root.replaceChildren();
+  if(!Number.isFinite(strategy)||!Number.isFinite(benchmark)||backtest?.totalReturn==null||backtest?.benchmarkBTC==null){
+    root.textContent="Données historiques insuffisantes pour tracer une comparaison.";
+    root.setAttribute("aria-label","Comparaison indisponible");
+    return;
+  }
+  const max=Math.max(Math.abs(strategy),Math.abs(benchmark),1);
+  root.setAttribute("aria-label","Sur "+days+" jours : stratégie "+strategy.toFixed(2)+" pour cent, Bitcoin "+benchmark.toFixed(2)+" pour cent");
+  for(const [name,value,kind] of [["Stratégie",strategy,"strategy"],["Bitcoin",benchmark,"benchmark"]]){
+    const line=document.createElement("div");line.className="bot-performance-row";
+    const label=document.createElement("span");label.textContent=name;
+    const track=document.createElement("div");track.className="bot-performance-track";
+    const zero=document.createElement("span");zero.className="bot-performance-zero";track.append(zero);
+    const bar=document.createElement("span");bar.className="bot-performance-bar "+kind+(value<0?" negative":"");
+    bar.style.width=(Math.abs(value)/max*48)+"%";
+    bar.style.left=value<0?(50-Math.abs(value)/max*48)+"%":"50%";
+    track.append(bar);
+    const figure=document.createElement("strong");figure.textContent=(value>0?"+":"")+value.toFixed(2)+" %";
+    line.append(label,track,figure);root.append(line);
   }
 }
 async function updateBotAIDetail(type,bot,aiConfig={}){
