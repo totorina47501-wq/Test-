@@ -243,3 +243,13 @@ test("BitGold 2.1: cockpit keeps live portfolio KPIs and accessible shortcuts", 
   assert.ok(css.includes('#dashboard .bg2-shortcuts a:focus-visible'));
   assert.ok(css.includes('@media(max-width:480px)'));
 });
+
+
+test("BitGold 2.1 brand palette uses violet and gold instead of green in the UX layer", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.ok(css.includes('--bg2-green:#c8a5ff'));
+  assert.ok(css.includes('#dashboard .positive'));
+  assert.ok(css.includes('color:#e0b55a!important'));
+  assert.ok(!css.includes('#35d4b0'));
+  assert.ok(!css.includes('rgba(53,212,176'));
+});
