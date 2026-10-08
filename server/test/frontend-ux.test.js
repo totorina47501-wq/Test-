@@ -156,3 +156,18 @@ test("V1.4: un jeton de challenge 2FA ne donne pas accès aux routes authentifi�
   assert.match(backend, /jwt\.verify\(match\[1\],secret,\{algorithms:\["HS256"\]\}\)/);
   assert.match(backend, /\^Bearer \(\[\^\\s\]\+\)\$/);
 });
+
+const v14Frontend = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+const v14Backend = fs.readFileSync(new URL("../src/index.js", import.meta.url), "utf8");
+test("V1.4: inscription protégée contre les tentatives répétées", () => {
+  assert.match(v14Backend, /app\.post\("\/api\/auth\/signup", authRateLimit/);
+});
+test("V1.4: session expirée déconnecte et propose une reconnexion", () => {
+  assert.match(v14Frontend, /r\.status===401 && apiToken/);
+  assert.match(v14Frontend, /Votre session a expiré\. Reconnectez-vous/);
+});
+test("V1.4: tableau de bord accessible avec réessai après erreur", () => {
+  assert.match(v14Frontend, /chart\.setAttribute\("aria-busy","true"\)/);
+  assert.match(v14Frontend, /retry\.addEventListener\("click",\(\)=>loadDashboard\(\)\)/);
+  assert.match(v14Frontend, /message\.setAttribute\("role","alert"\)/);
+});
