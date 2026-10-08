@@ -45,6 +45,12 @@ jobs:
           cache-dependency-path: server/package.json
       - name: Install dependencies
         run: npm install --prefer-offline --no-audit --no-fund
+      - name: Validate Dockerfile and production configuration contract
+        run: |
+          test -f Dockerfile
+          grep -q 'NODE_ENV=production' Dockerfile
+          grep -q 'JWT_SECRET must be configured' src/index.js
+          grep -q 'TWO_FACTOR_ENCRYPTION_KEY must be configured' src/index.js
       - name: Run quality checks and tests in parallel
         run: |
           set +e
