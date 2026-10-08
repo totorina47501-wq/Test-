@@ -392,7 +392,7 @@ async function loadMarket(){
     return data;
   }catch(e){
     console.warn("Cours marché:",e.message);
-    renderMarket(fallbackMarkets.map(([name,symbol,price,change24h])=>({symbol,price,change24h})));
+    if(lastMarketData.length){renderMarket(lastMarketData);document.querySelectorAll("#marketGrid .market-live").forEach(label=>{label.textContent="Dernières données disponibles";label.classList.add("market-stale")});}else{renderMarket([]);const grid=document.getElementById("marketGrid");if(grid)grid.innerHTML='<div class="market-unavailable" role="status">Cours temporairement indisponibles. Aucun prix de démonstration n’est affiché comme un cours réel. Réessayez dans quelques instants.</div>';}
   }
 }
 let marketHistoryPreview={};
