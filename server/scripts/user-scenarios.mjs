@@ -1,0 +1,37 @@
+// Isolated user journey: never point this at a deployed service or real funds.
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+
+const base="http://127.0.0.1:3000";
+const email=`scenario-${crypto.randomUUID()}@example.invalid`;
+const password=crypto.randomBytes(24).toString("hex");
+async function request(path,{method="GET",token,body}={}){
+  const response=await fetch(base+path,{method,headers:{...(token?{Authorization:`Bearer ${token}`}:{}),...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000)});
+  let json;try{json=await response.json()}catch{json={}};
+  return {status:response.status,data:json};
+}
+async function main(){
+  const health=await request("/api/health");assert.equal(health.status,200,"health");
+  const signup=await request("/api/auth/signup",{method:"POST",body:{email,password,first_name:"Scenario",last_name:"Test",country:"France",city:"Paris",postal_code:"75001"}});
+  assert.equal(signup.status,201,`signup: ${JSON.stringify(signup.data)}`);
+  assert.ok(signup.data.token,"signup token");
+  const login=await request("/api/auth/login",{method:"POST",body:{email,password}});
+  assert.equal(login.status,200,"login");assert.ok(login.data.token,"login token");
+  const token=login.data.token;
+  const denied=await request("/api/portfolio");assert.equal(denied.status,401,"protected portfolio");
+  const initial=await request("/api/portfolio",{token});assert.equal(initial.status,200,"initial portfolio");
+  assert.ok(Number(initial.data.cash)>=20,"demo cash available");
+  const buy=await request("/api/trades",{method:"POST",token,body:{side:"buy",asset:"BTC",amount:10}});
+  assert.equal(buy.status,201,`demo buy: ${JSON.stringify(buy.data)}`);
+  const afterBuy=await request("/api/portfolio",{token});assert.equal(afterBuy.status,200,"portfolio after buy");
+  assert.ok(Number(afterBuy.data.cash)<Number(initial.data.cash),"buy debits cash");
+  const sell=await request("/api/trades",{method:"POST",token,body:{side:"sell",asset:"BTC",amount:5}});
+  assert.equal(sell.status,201,`demo sell: ${JSON.stringify(sell.data)}`);
+  const afterSell=await request("/api/portfolio",{token});assert.equal(afterSell.status,200,"portfolio after sell");
+  assert.ok(Number(afterSell.data.cash)>Number(afterBuy.data.cash),"sell credits cash");
+  const activity=await request("/api/activity",{token});assert.equal(activity.status,200,"activity");
+  assert.ok(activity.data.trades?.some(t=>t.side==="buy"&&t.asset==="BTC"),"buy recorded");
+  assert.ok(activity.data.trades?.some(t=>t.side==="sell"&&t.asset==="BTC"),"sell recorded");
+  console.log("PASS: health, signup, login, protected route, demo buy, demo sell, portfolio, activity");
+}
+main().catch(e=>{console.error("USER SCENARIO FAILED:",e);process.exitCode=1});
