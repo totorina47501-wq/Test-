@@ -1018,10 +1018,24 @@ async function executeBotDecision(subscription,signal){
  try{
   await client.query("BEGIN");
   const w=await client.query("SELECT cash FROM wallets WHERE user_id=$1 FOR UPDATE",[subscription.user_id]);
-  const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,signal.asset]);
-  const cash=Number(w.rows[0]?.cash||0),qty=Number(h.rows[0]?.quantity||0),price=Number(prices[signal.asset]||0);
-  // Fail closed when an AI signal or market quote is invalid; never book a fabricated trade.
-  if(!def||!w.rows.length||!h.rows.length||!["buy","sell","hold"].includes(signal.action)||!Number.isFinite(price)||price<=0||!Number.isFinite(cash)||cash<0||!Number.isFinite(qty)||qty<0||(signal.action!=="hold"&&(!Number.isFinite(Number(signal.fraction))||Number(signal.fraction)<=0||Number(signal.fraction)>1)))throw Error("Bot: invalid signal or market state.");
+  // A HOLD decision requires neither a position nor a live quote. Newly listed
+  // assets may also have no holdings row until the first simulated purchase.
+  const asset=String(signal?.asset||"").toUpperCase();
+  const action=signal?.action;
+  const cash=Number(w.rows[0]?.cash);
+  if(!def||!w.rows.length||!["buy","sell","hold"].includes(action)||!Number.isFinite(cash)||cash<0)throw Error("Bot: invalid signal or wallet state.");
+  if(action==="hold"){
+    await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",asset||null,signal.message||"Aucun ordre simulé."]);
+    await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);
+    await client.query("COMMIT");return;
+  }
+  const price=Number(prices[asset]);
+  const fraction=Number(signal.fraction);
+  if(!asset||!Object.hasOwn(marketIds,asset)||!Number.isFinite(price)||price<=0||!Number.isFinite(fraction)||fraction<=0||fraction>1)throw Error("Bot: invalid trade signal or market quote.");
+  await client.query("INSERT INTO holdings(user_id,asset,quantity) VALUES($1,$2,0) ON CONFLICT(user_id,asset) DO NOTHING",[subscription.user_id,asset]);
+  const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,asset]);
+  const qty=Number(h.rows[0]?.quantity);
+  if(!Number.isFinite(qty)||qty<0)throw Error("Bot: invalid position state.");
   let amount=0,quantity=0;
   if(signal.action==="buy"){const maxTrade=Number(subscription.max_trade_eur||250);const maxPosition=Number(subscription.max_position_eur||1000);const currentPosition=qty*price;const remaining=Math.max(0,maxPosition-currentPosition);const reserve=Math.max(0,Math.min(90,Number(subscription.min_cash_pct||20)))/100;const spendable=Math.max(0,cash*(1-reserve));amount=Math.min(cash*signal.fraction,cash*def.allocation/100,maxTrade,remaining,spendable);quantity=price?amount/price:0}
   if(signal.action==="sell"){amount=Math.min(qty*price,(qty*price)*signal.fraction);quantity=price?amount/price:0}
