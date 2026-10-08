@@ -1,0 +1,15 @@
+/* UX 1.5 — bot strategy orientation, progressive enhancement only */
+.ux15-bot-guide{margin:20px 0 22px;padding:22px;border:1px solid rgba(148,163,184,.22);border-radius:20px;background:linear-gradient(120deg,rgba(21,38,61,.75),rgba(22,35,50,.45));color:#f1f5f9}
+.ux15-bot-guide-head strong{display:block;font-size:clamp(1.15rem,2.5vw,1.55rem);margin:7px 0}
+.ux15-bot-guide-head p{max-width:70ch;line-height:1.55;color:#cbd5e1;margin:0 0 18px}
+.ux15-bot-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ux15-bot-guide-item{display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:14px;background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);color:inherit;text-decoration:none;transition:transform .18s ease,border-color .18s ease}
+.ux15-bot-guide-item:hover,.ux15-bot-guide-item:focus-visible{transform:translateY(-2px);border-color:#93c5fd;outline-offset:3px}
+.ux15-bot-guide-item strong{font-size:1.18rem}
+.ux15-bot-guide-item>span:not(.ux15-bot-guide-symbol){color:#cbd5e1;line-height:1.45;flex:1}
+.ux15-bot-guide-item small{color:#93c5fd;font-weight:700}
+.ux15-bot-guide-symbol{font-size:1.5rem;color:#fbbf24}
+.ux15-bot-guide-item:first-child .ux15-bot-guide-symbol{color:#93c5fd}
+.ux15-bot-guide-item:nth-child(2) .ux15-bot-guide-symbol{color:#cbd5e1}
+@media(max-width:720px){.ux15-bot-guide{padding:16px}.ux15-bot-guide-grid{grid-template-columns:1fr}.ux15-bot-guide-item{padding:14px}}
+@media(prefers-reduced-motion:reduce){.ux15-bot-guide-item{transition:none}.ux15-bot-guide-item:hover{transform:none}}
