@@ -1169,8 +1169,25 @@ app.get("/api/portfolio",auth,async(req,res)=>{
     const invested=holdings.reduce((sum,row)=>sum+Math.max(0,row.value),0);
     const total=cash+invested;
     const positions=holdings.filter(row=>row.quantity>0&&row.price>0).map(row=>({...row,allocation:total?row.value/total*100:0}));
-    const integrity=Math.abs(total-(cash+invested))<0.01&&holdings.every(row=>row.quantity>=-1e-12);
-    res.json({updatedAt:Date.now(),source:"wallets + holdings + CoinGecko",cash,invested,total,initialCapital:10000,holdings,positions,trades:t.rows,integrity:{ok:integrity,cashPlusInvested:cash+invested,difference:total-(cash+invested)}});
+    // Reconcile user-visible balances against the complete simulated trade history.
+    // This is an operational warning, not a mutation of balances.
+    const historical=await pool.query("SELECT side,asset,amount_eur,quantity FROM trades WHERE user_id=$1 ORDER BY id ASC",[req.user.sub]);
+    const expected=new Map();let tradeCashDelta=0;
+    for(const row of historical.rows){
+      const direction=row.side==="buy"?1:-1;
+      tradeCashDelta-=direction*Number(row.amount_eur);
+      expected.set(row.asset,(expected.get(row.asset)||0)+direction*Number(row.quantity));
+    }
+    const assetDiscrepancies=[];
+    const actual=new Map(holdings.map(row=>[row.asset,row.quantity]));
+    for(const asset of new Set([...expected.keys(),...actual.keys()])){
+      const expectedQty=expected.get(asset)||0,actualQty=actual.get(asset)||0;
+      if(Math.abs(expectedQty-actualQty)>Math.max(1e-9,Math.abs(expectedQty)*1e-8))assetDiscrepancies.push({asset,expected:expectedQty,actual:actualQty});
+    }
+    // Cash can include legitimate deposits/withdrawals, so do not assert that initial capital plus trade deltas is the cash balance.
+    const integrity=Number.isFinite(cash)&&cash>=-1e-8&&Math.abs(total-(cash+invested))<0.01&&holdings.every(row=>Number.isFinite(row.quantity)&&row.quantity>=-1e-12);
+    const reconciliation={ok:assetDiscrepancies.length===0,assetDiscrepancies,tradeCount:historical.rows.length,tradeCashDelta};
+    res.json({updatedAt:Date.now(),source:"wallets + holdings + CoinGecko",cash,invested,total,initialCapital:10000,holdings,positions,trades:t.rows,integrity:{ok:integrity,cashPlusInvested:cash+invested,difference:total-(cash+invested),reconciliation}});
   } catch(e) { console.error("[PORTFOLIO] error", e.message); res.status(500).json({error:"Erreur serveur."}); }
 });
 
