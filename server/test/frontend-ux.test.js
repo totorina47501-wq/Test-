@@ -185,13 +185,13 @@ test("V1.4: journal affiche une erreur accessible sans HTML non fiable", () => {
 
 
 test("BitGold 2.0: navigation mobile et thème chargés sans toucher aux parcours métier", () => {
-  assert.match(html, /bitgold-2\\.css\\?v=1/);
+  assert.ok(html.includes('href="bitgold-2.css?v=1"'));
   assert.match(html, /class="bg2-mobile-tabs"/);
   assert.match(html, /class="bg2-shortcuts"/);
   for (const target of ['href="#dashboard"', 'href="/investir"', 'href="#bots"', 'href="#portefeuille"', 'href="/activite"']) {
     assert.ok(html.includes(target), `lien mobile absent: ${target}`);
   }
   const visualCss = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
-  assert.match(visualCss, /@media\\(max-width:640px\\)/);
+  assert.ok(visualCss.includes("@media(max-width:640px)"));
   assert.match(visualCss, /prefers-reduced-motion/);
 });
