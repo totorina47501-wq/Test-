@@ -31,9 +31,9 @@ test("dashboard quick links are present in the delivered HTML", async ({ request
   const response = await request.get("/");
   expect(response.ok()).toBeTruthy();
   const html = await response.text();
-  const section = html.match(/<div class="bg2-shortcuts"[^>]*>([\\s\\S]*?)<\\/div>/);
-  expect(section, "dashboard shortcuts must be delivered to authenticated clients").not.toBeNull();
+  const section = html.split('<div class="bg2-shortcuts"')[1]?.split('</div>')[0];
+  expect(section, "dashboard shortcuts must be delivered to authenticated clients").toBeTruthy();
   for (const target of ['href="/investir"', 'href="#bots"', 'href="#portefeuille"', 'href="/activite"']) {
-    expect(section[1]).toContain(target);
+    expect(section).toContain(target);
   }
 });
