@@ -15,9 +15,9 @@ test("landing place les bots avant les tarifs", () => {
 });
 
 test("hero présente les bots comme proposition de valeur principale", () => {
-  assert.match(html, /BitGold AI · bots intelligents/);
-  assert.match(html, /Des bots intelligents pour/);
-  assert.match(html, /href="#bots"[^>]*>Découvrir les Bots IA/);
+  assert.match(html, /Bienvenue sur BitGold/);
+  assert.match(html, /La crypto, plus simple à comprendre/);
+  assert.match(html, /href="#parcours"[^>]*>Découvrir BitGold/);
 });
 
 test("le parcours d'une décision est explicitement expliqué", () => {
