@@ -124,3 +124,28 @@ test("le journal permet une recherche combinée aux filtres", () => {
   assert.match(app, /addEventListener\("input",\(\)=>renderActivity/);
   assert.match(css, /bg-activity-tools/);
 });
+
+
+test("l'accueil invité présente une promesse accueillante et honnête", () => {
+  assert.match(html, /Bienvenue sur BitGold/);
+  assert.match(html, /La crypto, plus simple à comprendre/);
+  assert.match(html, /href="#parcours"/);
+  assert.match(html, /Sans dépôt/);
+  assert.match(html, /100 %/);
+});
+
+test("les quatre valeurs BitGold sont accessibles depuis l'accueil", () => {
+  assert.match(html, /id="valeurs"/);
+  assert.match(html, /Clarté/);
+  assert.match(html, /Transparence/);
+  assert.match(html, /Contrôle/);
+  assert.match(html, /Responsabilité/);
+  assert.match(html, /aucune promesse de rendement/);
+});
+
+test("le cockpit distingue explicitement les simulations des cours externes", () => {
+  assert.match(html, /bg-dashboard-disclaimer/);
+  assert.match(html, /Portefeuille de démonstration/);
+  assert.match(html, /Les cours de marché peuvent provenir de fournisseurs externes/);
+  assert.match(css, /bg-values-grid/);
+});
