@@ -5,8 +5,8 @@ import crypto from "node:crypto";
 const base="http://127.0.0.1:3000";
 const email=`scenario-${crypto.randomUUID()}@example.invalid`;
 const password=crypto.randomBytes(24).toString("hex");
-async function request(path,{method="GET",token,body}={}){
-  const response=await fetch(base+path,{method,headers:{...(token?{Authorization:`Bearer ${token}`}:{}),...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000)});
+async function request(path,{method="GET",token,body,headers={}}={}){
+  const response=await fetch(base+path,{method,headers:{...headers,...(token?{Authorization:`Bearer ${token}`}:{}),...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000)});
   let json;try{json=await response.json()}catch{json={}};
   return {status:response.status,data:json};
 }
@@ -47,6 +47,19 @@ async function main(){
   assert.ok(Math.abs(Number(afterRejected.data.cash)-Number(beforeRejected.data.cash))<0.000001,"rejected orders preserve cash");
   const holdingsByAsset=(portfolio)=>Object.fromEntries((portfolio.holdings||[]).map(h=>[h.asset,Number(h.quantity)]));
   assert.deepEqual(holdingsByAsset(afterRejected.data),holdingsByAsset(beforeRejected.data),"rejected orders preserve holdings");
+  // Replayed requests must never debit twice, even when sent concurrently.
+  const beforeIdempotent=await request("/api/portfolio",{token});
+  const idempotencyKey=`scenario_${crypto.randomUUID().replaceAll("-","")}`;
+  const identical={method:"POST",token,headers:{"Idempotency-Key":idempotencyKey},body:{side:"buy",asset:"BTC",amount:7}};
+  const responses=await Promise.all([request("/api/trades",identical),request("/api/trades",identical)]);
+  assert.deepEqual(responses.map(r=>r.status).sort(),[200,201],"concurrent duplicate orders replay exactly once");
+  assert.equal(responses[0].data.tradeId,responses[1].data.tradeId,"duplicate responses refer to same trade");
+  const afterIdempotent=await request("/api/portfolio",{token});
+  assert.ok(Math.abs((Number(beforeIdempotent.data.cash)-Number(afterIdempotent.data.cash))-7)<0.00001,"concurrent retry debits once");
+  const conflict=await request("/api/trades",{method:"POST",token,headers:{"Idempotency-Key":idempotencyKey},body:{side:"buy",asset:"BTC",amount:8}});
+  assert.equal(conflict.status,409,"reused key with different payload is rejected");
+  const afterConflict=await request("/api/portfolio",{token});
+  assert.ok(Math.abs(Number(afterConflict.data.cash)-Number(afterIdempotent.data.cash))<0.00001,"conflicting retry does not debit");
   const activity=await request("/api/activity",{token});assert.equal(activity.status,200,"activity");
   assert.ok(activity.data.trades?.some(t=>t.side==="buy"&&t.asset==="BTC"),"buy recorded");
   assert.ok(activity.data.trades?.some(t=>t.side==="sell"&&t.asset==="BTC"),"sell recorded");
