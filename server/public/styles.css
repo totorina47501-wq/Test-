@@ -1188,3 +1188,18 @@ img,svg,video,canvas{max-width:100%}
 .bg-activity-tools input::placeholder{color:#a6b8a8}
 .bg-activity-tools span{color:#b5c9b3;font-size:.85rem}
 @media(max-width:560px){.bg-activity-tools{align-items:stretch;flex-direction:column}.bg-activity-tools input{flex:0 0 auto;width:100%}}
+
+/* Activity journal: keep large histories inside a responsive scrollable window. */
+#activityLog.activity-log{
+  max-height:clamp(320px,58dvh,680px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#55735b #0b1711;
+  -webkit-overflow-scrolling:touch;
+}
+#activityLog.activity-log:focus-visible{outline:2px solid #c8ff45;outline-offset:3px}
+#activityLog.activity-log::-webkit-scrollbar{width:9px}
+#activityLog.activity-log::-webkit-scrollbar-thumb{background:#55735b;border-radius:10px}
+#activityLog.activity-log::-webkit-scrollbar-track{background:#0b1711}
+@media(max-width:600px){#activityLog.activity-log{max-height:52dvh;padding-inline:10px}}
