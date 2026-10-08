@@ -17,8 +17,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: bitgold-user-scenarios
-  cancel-in-progress: false
+  # Each PR gets its own lane; newer commits replace obsolete PR runs.
+  # Scheduled/manual runs stay isolated and are never auto-cancelled.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   user-scenarios:
