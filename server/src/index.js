@@ -576,7 +576,7 @@ async function provisionUserAssets(client,userId){
   }
 }
 
-app.post("/api/auth/signup", async (req,res) => {
+app.post("/api/auth/signup", authRateLimit, async (req,res) => {
   const email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
   const profile=normalizeProfile(req.body);
   if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8) return res.status(400).json({error:"Email valide et mot de passe de 8 caractères minimum requis."});
