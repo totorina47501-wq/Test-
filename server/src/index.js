@@ -338,7 +338,17 @@ async function challengeToken(user){
   return jwt.sign({sub:user.id,email:user.email,purpose:"2fa_challenge",jti},secret,{expiresIn:"5m"});
 }
 function token(user){ return jwt.sign({sub:user.id,email:user.email},secret,{expiresIn:"7d"}); }
-function auth(req,res,next){ try { req.user=jwt.verify((req.headers.authorization||"").replace("Bearer ",""),secret); next(); } catch { res.status(401).json({error:"Non authentifié"}); } }
+function auth(req,res,next){
+  const authorization=String(req.headers.authorization||"");
+  const match=/^Bearer ([^\s]+)$/.exec(authorization);
+  if(!match)return res.status(401).json({error:"Non authentifié"});
+  try{
+    const payload=jwt.verify(match[1],secret,{algorithms:["HS256"]});
+    if(payload.purpose||!Number.isSafeInteger(Number(payload.sub))||Number(payload.sub)<=0)return res.status(401).json({error:"Non authentifié"});
+    req.user=payload;
+    next();
+  }catch{return res.status(401).json({error:"Non authentifié"});}
+}
 
 app.get("/api/compliance/status",auth,async(req,res)=>{
   try{res.json(await compliance.getUserStatus(req.user.sub));}catch(e){console.error("[COMPLIANCE] status error",e.message);res.status(500).json({error:"Impossible de charger le statut de conformité."})}
