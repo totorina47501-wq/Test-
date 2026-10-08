@@ -275,3 +275,16 @@ test("2FA security flow is wired for password and Google authentication",()=>{
   assert.match(app,/requestBitGold2FA/);
   assert.match(app,/\/api\/auth\/2fa\/verify/);
 });
+
+
+test("bot HOLD bypasses quote/position requirements and trades provision missing holdings",()=>{
+  const start=server.indexOf("async function executeBotDecision(");
+  const end=server.indexOf("async function runBots(",start);
+  assert.ok(start>=0&&end>start,"bot execution handler exists");
+  const handler=server.slice(start,end);
+  const hold=handler.indexOf('if(action==="hold")');
+  const quote=handler.indexOf("const price=Number(prices[asset])");
+  assert.ok(hold>=0&&quote>hold,"hold is processed before requiring a quote");
+  assert.match(handler,/ON CONFLICT\(user_id,asset\) DO NOTHING/);
+  assert.match(handler,/UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP/);
+});
