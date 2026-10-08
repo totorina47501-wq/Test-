@@ -114,3 +114,13 @@ test("le cockpit précise explicitement le caractère simulé des chiffres", () 
   assert.match(html, /Soldes, opérations et performances sont simulés/);
   assert.match(html, /Les cours de marché peuvent provenir de fournisseurs externes/);
 });
+
+
+test("le journal permet une recherche combinée aux filtres", () => {
+  assert.match(html, /id="activitySearch" type="search"/);
+  assert.match(html, /id="activitySearchCount" role="status"/);
+  assert.match(app, /getElementById\("activitySearch"\)/);
+  assert.match(app, /toLocaleLowerCase\("fr"\)/);
+  assert.match(app, /addEventListener\("input",\(\)=>renderActivity/);
+  assert.match(css, /bg-activity-tools/);
+});
