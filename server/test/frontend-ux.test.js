@@ -253,3 +253,15 @@ test("BitGold 2.1 brand palette uses violet and gold instead of green in the UX 
   assert.ok(!css.includes('#35d4b0'));
   assert.ok(!css.includes('rgba(53,212,176'));
 });
+
+
+test("BitGold 2.1 bots: comparative chart is driven by actual backtest data, never fabricated", () => {
+  const js = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.ok(html.includes('id="botPerformanceChart"'));
+  assert.ok(js.includes("renderBotPerformanceComparison(b,days)"));
+  assert.ok(js.includes("Number(backtest?.totalReturn)"));
+  assert.ok(js.includes("Number(backtest?.benchmarkBTC)"));
+  assert.ok(js.includes("Données historiques insuffisantes"));
+  assert.ok(css.includes(".bot-performance-track"));
+});
