@@ -7,8 +7,10 @@ test("signup and login controls work in the browser", async ({ page }) => {
   await expect(page.locator("#authEmail")).toBeVisible();
   await expect(page.locator("#authPassword")).toBeVisible();
   await expect(page.locator("#authSubmit")).toBeVisible();
-  await page.locator("#authSwitch").click();
   await expect(page.locator("#authFirstName")).toBeVisible();
+  await page.locator("#authSwitch").click();
+  await expect(page.locator("#authFirstName")).toBeHidden();
+  await expect(page.locator("#authSubmit")).toHaveText("Se connecter");
   await expect(page.locator("#authCountry")).toBeVisible();
 });
 
