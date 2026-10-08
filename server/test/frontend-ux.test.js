@@ -50,3 +50,31 @@ test("les identifiants HTML restent uniques", () => {
   const duplicates = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
   assert.deepEqual(duplicates, [], `IDs dupliqués: ${duplicates.join(", ")}`);
 });
+
+
+const app = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+const css = fs.readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
+
+test("les boutons de navigation vers le journal ouvrent la vue et le retour est câblé", () => {
+  for (const id of ["dashboardActivityLink", "dashDecisionOpen", "activityNav", "activityBack"]) {
+    assert.match(html, new RegExp('id="' + id + '"'));
+    assert.match(app, new RegExp('getElementById\\("' + id + '"\\)'));
+  }
+  assert.match(app, /dashboardActivityLink"\)\?\.addEventListener\("click",event=>\{event\.preventDefault\(\);openActivity\(\)/);
+  assert.match(app, /dashDecisionOpen"\)\?\.addEventListener\("click",\(\)=>openActivity\(\)/);
+});
+
+test("les boutons de filtres du journal correspondent aux catégories disponibles", () => {
+  for (const filter of ["all", "bot", "buy", "sell", "subscription"]) {
+    assert.match(html, new RegExp('data-activity-filter="' + filter + '"'));
+  }
+  assert.match(app, /data-activity-filter/);
+});
+
+test("les panneaux et le journal sont contraints à la largeur mobile", () => {
+  assert.match(html, /name="viewport" content="width=device-width, initial-scale=1\.0"/);
+  assert.match(css, /mobile-first layout safeguards/);
+  assert.match(css, /overflow-x:clip/);
+  assert.match(css, /focus-visible/);
+  assert.match(css, /activity-page-shell/);
+});
