@@ -1020,11 +1020,14 @@ async function executeBotDecision(subscription,signal){
   const w=await client.query("SELECT cash FROM wallets WHERE user_id=$1 FOR UPDATE",[subscription.user_id]);
   const h=await client.query("SELECT quantity FROM holdings WHERE user_id=$1 AND asset=$2 FOR UPDATE",[subscription.user_id,signal.asset]);
   const cash=Number(w.rows[0]?.cash||0),qty=Number(h.rows[0]?.quantity||0),price=Number(prices[signal.asset]||0);
+  // Fail closed when an AI signal or market quote is invalid; never book a fabricated trade.
+  if(!def||!w.rows.length||!h.rows.length||!["buy","sell","hold"].includes(signal.action)||!Number.isFinite(price)||price<=0||!Number.isFinite(cash)||cash<0||!Number.isFinite(qty)||qty<0||!Number.isFinite(Number(signal.fraction))||Number(signal.fraction)<0||Number(signal.fraction)>1)throw Error("Bot: invalid signal or market state.");
   let amount=0,quantity=0;
   if(signal.action==="buy"){const maxTrade=Number(subscription.max_trade_eur||250);const maxPosition=Number(subscription.max_position_eur||1000);const currentPosition=qty*price;const remaining=Math.max(0,maxPosition-currentPosition);const reserve=Math.max(0,Math.min(90,Number(subscription.min_cash_pct||20)))/100;const spendable=Math.max(0,cash*(1-reserve));amount=Math.min(cash*signal.fraction,cash*def.allocation/100,maxTrade,remaining,spendable);quantity=price?amount/price:0}
   if(signal.action==="sell"){amount=Math.min(qty*price,(qty*price)*signal.fraction);quantity=price?amount/price:0}
   if(signal.action!=="hold"&&amount>0&&quantity>0){await complianceCheck(amount);await agentPayments.authorize({userId:subscription.user_id,botType:subscription.bot_type,asset:signal.asset,amountEur:amount});}
   if(signal.action==="hold"||amount<=0||quantity<=0){await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",signal.asset,signal.message]);await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");return}
+  if(!Number.isFinite(amount)||!Number.isFinite(quantity)||amount<=0||quantity<=0||(signal.action==="buy"&&amount>Number(subscription.max_trade_eur||250)+1e-8)||(signal.action==="buy"&&amount>cash+1e-8)||(signal.action==="sell"&&quantity>qty+1e-10))throw Error("Bot: trade risk limit exceeded.");
   await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2",[signal.action==="buy"?-amount:amount,subscription.user_id]);
   await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3",[signal.action==="buy"?quantity:-quantity,subscription.user_id,signal.asset]);
   await client.query("INSERT INTO trades(user_id,side,asset,amount_eur,price_eur,quantity) VALUES($1,$2,$3,$4,$5,$6)",[subscription.user_id,signal.action,signal.asset,amount,price,quantity]);
