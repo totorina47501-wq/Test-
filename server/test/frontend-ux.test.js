@@ -195,3 +195,14 @@ test("BitGold 2.0: navigation mobile et thème chargés sans toucher aux parcour
   assert.ok(visualCss.includes("@media(max-width:640px)"));
   assert.match(visualCss, /prefers-reduced-motion/);
 });
+
+
+test("BitGold 2.0 lot 2: wallet and markets retain their functional controls", () => {
+  for (const id of ['portfolioTotal', 'cashBalance', 'walletBuy', 'walletSell', 'holdings', 'marketGrid']) {
+    assert.ok(html.includes('id="' + id + '"'), 'missing existing business UI hook: ' + id);
+  }
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  assert.ok(css.includes('#compte .portfolio-overview'));
+  assert.ok(css.includes('#marketGrid .market'));
+  assert.ok(css.includes('@media(max-width:640px)'));
+});
