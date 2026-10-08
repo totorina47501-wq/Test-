@@ -217,3 +217,15 @@ test("BitGold 2.0 lot 3: bot comparison and details keep existing interactions",
   assert.ok(css.includes('#bot-detail .bot-detail-grid'));
   assert.ok(css.includes('@media(max-width:720px)'));
 });
+
+
+test("BitGold 2.0 lot 4: all existing dialogs have constrained mobile scroll", () => {
+  const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
+  for (const id of ['demoModal', 'cryptoDetailModal', 'tradeModal', 'modal', 'profileModal']) {
+    assert.ok(html.includes('id="' + id + '"'), 'missing dialog: ' + id);
+    assert.ok(css.includes('#' + id + ' .modal-box'), 'missing scrollable dialog rule: ' + id);
+  }
+  assert.ok(css.includes('max-height:calc(100dvh - 32px)'));
+  assert.ok(css.includes('overflow-y:auto'));
+  assert.ok(css.includes('overscroll-behavior:contain'));
+});
