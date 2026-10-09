@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 test("visitor sees the BitGold V3 clean-slate landing and can open signup", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".visitor-hero h1")).toContainText("Explorez la crypto.");
-  await expect(page.locator(".visitor-hero")).toContainText("Les marchés, votre portefeuille");
+  await expect(page.locator(".visitor-hero")).toContainText("Comprenez les marchés, suivez un portefeuille virtuel");
   await expect(page.locator("#heroSignup")).toBeVisible();
   await page.locator("#heroSignup").click();
   await expect(page.locator("#authEmail")).toBeVisible();
