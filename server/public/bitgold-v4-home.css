@@ -37,3 +37,12 @@
 .bg3-dashboard .v4-cockpit-guide{border-color:rgba(179,255,202,.22)}
 .bg3-dashboard .bg2-shortcuts a{min-height:72px}
 .bg3-dashboard .ux15-quickstart{margin-top:12px}
+
+/* V4.6: one primary visitor discovery route; showcase and guided demo remain available. */
+.bg3-home .bg3-feature-row{display:none!important}
+.bg3-home .home-explorer{margin-top:clamp(28px,4vw,54px)}
+/* Signed-in: make portfolio and risk figures the first actionable information. */
+.bg3-dashboard .dashboard-kpis{margin-top:18px!important}
+.bg3-dashboard .v4-cockpit-guide{margin-top:14px}
+.bg3-dashboard .bg2-shortcuts{margin-bottom:22px}
+@media(max-width:780px){.bg3-dashboard .dashboard-kpis{margin-top:12px!important}.bg3-dashboard .v4-cockpit-guide{margin-top:12px}}

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="bitgold-v4-cockpit.css?v=20261009-bento1">
 <link rel="stylesheet" href="bitgold-v4-bots.css?v=20261009-bots1">
 <link rel="stylesheet" href="bitgold-v4-investir.css?v=20261009-unified1">
-<link rel="stylesheet" href="bitgold-v4-home.css?v=20261009-hierarchy1">
+<link rel="stylesheet" href="bitgold-v4-home.css?v=20261009-v46">
 </head>
 <body>
 <header class="topbar">
@@ -130,15 +130,14 @@
     <div><span class="eyebrow">VOTRE ESPACE · SIMULATION</span><h2>Votre cockpit.</h2><p class="section-subtitle">Votre portefeuille, vos marchés et vos bots au même endroit. Toutes les opérations sont simulées.</p><div class="cockpit-customizer" role="group" aria-label="Personnaliser le cockpit"><span>Vue prioritaire</span><button type="button" class="cockpit-focus-btn active" data-cockpit-focus="performance">Performance</button><button type="button" class="cockpit-focus-btn" data-cockpit-focus="risk">Risque</button><button type="button" class="cockpit-focus-btn" data-cockpit-focus="bots">Bots</button></div><div class="cockpit-visibility" role="group" aria-label="Modules visibles"><span>Modules</span><button type="button" class="cockpit-visibility-btn active" data-cockpit-visibility="performance" aria-pressed="true">Performance</button><button type="button" class="cockpit-visibility-btn active" data-cockpit-visibility="risk" aria-pressed="true">Risque</button><button type="button" class="cockpit-visibility-btn active" data-cockpit-visibility="bots" aria-pressed="true">Bots</button></div></div>
     <span class="live" id="dashboardUpdated">Actualisation en attente</span>
   </div>
-  <div class="v4-cockpit-guide" aria-label="Vue rapide du cockpit"><div class="v4-cockpit-guide-copy"><span class="eyebrow">VOTRE POSTE DE PILOTAGE</span><strong>L'essentiel, immédiatement.</strong><p>Capital, performance et exposition en priorité. Explorez ensuite vos stratégies et vos positions.</p></div><div class="v4-cockpit-guide-actions"><a href="#bots">Mes stratégies ↗</a><a href="/activite">Journal d'activité ↗</a></div></div>
-  <div class="bg2-shortcuts" aria-label="Raccourcis principaux"><a href="/investir"><span>↗</span><strong>Investir</strong><small>Explorer les marchés</small></a><a href="#bots"><span>✦</span><strong>Bots IA</strong><small>Choisir une stratégie</small></a><a href="#portefeuille"><span>◈</span><strong>Portefeuille</strong><small>Voir mes actifs</small></a><a href="/activite"><span>☷</span><strong>Activité</strong><small>Suivre les opérations</small></a></div><div class="ux15-quickstart" aria-label="Actions prioritaires"><div class="ux15-quickstart-copy"><span class="eyebrow">BITGOLD · VOTRE ESPACE</span><strong>Votre stratégie, en un coup d’œil.</strong><span>Suivez votre portefeuille démo et pilotez vos stratégies en gardant le contrôle.</span></div><nav class="ux15-quickstart-actions" aria-label="Accès rapides"><a href="#bots" class="btn btn-primary">Explorer les bots IA</a><a href="/investir" class="btn btn-ghost">Explorer les cryptos</a></nav></div>
   <p class="bg-dashboard-disclaimer" role="note"><strong>Portefeuille de démonstration.</strong> Soldes, opérations et performances sont simulés. Les cours de marché peuvent provenir de fournisseurs externes et être différés.</p><div class="dashboard-kpis">
     <article class="pro-kpi"><span>Valeur portefeuille</span><strong id="dashTotal">—</strong><small id="dashReturn">—</small></article>
     <article class="pro-kpi"><span>Performance</span><strong id="dashPerformance">—</strong><small>Depuis le début</small></article>
     <article class="pro-kpi"><span>Risque</span><strong id="dashRisk">—</strong><small id="dashRiskMeta">—</small></article>
     <article class="pro-kpi"><span>Bots actifs</span><strong id="dashBots">—</strong><small>Sur votre niveau actuel</small></article>
   </div>
-  <div class="dashboard-cockpit-strip">
+  <div class="v4-cockpit-guide" aria-label="Vue rapide du cockpit"><div class="v4-cockpit-guide-copy"><span class="eyebrow">VOTRE POSTE DE PILOTAGE</span><strong>L'essentiel, immédiatement.</strong><p>Capital, performance et exposition en priorité. Explorez ensuite vos stratégies et vos positions.</p></div><div class="v4-cockpit-guide-actions"><a href="#bots">Mes stratégies ↗</a><a href="/activite">Journal d'activité ↗</a></div></div>
+  <div class="bg2-shortcuts" aria-label="Raccourcis principaux"><a href="/investir"><span>↗</span><strong>Investir</strong><small>Explorer les marchés</small></a><a href="#bots"><span>✦</span><strong>Bots IA</strong><small>Choisir une stratégie</small></a><a href="#portefeuille"><span>◈</span><strong>Portefeuille</strong><small>Voir mes actifs</small></a><a href="/activite"><span>☷</span><strong>Activité</strong><small>Suivre les opérations</small></a></div><div class="dashboard-cockpit-strip">
     <article class="pro-panel dashboard-membership-panel">
       <div class="pro-panel-head"><div><span class="eyebrow">ABONNEMENT</span><h3>Votre niveau BitGold</h3></div><span id="dashPlanBadge" class="status-pill">FREE</span></div>
       <div class="dashboard-membership-main"><strong id="dashPlanName">BitGold Free</strong><span id="dashPlanMeta">1 bot actif maximum</span></div>
