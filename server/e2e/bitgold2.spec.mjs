@@ -65,7 +65,7 @@ test("visitor can reach markets and bots without authentication", async ({ page 
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.locator("#marches")).toBeAttached();
   await expect(page.locator("#bots")).toBeAttached();
-  await page.locator('.bg3-feature-row a[href="#bots"]').click();
+  await page.locator('.bg3-tool-grid a[href="#bots"]').click();
   await expect(page).toHaveURL(/#bots$/);
 });
 
