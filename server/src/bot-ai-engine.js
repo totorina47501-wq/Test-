@@ -65,7 +65,7 @@ export async function evaluateBot({type,market,histories,portfolio,subscription,
  if(ai&&ai.confidence>=.62){
   if(ai.bias!==base.action&&base.action!=="hold"){
    base={action:"hold",asset:base.asset,fraction:0};
-
+  }
  }
  if(base.action!=="hold"&&(!base.asset||!features[base.asset]||features[base.asset].historyPoints<4||!Number.isFinite(features[base.asset].price)||features[base.asset].price<=0))base={action:"hold",asset:base.asset||null,fraction:0};
  if(base.action==="buy"&&(risk.cashPct<finite(subscription?.min_cash_pct,20)||risk.score>=82))base={action:"hold",asset:base.asset,fraction:0};
