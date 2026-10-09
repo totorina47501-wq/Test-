@@ -185,7 +185,7 @@ test("V1.4: journal affiche une erreur accessible sans HTML non fiable", () => {
 
 
 test("BitGold 2.0: navigation mobile et thème chargés sans toucher aux parcours métier", () => {
-  assert.ok(html.includes('href="bitgold-2.css?v=1"'));
+  assert.ok(html.includes('href="bitgold-2.css?v=20261009-mint2"'));
   assert.match(html, /class="bg2-mobile-tabs"/);
   assert.match(html, /class="bg2-shortcuts"/);
   for (const target of ['href="#dashboard"', 'href="/investir"', 'href="#bots"', 'href="#portefeuille"', 'href="/activite"']) {
@@ -248,8 +248,8 @@ test("BitGold 2.1: cockpit keeps live portfolio KPIs and accessible shortcuts", 
 test("BitGold 2.1 brand palette follows approved black and mint design", () => {
   const css = fs.readFileSync(new URL("../public/bitgold-2.css", import.meta.url), "utf8");
   const mint = css.slice(css.indexOf("/* BitGold 2.1: approved visual direction"));
-  assert.ok(mint.includes("--bg2-purple:#43e5b8"));
-  assert.ok(mint.includes("--bg2-green:#43e5b8"));
+  assert.ok(mint.includes("--bg2-purple:#b3ffca"));
+  assert.ok(mint.includes("--bg2-green:#b3ffca"));
   assert.ok(mint.includes(".bitgold-home-hero"));
   assert.ok(mint.includes(".bg2-mobile-tabs"));
   assert.ok(mint.includes(".bot-performance-bar"));
@@ -280,7 +280,7 @@ test("BitGold 2.1 portfolio cockpit keeps accessible mint responsive layout", ()
   assert.ok(refinement.includes("grid-template-columns:repeat(4,minmax(0,1fr))"));
   assert.ok(refinement.includes("@media(max-width:600px)"));
   assert.ok(refinement.includes("@media(prefers-reduced-motion:reduce)"));
-  assert.ok(refinement.includes("#43e5b8"));
+  assert.ok(refinement.includes("#b3ffca"));
 });
 
 

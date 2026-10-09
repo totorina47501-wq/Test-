@@ -20,7 +20,7 @@ body{background:var(--v3-bg);color:var(--v3-ink)}
 .bg3-hero-actions{display:flex;flex-wrap:wrap;gap:12px}
 .bg3-hero-actions .btn{min-height:55px;border-radius:11px!important;font-weight:800!important;padding:13px 22px!important}
 .bg3-hero-actions .btn-primary{background:var(--v3-mint)!important;border-color:var(--v3-mint)!important;color:#102417!important}
-.bg3-hero-actions .btn-primary:hover{background:#d1ffdc!important}
+.bg3-hero-actions .btn-primary:hover{background:#b3ffca!important}
 .bg3-hero-actions .btn-ghost{background:#18221c!important;border:1px solid #425749!important;color:#f3faf4!important}
 .bg3-trust{display:flex;gap:10px 18px;flex-wrap:wrap;margin:30px 0 15px;color:#b6cdbb;font-size:.77rem;font-weight:650}
 .bg3-hero-copy .risk{font-size:.72rem;color:#819789;max-width:510px;line-height:1.6}
@@ -77,7 +77,7 @@ body{background:var(--v3-bg);color:var(--v3-ink)}
 .bg3-page-intro{display:flex;justify-content:space-between;align-items:center;gap:20px;background:#111a14;border:1px solid #29392d;border-radius:15px;padding:21px 25px;margin:0 0 25px}
 .bg3-page-overline{display:block;color:#b3ffca;font-size:.7rem;letter-spacing:.15em;font-weight:850;margin-bottom:7px}
 .bg3-page-intro p{color:#b4c9b8;margin:0;line-height:1.55;font-size:.9rem}
-.bg3-page-chip{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border:1px solid #3d5543;background:#202d23;border-radius:10px;color:#d3ffdd!important;font-weight:800;font-size:.78rem;padding:11px 16px;text-decoration:none!important;transition:border-color .2s}
+.bg3-page-chip{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border:1px solid #3d5543;background:#202d23;border-radius:10px;color:#b3ffca!important;font-weight:800;font-size:.78rem;padding:11px 16px;text-decoration:none!important;transition:border-color .2s}
 .bg3-page-chip:hover{border-color:#b3ffca}
 .bg3-dashboard .section-title,.bg3-markets .section-title,.bg3-bots>.section-title{margin:0 0 26px!important}
 .bg3-dashboard .section-title h2,.bg3-markets .section-title h2,.bg3-bots>.section-title h2,.bg3-portfolio h2{font-size:clamp(1.9rem,3.4vw,3.2rem)!important;font-weight:850!important;letter-spacing:-.06em!important;line-height:1.14!important;color:#f2faf4!important;margin:6px 0 12px!important}
