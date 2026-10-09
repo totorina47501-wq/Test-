@@ -416,14 +416,14 @@
       <select id="botComparatorDays"><option value="30">30 jours</option><option value="90" selected>90 jours</option><option value="180">180 jours</option></select>
     </label>
     <label>Classement
-      <select id="botComparatorSort"><option value="return">Rendement</option><option value="sharpe">Sharpe</option><option value="sortino">Sortino</option><option value="drawdown">Drawdown maîtrisé</option><option value="robustness">Robustesse médiane</option></select>
+      <select id="botComparatorSort"><option value="return">Rendement</option><option value="excess">Surperformance vs BTC</option><option value="sharpe">Sharpe</option><option value="sortino">Sortino</option><option value="drawdown">Drawdown maîtrisé</option><option value="robustness">Robustesse médiane</option></select>
     </label>
     <div id="botComparatorBots" class="comparator-checks" aria-label="Stratégies à comparer">
       <label><input type="checkbox" value="shield" checked> Shield</label>
-      <label><input type="checkbox" value="adaptive-ai" checked> Adaptive AI</label>
-      <label><input type="checkbox" value="quant-pulse" checked> Quant Pulse</label>
-      <label><input type="checkbox" value="silver"> Silver</label>
-      <label><input type="checkbox" value="gold"> Gold</label>
+      <label><input type="checkbox" value="adaptive-ai"> Adaptive AI</label>
+      <label><input type="checkbox" value="quant-pulse"> Quant Pulse</label>
+      <label><input type="checkbox" value="silver" checked> Silver</label>
+      <label><input type="checkbox" value="gold" checked> Gold</label>
       <label><input type="checkbox" value="macro-rotation"> Macro Rotation</label>
     </div>
     <button class="btn btn-primary" type="button" data-comparator-run>Comparer les stratégies</button>

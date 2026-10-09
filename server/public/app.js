@@ -1203,10 +1203,12 @@ window.openSecurityCenter=openSecurityCenter;
 window.addEventListener("DOMContentLoaded",()=>{if(apiToken){const b=document.createElement("button");b.type="button";b.textContent="Sécurité / 2FA";b.className="btn btn-ghost";b.style.position="fixed";b.style.right="18px";b.style.bottom="18px";b.style.zIndex="9990";b.onclick=openSecurityCenter;document.body.appendChild(b)}});
 
 /* BitGold AI comparator — simulation only. */
+let comparatorCachedRows=[];
 const comparatorBotNames={shield:"Shield","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse",silver:"Silver",gold:"Gold","macro-rotation":"Macro Rotation"};
 function comparatorNumber(value,fallback=0){return Number.isFinite(Number(value))?Number(value):fallback}
-function comparatorPct(value){return Number.isFinite(Number(value))?((Number(value)>0?"+":"")+Number(value).toFixed(2)+" %"):"—"}
+function comparatorPct(value){return value!==null&&value!==undefined&&Number.isFinite(Number(value))?((Number(value)>0?"+":"")+Number(value).toFixed(2)+" %"):"—"}
 function comparatorScore(row,sort){
+  if(sort==="excess")return comparatorNumber(row.excessReturnBTC,-Infinity);
   if(sort==="sharpe")return comparatorNumber(row.sharpe,-Infinity);
   if(sort==="sortino")return comparatorNumber(row.sortino,-Infinity);
   if(sort==="drawdown")return -comparatorNumber(row.maxDrawdown,Infinity);
@@ -1225,19 +1227,20 @@ function renderBotComparator(rows){
   const sort=document.getElementById("botComparatorSort")?.value||"return";
   const ranked=rows.slice().sort((a,b)=>comparatorScore(b,sort)-comparatorScore(a,sort));
   const best=ranked[0];
+  const btcExcess=ranked.reduce((sum,row)=>sum+comparatorNumber(row.excessReturnBTC),0)/ranked.length;
   const robustValues=ranked.map(row=>comparatorNumber(row.robustness?.confidence?.p50)).filter(Number.isFinite).sort((a,b)=>a-b);
   const avgReturn=ranked.reduce((sum,row)=>sum+comparatorNumber(row.totalReturn),0)/ranked.length;
   const avgDrawdown=ranked.reduce((sum,row)=>sum+comparatorNumber(row.maxDrawdown),0)/ranked.length;
   if(summary){
     summary.hidden=false;
     const medianRobustness=robustValues.length?robustValues[Math.floor(robustValues.length/2)]:null;
-    summary.innerHTML=`<div><span>Leader selon le tri</span><strong>${escapeHtml(comparatorBotNames[best.botType]||best.botType)}</strong></div><div><span>Rendement moyen</span><strong>${comparatorPct(avgReturn)}</strong></div><div><span>Drawdown moyen</span><strong>−${avgDrawdown.toFixed(2)} %</strong></div><div><span>Robustesse médiane</span><strong>${medianRobustness!==null?comparatorPct(medianRobustness):"—"}</strong></div>`;
+    summary.innerHTML=`<div><span>Leader selon le tri</span><strong>${escapeHtml(comparatorBotNames[best.botType]||best.botType)}</strong></div><div><span>Rendement moyen</span><strong>${comparatorPct(avgReturn)}</strong></div><div><span>Écart moyen vs BTC</span><strong>${comparatorPct(btcExcess)}</strong></div><div><span>Drawdown moyen</span><strong>−${avgDrawdown.toFixed(2)} %</strong></div><div><span>Robustesse médiane</span><strong>${medianRobustness!==null?comparatorPct(medianRobustness):"—"}</strong></div>`;
   }
   body.innerHTML=ranked.map((row,index)=>{
     const robust=row.robustness||{},conf=robust.confidence||{};
     const name=comparatorBotNames[row.botType]||row.botType;
     const badge=index===0?'<span class="comparator-badge">Leader</span>':"";
-    return `<article class="comparator-card${index===0?" highlight":""}"><div class="comparator-rank">#${index+1}</div><div class="comparator-main"><strong>${escapeHtml(name)}</strong><span>${row.trades} trades · ${row.periodPoints} points${badge}</span></div><div><small>Rendement</small><strong>${comparatorPct(row.totalReturn)}</strong></div><div><small>vs BTC</small><strong>${comparatorPct(row.benchmarkBTC)}</strong></div><div><small>Sharpe</small><strong>${comparatorNumber(row.sharpe).toFixed(2)}</strong></div><div><small>Sortino</small><strong>${comparatorNumber(row.sortino).toFixed(2)}</strong></div><div><small>Volatilité</small><strong>${comparatorPct(row.volatility)}</strong></div><div><small>Drawdown max</small><strong>−${comparatorNumber(row.maxDrawdown).toFixed(2)} %</strong></div><div><small>Robustesse P05/P50/P95</small><strong>${comparatorPct(conf.p05)} / ${comparatorPct(conf.p50)} / ${comparatorPct(conf.p95)}</strong></div></article>`;
+    return `<article class="comparator-card${index===0?" highlight":""}"><div class="comparator-rank">#${index+1}</div><div class="comparator-main"><strong>${escapeHtml(name)}</strong><span>${row.trades} trades · ${row.periodPoints} points${badge}</span></div><div><small>Rendement</small><strong>${comparatorPct(row.totalReturn)}</strong></div><div><small>BTC (même période)</small><strong>${comparatorPct(row.benchmarkBTC)}</strong></div><div><small>Écart vs BTC</small><strong>${comparatorPct(row.excessReturnBTC)}</strong></div><div><small>Sharpe</small><strong>${comparatorNumber(row.sharpe).toFixed(2)}</strong></div><div><small>Sortino</small><strong>${comparatorNumber(row.sortino).toFixed(2)}</strong></div><div><small>Volatilité</small><strong>${comparatorPct(row.volatility)}</strong></div><div><small>Drawdown max</small><strong>−${comparatorNumber(row.maxDrawdown).toFixed(2)} %</strong></div><div><small>Robustesse P05/P50/P95</small><strong>${comparatorPct(conf.p05)} / ${comparatorPct(conf.p50)} / ${comparatorPct(conf.p95)}</strong></div></article>`;
   }).join("");
 }
 async function loadBotComparator(){
@@ -1257,6 +1260,7 @@ async function loadBotComparator(){
   try{
     const data=await apiFetch("/api/bots/comparator?days="+encodeURIComponent(days)+"&bots="+encodeURIComponent(selected.join(",")));
     const rows=Array.isArray(data?.bots)?data.bots:[];
+    comparatorCachedRows=rows;
     renderBotComparator(rows);
     if(status)status.textContent=rows.length+" stratégies · historique identique · simulation uniquement.";
   }catch(error){
@@ -1276,7 +1280,7 @@ function initBotComparator(){
   panel.querySelectorAll("#botComparatorBots input").forEach(input=>input.addEventListener("change",updateBotComparatorSelection));
   document.getElementById("botComparatorSort")?.addEventListener("change",()=>{
     const cards=panel.querySelectorAll(".comparator-card");
-    if(cards.length)loadBotComparator().catch(error=>console.warn("Comparator sort:",error.message));
+    if(cards.length)renderBotComparator(comparatorCachedRows);
   });
   updateBotComparatorSelection();
 }
