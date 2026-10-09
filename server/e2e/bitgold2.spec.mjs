@@ -70,24 +70,18 @@ test("visitor can reach markets and bots without authentication", async ({ page 
 });
 
 
-test("V4 showcase displays anonymized screenshot files without live iframe", async ({ page, request }) => {
+test("V4 showcase navigates without reloading the current preview unnecessarily", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   const stage = page.locator("#v4FeatureStage");
-  const shot = page.locator("#v4FeatureImage");
-  await expect(page.locator("#v4FeatureFrame")).toHaveCount(0);
-  await expect(shot).toHaveAttribute("src", "/showcase/investir.png");
+  const frame = page.locator("#v4FeatureFrame");
+  await expect(frame).toHaveAttribute("src", "/investir");
   await expect(page.locator("#v4FeatureCount")).toHaveText("01 / 05");
   await page.locator("#v4FeatureNext").click();
   await expect(page.locator("#v4FeatureCount")).toHaveText("02 / 05");
-  await expect(shot).toHaveAttribute("src", "/showcase/cockpit.png");
+  await expect(frame).toHaveAttribute("src", "/#dashboard");
   await stage.focus();
   await page.keyboard.press("ArrowLeft");
   await expect(page.locator("#v4FeatureCount")).toHaveText("01 / 05");
   await expect(page.locator("#v4FeatureDots button").first()).toHaveAttribute("aria-current", "true");
-  await expect(page.locator(".v4-feature-disclosure")).toContainText("Captures d’écrans réels");
-  for (const file of ["investir", "cockpit", "bots", "activite", "transparence"]) {
-    const result = await request.get("/showcase/" + file + ".png");
-    expect(result.ok(), file + " screenshot must be available").toBeTruthy();
-    expect(result.headers()["content-type"]).toContain("image/png");
-  }
+  await expect(page.locator(".v4-feature-disclosure")).toContainText("non une capture");
 });
