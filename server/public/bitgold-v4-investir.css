@@ -1,0 +1,16 @@
+/* V4: one canonical Investir market, one live source, responsive Bento. */
+.bg3-markets{--market-glass:rgba(17,32,24,.9);--market-border:rgba(179,255,202,.16)}
+.bg3-markets .market-grid.v4-unified-market-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:15px!important;align-items:stretch}
+.bg3-markets .v4-unified-market-grid>.market{min-width:0;border:1px solid var(--market-border)!important;border-radius:22px!important;padding:clamp(19px,2.3vw,27px)!important;background:var(--market-glass)!important;box-shadow:0 18px 48px rgba(0,0,0,.15);backdrop-filter:blur(12px);transition:transform .22s,border-color .22s}
+@media(hover:hover){.bg3-markets .v4-unified-market-grid>.market:hover{transform:translateY(-3px);border-color:rgba(179,255,202,.43)!important}}
+.bg3-markets .v4-unified-market-grid .market-change.down{color:#f87171!important}
+.bg3-markets .v4-unified-market-grid .market-change.up{color:#b3ffca!important}
+.bg3-markets .v4-unified-market-grid .market-price-row{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between}
+.bg3-markets .v4-unified-market-grid .price{font-variant-numeric:tabular-nums;font-size:clamp(1.4rem,2vw,2.2rem)!important;overflow-wrap:anywhere}
+.bg3-markets .v4-market-loading{grid-column:1/-1;border:1px dashed rgba(179,255,202,.24);border-radius:19px;padding:32px;color:#c7d6cd;line-height:1.65;background:rgba(18,35,26,.75)}
+.bg3-markets .investir-market-intro,.bg3-markets .investir-market-tools{border-radius:17px}
+.bg3-markets button:focus-visible,.bg3-markets a:focus-visible,.bg3-markets input:focus-visible{outline:2px solid #b3ffca;outline-offset:3px}
+@media(max-width:1100px){.bg3-markets .market-grid.v4-unified-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:680px){.bg3-markets .market-grid.v4-unified-market-grid{grid-template-columns:minmax(0,1fr)!important}.bg3-markets .v4-unified-market-grid>.market{padding:20px!important}}
+@media(prefers-reduced-motion:reduce){.bg3-markets .v4-unified-market-grid>.market{transition:none!important}.bg3-markets .v4-unified-market-grid>.market:hover{transform:none!important}}
+@media(prefers-reduced-transparency:reduce){.bg3-markets .v4-unified-market-grid>.market{background:#14251b!important;backdrop-filter:none!important}}
