@@ -1020,6 +1020,12 @@ async function executeBotDecision(subscription,signal){
  const def=botDefinition(subscription.bot_type),client=await pool.connect();
  try{
   await client.query("BEGIN");
+  // Revalidate queued decisions under a subscription lock: cancelled bots never trade.
+  const current=(await client.query("SELECT * FROM bot_subscriptions WHERE id=$1 AND user_id=$2 FOR UPDATE",[subscription.id,subscription.user_id])).rows[0];
+  if(!current?.active){await client.query("ROLLBACK");return;}
+  const currentPlan=(await client.query("SELECT plan FROM users WHERE id=$1",[subscription.user_id])).rows[0]?.plan;
+  if(!botEntitlement(currentPlan,current.bot_type)){await client.query("ROLLBACK");return;}
+  subscription=current;
   const w=await client.query("SELECT cash FROM wallets WHERE user_id=$1 FOR UPDATE",[subscription.user_id]);
   // A HOLD decision requires neither a position nor a live quote. Newly listed
   // assets may also have no holdings row until the first simulated purchase.
@@ -1132,7 +1138,7 @@ app.post("/api/stripe/portal",auth,async(req,res)=>{
 });
 
 app.get("/api/plan",auth,async(req,res)=>{try{res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de charger le plan."})}});
-app.post("/api/plan/demo",auth,async(req,res)=>{try{const plan=String(req.body.plan||"free").toLowerCase();if(!["free","pro","elite"].includes(plan))return res.status(400).json({error:"Plan invalide."});await pool.query("UPDATE users SET plan=$1,pro_since=CASE WHEN $1='pro' THEN COALESCE(pro_since,CURRENT_TIMESTAMP) ELSE NULL END WHERE id=$2",[plan,req.user.sub]);res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de modifier le plan de démonstration."})}});
+app.post("/api/plan/demo",auth,async(req,res)=>{if(isProduction)return res.status(403).json({error:"Modification de formule démo désactivée en production.",code:"DEMO_PLAN_DISABLED"});try{const plan=String(req.body.plan||"free").toLowerCase();if(!["free","pro","elite"].includes(plan))return res.status(400).json({error:"Plan invalide."});await pool.query("UPDATE users SET plan=$1,pro_since=CASE WHEN $1='pro' THEN COALESCE(pro_since,CURRENT_TIMESTAMP) ELSE NULL END WHERE id=$2",[plan,req.user.sub]);res.json(await getUserPlan(req.user.sub))}catch(e){res.status(500).json({error:"Impossible de modifier le plan de démonstration."})}});
 app.get("/api/plans/demo",(_req,res)=>res.json({mode:"simulation",requiresPayment:false,plans:[
   {id:"free",label:"Free",maxActiveBots:1,botTypes:BOT_CATALOG.filter(bot=>bot.plan==="free").map(bot=>bot.id)},
   {id:"pro",label:"Pro",maxActiveBots:3,botTypes:BOT_CATALOG.filter(bot=>bot.plan==="free"||bot.plan==="pro").map(bot=>bot.id)},
