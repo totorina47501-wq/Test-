@@ -1228,7 +1228,7 @@ function renderBotComparator(rows){
   const ranked=rows.slice().sort((a,b)=>comparatorScore(b,sort)-comparatorScore(a,sort));
   const best=ranked[0];
   const btcExcess=ranked.reduce((sum,row)=>sum+comparatorNumber(row.excessReturnBTC),0)/ranked.length;
-  const robustValues=ranked.map(row=>comparatorNumber(row.robustness?.confidence?.p50)).filter(Number.isFinite).sort((a,b)=>a-b);
+  const robustValues=ranked.map(row=>row.robustness?.confidence?.p50).filter(value=>value!==null&&value!==undefined&&Number.isFinite(Number(value))).map(Number).sort((a,b)=>a-b);
   const avgReturn=ranked.reduce((sum,row)=>sum+comparatorNumber(row.totalReturn),0)/ranked.length;
   const avgDrawdown=ranked.reduce((sum,row)=>sum+comparatorNumber(row.maxDrawdown),0)/ranked.length;
   if(summary){
@@ -1251,6 +1251,9 @@ async function loadBotComparator(){
   const body=panel.querySelector("[data-comparator-body]");
   const status=document.getElementById("botComparatorStatus");
   if(selected.length<2){
+    comparatorCachedRows=[];
+    const summary=document.getElementById("botComparatorSummary");
+    if(summary)summary.hidden=true;
     if(status)status.textContent="Sélectionnez au moins 2 stratégies.";
     if(body)body.innerHTML='<div class="comparator-empty">Sélectionnez au moins deux stratégies pour comparer leurs profils.</div>';
     return;
@@ -1264,6 +1267,9 @@ async function loadBotComparator(){
     renderBotComparator(rows);
     if(status)status.textContent=rows.length+" stratégies · historique identique · simulation uniquement.";
   }catch(error){
+    comparatorCachedRows=[];
+    const summary=document.getElementById("botComparatorSummary");
+    if(summary)summary.hidden=true;
     if(body)body.innerHTML=`<div class="comparator-empty">${escapeHtml(error.message||"Comparateur indisponible.")}</div>`;
     if(status)status.textContent="Calcul indisponible.";
   }
