@@ -10,7 +10,7 @@ test("bot decision audit persists reason, proposed fraction and explicit simulat
 });
 test("decision history is authenticated, scoped to owner and bounded",()=>{
  assert.match(source,/app\.get\("\/api\/bots\/decisions\/history",auth,/);
- assert.match(source,/WHERE user_id=\$1 AND \(\$2::text='' OR bot_type=\$2\) ORDER BY id DESC LIMIT \$3/);
- assert.match(source,/Math\.min\(100,Math\.max\(1,/);
- assert.match(source,/res\.json\(\{mode:"simulation",decisions:rows\.rows\}\)/);
+ assert.match(source,/WHERE user_id=\$1 AND \(\$2::text='' OR bot_type=\$2\) AND \(\$3::text='' OR asset=\$3\)/);
+ assert.match(source,/decisionFilters\(req\.query\)/);
+ assert.match(source,/res\.json\(\{mode:"simulation",decisions:rows\.rows\.map\(presentDecision\),filters\}\)/);
 });
