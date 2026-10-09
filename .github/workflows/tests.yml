@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: public.ecr.aws/docker/library/postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -59,7 +59,7 @@ jobs:
           docker network create bitgold-ci-net
           docker run -d --name bitgold-ci-db --network bitgold-ci-net \
             -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
-            -e POSTGRES_DB=bitgold_test postgres:16
+            -e POSTGRES_DB=bitgold_test public.ecr.aws/docker/library/postgres:16
           for i in $(seq 1 30); do
             if docker exec bitgold-ci-db pg_isready -U postgres -d bitgold_test; then break; fi
             sleep 2
@@ -73,7 +73,7 @@ jobs:
             bitgold-ci:${{ github.sha }}
           ok=0
           for i in $(seq 1 40); do
-            if docker run --rm --network bitgold-ci-net curlimages/curl:8.12.1 -fsS http://bitgold-ci-app:3000/api/health; then
+            if docker exec bitgold-ci-app node -e 'fetch("http://127.0.0.1:3000/api/health").then(r=>{if(!r.ok)process.exit(1);return r.text()}).then(console.log).catch(()=>process.exit(1))'; then
               ok=1
               break
             fi
