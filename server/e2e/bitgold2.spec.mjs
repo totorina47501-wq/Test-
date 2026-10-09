@@ -15,7 +15,7 @@ test("visitor sees the BitGold V3 clean-slate landing and can open signup", asyn
 
 test("responsive shell keeps the landing usable without horizontal overflow", async ({ page, isMobile }) => {
   await page.goto("/");
-  await expect(page.locator('link[href="bitgold-2.css?v=1"]')).toHaveCount(1);
+  await expect(page.locator('link[href="bitgold-2.css?v=20261009-mint2"]')).toHaveCount(1);
   await expect(page.locator(".visitor-hero h1")).toBeVisible();
   const hasOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   expect(hasOverflow, `horizontal overflow on ${isMobile ? "mobile" : "desktop"}`).toBe(false);
