@@ -20,7 +20,7 @@ const mean=values=>{const a=values.filter(Number.isFinite);return a.length?a.red
 const std=values=>{const a=values.filter(Number.isFinite);if(a.length<2)return 0;const m=mean(a);return Math.sqrt(mean(a.map(v=>(v-m)**2)))};
 function series(points){return(points||[]).map(p=>({timestamp:finite(p.timestamp),price:finite(p.price)})).filter(p=>p.price>0)}
 export function momentum(points){const v=series(points).map(p=>p.price);return v.length>1&&v[0]>0?(v[v.length-1]/v[0]-1)*100:0}
-export function rsi(points){const v=series(points).map(p=>p.price);if(v.length<4)return 50;const start=Math.max(1,v.length-14),g=[],l=[];for(let i=start;i<v.length;i++){const d=v[i]-v[i-1];if(d>0)g.push(d);else if(d<0)l.push(-d)}const ag=mean(g),al=mean(l);if(al===0)return ag>0?100:50;return 100-100/(1+ag/al)}
+export function rsi(points){const v=series(points).map(p=>p.price);if(v.length<4)return 50;const start=Math.max(1,v.length-14),g=[],l=[];for(let i=start;i<v.length;i++){const d=v[i]-v[i-1];if(d>0)g.push(d);else if(d<0)l.push(-d)}const periods=Math.min(14,v.length-1);const ag=g.reduce((s,x)=>s+x,0)/periods,al=l.reduce((s,x)=>s+x,0)/periods;if(al===0)return ag>0?100:50;return 100-100/(1+ag/al)}
 export function volatility(points){const v=series(points).map(p=>p.price);if(v.length<4)return 0;const returns=[];for(let i=1;i<v.length;i++)if(v[i-1]>0)returns.push((v[i]/v[i-1]-1)*100);return std(returns)}
 export function trend(points){const v=series(points).map(p=>p.price);if(v.length<6)return 0;const half=Math.floor(v.length/2);const fast=mean(v.slice(-half)),slow=mean(v.slice(0,half));return slow?((fast/slow)-1)*100:0}
 export function maxDrawdown(points){const v=series(points).map(p=>p.price);let peak=0,best=0;for(const price of v){peak=Math.max(peak,price);if(peak>0)best=Math.max(best,(peak-price)/peak*100)}return best}
@@ -55,26 +55,16 @@ export async function evaluateBot({type,market,histories,portfolio,subscription,
  const regime=detectRegime(eligibleMarket,eligibleFeatures);
  const sentiment=scoreNews(news||[]);
  const forecasts=Object.fromEntries(Object.entries(eligibleFeatures).map(([symbol,f])=>[symbol,blendForecastWithSentiment(forecast(f),sentiment.perAsset[symbol]||sentiment)]));
- const risk=portfolioRisk(portfolio||{},features);
+ const risk=portfolioRisk(portfolio||{},eligibleFeatures);
  const positions=Array.isArray(portfolio?.positions)?portfolio.positions:[];
  const ranked=Object.keys(forecasts).map(symbol=>({symbol,...forecasts[symbol],momentum7d:features[symbol].momentum7d,volatility:features[symbol].volatility})).sort((a,b)=>b.score-a.score);
  const selected=pickAsset(safeType,forecasts,eligibleFeatures,regime,positions);
  let base=selected?baseDecision(safeType,selected.symbol,features,forecasts[selected.symbol],regime,risk,positions):{action:"hold",asset:null,fraction:0};
  let ai=null;
- if(ranked.length)try{ai=await aiOverlay(safeType,regime,ranked,risk)}catch(error){console.warn("[BOT-AI] provider unavailable:",error.message)}
+ if(ranked.length)try{ai=await aiOverlay(safeType,regime,ranked,risk,sentiment)}catch(error){console.warn("[BOT-AI] provider unavailable:",error.message)}
  if(ai&&ai.confidence>=.62){
   if(ai.bias!==base.action&&base.action!=="hold"){
    base={action:"hold",asset:base.asset,fraction:0};
-  }else if(base.action==="hold"&&ai.bias!=="hold"&&ai.asset){
-   const f=features[ai.asset],fc=forecasts[ai.asset];
-   if(f&&fc&&ai.confidence>=.72){
-    const holding=positions.find(p=>p.asset===ai.asset);
-    if(ai.bias==="sell"&&finite(holding?.quantity)>0){
-     base={action:"sell",asset:ai.asset,fraction:.1};
-    }else if(ai.bias==="buy"&&risk.score<76){
-     base={action:"buy",asset:ai.asset,fraction:safeType==="gold"?.03:.02};
-    }
-   }
   }
  }
  if(base.action!=="hold"&&(!base.asset||!features[base.asset]||features[base.asset].historyPoints<4||!Number.isFinite(features[base.asset].price)||features[base.asset].price<=0))base={action:"hold",asset:base.asset||null,fraction:0};
