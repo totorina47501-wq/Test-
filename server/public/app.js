@@ -988,6 +988,7 @@ function renderBots(){
       '<p class="bot-card-summary">'+escapeHtml(bot.summary||bot.description)+'</p>'+
       '<div class="bot-control-line '+m.engineKind+'"><b>'+(m.engineKind==="ai"?"AUTONOMIE":"CONTRÔLE")+'</b><span>'+(m.engineKind==="ai"?"Le moteur analyse et ajuste la stratégie.":"Vous définissez et pilotez les règles.")+'</span></div>'+
       '<div class="bot-stats"><span><b>Risque</b>'+escapeHtml(bot.risk)+'</span><span><b>Allocation max</b>'+bot.allocation+'%</span><span><b>Rythme</b>'+escapeHtml(bot.frequency)+'</span></div>'+
+      '<p class="bot-risk-clarity">Performances issues de simulations historiques, sans garantie de rendement. Les ordres simulés sont suspendus si les données sont insuffisantes.</p>'+
       '<div class="bot-compatible"><b>ACTIFS</b><span>'+escapeHtml(assets||"Multi-actifs")+'</span></div>'+
       '<div class="bot-card-footer"><span class="bot-card-note">'+(locked?"Profil verrouillé · voir les conditions.":"Simulation uniquement · aucun ordre réel.")+'</span><span class="bot-card-open-label">'+(subscribed?"Gérer la stratégie":"Ouvrir la fiche")+' <b>→</b></span></div>'+
     '</article>';

@@ -141,3 +141,6 @@ body{background:var(--v3-bg);color:var(--v3-ink)}
 .bg3-markets .market-unavailable{grid-column:1/-1;padding:24px;border:1px dashed #637767;border-radius:14px;color:#d2e4d5;background:#18231b;line-height:1.6}
 .bg3-markets .market-live.market-stale{color:#f3d5a4!important;background:#3b3020!important;border:1px solid #7c6341!important}
 .bg3-markets .market-live.market-stale i{display:none!important}
+
+/* V3.3 — honest strategy disclosure */
+.bg3-bots .bot-risk-clarity{margin:12px 0!important;padding:11px 13px;border:1px solid #354c3a;border-radius:10px;color:#b8d1bf;font-size:.78rem;line-height:1.5;background:rgba(17,33,23,.55)}

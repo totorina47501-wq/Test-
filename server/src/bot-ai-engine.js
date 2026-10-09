@@ -48,8 +48,9 @@ function parseJson(text){const raw=String(text||"").trim();const fenced=raw.matc
 async function aiOverlay(type,regime,ranked,risk,sentiment){const p=configuredProvider();if(p==="none")return null;const top=ranked.slice(0,4).map(x=>({asset:x.symbol,upProbability:Number(x.upProbability.toFixed(3)),score:Number(x.score.toFixed(3))}));const prompt=["You are a constrained crypto strategy classifier inside a simulated trading system.","Do not invent prices. Do not give financial advice. Return JSON only.","Allowed bias: buy, sell, hold. Select one asset from the supplied list.","Regime: "+regime.name+". Portfolio risk: "+JSON.stringify(risk),"Market sentiment: "+JSON.stringify({bias:sentiment?.bias||"neutral",score:sentiment?.score||0,confidence:sentiment?.confidence||0}),"Candidates: "+JSON.stringify(top),"Bot: "+type,'Return {"bias":"buy|sell|hold","asset":"SYMBOL","confidence":0..1,"reason":"max 180 chars"}'].join("\n");const now=Date.now();const key=p+"|"+config[p+"Model"]+"|"+type+"|"+regime.name+"|"+top.map(x=>x.asset+Math.round(x.score*100)).join(",");const cached=aiCache.get(key);if(cached&&now-cached.time<config.cacheMs)return cached.value;let raw;if(p==="openai")raw=await callOpenAI(prompt);else if(p==="gemini")raw=await callGemini(prompt);else raw=await callAnthropic(prompt);const parsed=parseJson(raw);const value={bias:["buy","sell","hold"].includes(parsed.bias)?parsed.bias:"hold",asset:top.some(x=>x.asset===parsed.asset)?parsed.asset:top[0]?.asset||null,confidence:clamp(finite(parsed.confidence,.5),0,1),reason:String(parsed.reason||"Analyse IA indisponible").slice(0,180)};aiCache.set(key,{time:now,value});return value}
 export async function evaluateBot({type,market,histories,portfolio,subscription,news}={}){
  const safeType=String(type||"").toLowerCase();
- const features=Object.fromEntries((market||[]).map(row=>[row.symbol,buildAssetFeatures(row,histories?.[row.symbol])]));
- const regime=detectRegime(market||[],features);
+ const validMarket=(Array.isArray(market)?market:[]).filter(row=>row&&typeof row.symbol==="string"&&Number.isFinite(Number(row.price))&&Number(row.price)>0);
+ const features=Object.fromEntries(validMarket.map(row=>[row.symbol,buildAssetFeatures(row,histories?.[row.symbol])]));
+ const regime=detectRegime(validMarket,features);
  const sentiment=scoreNews(news||[]);
  const forecasts=Object.fromEntries(Object.entries(features).map(([symbol,f])=>[symbol,blendForecastWithSentiment(forecast(f),sentiment.perAsset[symbol]||sentiment)]));
  const risk=portfolioRisk(portfolio||{},features);
@@ -58,7 +59,7 @@ export async function evaluateBot({type,market,histories,portfolio,subscription,
  const selected=pickAsset(safeType,forecasts,features,regime,positions);
  let base=selected?baseDecision(safeType,selected.symbol,features,forecasts[selected.symbol],regime,risk,positions):{action:"hold",asset:null,fraction:0};
  let ai=null;
- try{ai=await aiOverlay(safeType,regime,ranked,risk)}catch(error){console.warn("[BOT-AI] provider unavailable:",error.message)}
+ if(ranked.length)try{ai=await aiOverlay(safeType,regime,ranked,risk)}catch(error){console.warn("[BOT-AI] provider unavailable:",error.message)}
  if(ai&&ai.confidence>=.62){
   if(ai.bias!==base.action&&base.action!=="hold"){
    base={action:"hold",asset:base.asset,fraction:0};
@@ -74,6 +75,7 @@ export async function evaluateBot({type,market,histories,portfolio,subscription,
    }
   }
  }
+ if(base.action!=="hold"&&(!base.asset||!features[base.asset]||features[base.asset].historyPoints<4||!Number.isFinite(features[base.asset].price)||features[base.asset].price<=0))base={action:"hold",asset:base.asset||null,fraction:0};
  if(base.action==="buy"&&(risk.cashPct<finite(subscription?.min_cash_pct,20)||risk.score>=82))base={action:"hold",asset:base.asset,fraction:0};
  const selectedFeatures=base.asset?features[base.asset]:null;
  const selectedForecast=base.asset?forecasts[base.asset]:null;
