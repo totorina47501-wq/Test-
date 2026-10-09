@@ -121,10 +121,10 @@ export function simulateBacktest({
   const finalEquity=curve.at(-1)?.equity||cash;
   const totalReturn=initialCash?finalEquity/initialCash-1:0;
   const ann=annualizationFactor(timeline);
-  const avg=mean(returns),vol=std(returns),downside=std(returns.filter(r=>r<0));
+  const avg=mean(returns),vol=std(returns),downside=returns.length?Math.sqrt(mean(returns.map(r=>Math.min(0,r)**2))):0;
   const sharpe=vol?avg/vol*ann:0;
   const sortino=downside?avg/downside*ann:0;
-  const firstBtc=series.BTC.find(p=>p.timestamp===curve[0]?.timestamp)?.price,lastBtc=series.BTC.at(-1)?.price;
+  const firstBtc=series.BTC.find(p=>p.timestamp===curve[0]?.timestamp)?.price,lastBtc=series.BTC.find(p=>p.timestamp===curve.at(-1)?.timestamp)?.price;
   const benchmarkReturn=firstBtc&&lastBtc?lastBtc/firstBtc-1:0;
   return{
     botType,
@@ -144,6 +144,8 @@ export function simulateBacktest({
     fees:Number(fees.toFixed(2)),
     turnover:Number(turnover.toFixed(2)),
     periodPoints:curve.length,
+    periodStart:curve[0]?.timestamp||null,
+    periodEnd:curve.at(-1)?.timestamp||null,
     curve:curve.slice(-200)
   };
 }
