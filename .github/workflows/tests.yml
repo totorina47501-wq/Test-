@@ -73,7 +73,7 @@ jobs:
             bitgold-ci:${{ github.sha }}
           ok=0
           for i in $(seq 1 40); do
-            if docker run --rm --network bitgold-ci-net curlimages/curl:8.12.1 -fsS http://bitgold-ci-app:3000/api/health; then
+            if docker exec bitgold-ci-app node -e 'fetch("http://127.0.0.1:3000/api/health").then(r=>{if(!r.ok)process.exit(1);return r.text()}).then(console.log).catch(()=>process.exit(1))'; then
               ok=1
               break
             fi
