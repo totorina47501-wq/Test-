@@ -1251,17 +1251,43 @@ function renderComparatorChart(rows){
   host.hidden=false;
   host.innerHTML='<div class="comparator-chart-heading"><strong>Évolution simulée de 1 000 €</strong><span>Capital normalisé · même période · frais inclus</span></div><div class="comparator-chart-scroll"><svg role="img" aria-label="Courbes de performance simulée des stratégies et du Bitcoin" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet">'+grid+lines+'<text x="52" y="292" fill="#9db5a6" font-size="12">'+new Date(minTime).toLocaleDateString("fr-FR")+'</text><text x="876" y="292" text-anchor="end" fill="#9db5a6" font-size="12">'+new Date(maxTime).toLocaleDateString("fr-FR")+'</text></svg></div><div class="comparator-chart-legends">'+legend+'</div><p class="comparator-chart-note">Simulation historique indicative, sans garantie de rendement futur. Les courbes sont ramenées à un capital initial commun de 1 000 €.</p>';
 }
+function renderComparatorRisk(rows){
+  const host=document.getElementById("botComparatorRisk");
+  if(!host)return;
+  const eligible=rows.filter(row=>Array.isArray(row.drawdownCurve)&&row.drawdownCurve.length>1);
+  if(!eligible.length){host.hidden=true;host.innerHTML="";return;}
+  const lines=eligible.map((row,index)=>({
+    name:comparatorBotNames[row.botType]||row.botType,
+    color:["#B3FFCA","#7eb8ff","#f5c66d","#e3a3ff","#ff9f9f","#a9e0da"][index%6],
+    values:row.drawdownCurve.filter(p=>Number.isFinite(p.timestamp)&&Number.isFinite(p.drawdownPct))
+  })).filter(line=>line.values.length>1);
+  if(!lines.length){host.hidden=true;host.innerHTML="";return;}
+  const timestamps=lines.flatMap(line=>line.values.map(p=>p.timestamp));
+  const minTime=Math.min(...timestamps),maxTime=Math.max(...timestamps);
+  if(maxTime<=minTime){host.hidden=true;host.innerHTML="";return;}
+  const maximum=Math.max(1,...lines.flatMap(line=>line.values.map(p=>p.drawdownPct)));
+  const ceiling=Math.ceil(maximum*1.1);
+  const x=t=>52+(t-minTime)/(maxTime-minTime)*824;
+  const y=v=>18+v/ceiling*242;
+  const grid=Array.from({length:5},(_,i)=>{const pct=ceiling*i/4,py=y(pct);return '<line x1="52" x2="876" y1="'+py+'" y2="'+py+'" stroke="#294238"/><text x="45" y="'+(py+4)+'" text-anchor="end" fill="#9db5a6" font-size="12">−'+pct.toFixed(1)+' %</text>';}).join("");
+  const paths=lines.map(line=>'<polyline fill="none" stroke="'+line.color+'" stroke-width="2.5" stroke-linejoin="round" points="'+line.values.map(p=>x(p.timestamp).toFixed(1)+","+y(p.drawdownPct).toFixed(1)).join(" ")+'"><title>'+escapeHtml(line.name)+'</title></polyline>').join("");
+  const legend=lines.map(line=>'<span class="comparator-chart-legend"><i style="background:'+line.color+'"></i>'+escapeHtml(line.name)+'</span>').join("");
+  host.hidden=false;
+  host.innerHTML='<div class="comparator-chart-heading"><strong>Baisses depuis les sommets (drawdown)</strong><span>0 % = sommet historique de la période · plus bas = perte temporaire plus importante</span></div><div class="comparator-chart-scroll"><svg role="img" aria-label="Historique des baisses simulées depuis les sommets pour chaque bot" viewBox="0 0 900 300">'+grid+paths+'<text x="52" y="292" fill="#9db5a6" font-size="12">'+new Date(minTime).toLocaleDateString("fr-FR")+'</text><text x="876" y="292" text-anchor="end" fill="#9db5a6" font-size="12">'+new Date(maxTime).toLocaleDateString("fr-FR")+'</text></svg></div><div class="comparator-chart-legends">'+legend+'</div><p class="comparator-chart-note">Risque historique simulé. Une baisse passée ne prédit pas les pertes futures.</p>';
+}
 function renderBotComparator(rows){
   const body=document.querySelector("#botComparatorPanel [data-comparator-body]");
   const summary=document.getElementById("botComparatorSummary");
   if(!body)return;
   if(!rows.length){
     renderComparatorChart([]);
+    renderComparatorRisk([]);
     if(summary)summary.hidden=true;
     body.innerHTML='<div class="comparator-empty">Aucun résultat.</div>';
     return;
   }
   renderComparatorChart(rows);
+  renderComparatorRisk(rows);
   const sort=document.getElementById("botComparatorSort")?.value||"return";
   const ranked=rows.slice().sort((a,b)=>comparatorScore(b,sort)-comparatorScore(a,sort));
   const best=ranked[0];
