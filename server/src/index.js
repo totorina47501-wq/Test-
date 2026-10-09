@@ -18,6 +18,7 @@ import { createAgentPayments } from "./agent-payment-policy.js";
 import { buildPaymentRequirements, hashPaymentRequirements, acceptedMatchesRequirements, requirementsMatch } from "./x402-quote.js";
 import { createOpenFacilitator } from "./openfacilitator.js";
 import { evaluateBot, getBotAIConfig } from "./bot-ai-engine.js";
+import { presentDecision, decisionFilters } from "./bot-decision-history.js";
 import { simulateBacktest, compareBacktests, analyzeBacktestRobustness } from "./bot-ai-backtest.js";
 
 const { Pool } = pg;
@@ -1209,14 +1210,15 @@ app.get("/api/bots/executions/history",auth,async(req,res)=>{
 });
 app.get("/api/bots/decisions/history",auth,async(req,res)=>{
  try{
-  const limit=Math.min(100,Math.max(1,Number.parseInt(String(req.query.limit||"30"),10)||30));
-  const botType=String(req.query.botType||"").trim().toLowerCase();
+  let filters;
+  try{filters=decisionFilters(req.query)}catch(e){return res.status(400).json({error:e.message})}
+  const {botType,asset,days,limit}=filters;
   if(botType&&!botDefinition(botType))return res.status(400).json({error:"Bot inconnu."});
   const rows=await pool.query(
-   "SELECT id,bot_type,action,asset,confidence,regime,reason,decision_reason,proposed_fraction,simulation_mode,features,created_at FROM bot_ai_decisions WHERE user_id=$1 AND ($2::text='' OR bot_type=$2) ORDER BY id DESC LIMIT $3",
-   [req.user.sub,botType,limit]
+   "SELECT id,bot_type,action,asset,confidence,regime,reason,decision_reason,proposed_fraction,simulation_mode,features,created_at FROM bot_ai_decisions WHERE user_id=$1 AND ($2::text='' OR bot_type=$2) AND ($3::text='' OR asset=$3) AND ($4::int IS NULL OR created_at >= NOW() - ($4::int * INTERVAL '1 day')) ORDER BY created_at DESC,id DESC LIMIT $5",
+   [req.user.sub,botType,asset,days,limit]
   );
-  res.json({mode:"simulation",decisions:rows.rows});
+  res.json({mode:"simulation",decisions:rows.rows.map(presentDecision),filters});
  }catch(e){console.error("[BOT] decision history error",e.message);res.status(500).json({error:"Historique des décisions indisponible."})}
 });
 app.get("/api/bots/:botType/decision",auth,async(req,res)=>{try{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});const sub=(await pool.query("SELECT min_cash_pct FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||{min_cash_pct:20};res.json(await botSignal(botType,req.user.sub,sub))}catch(e){console.error("[BOT-AI] decision error",e.message);res.status(500).json({error:"Impossible de calculer la décision IA."})}});
