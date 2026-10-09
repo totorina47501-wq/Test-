@@ -100,6 +100,10 @@ CREATE TABLE IF NOT EXISTS trade_idempotency(user_id INTEGER NOT NULL REFERENCES
 CREATE TABLE IF NOT EXISTS bot_subscriptions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,portfolio_name TEXT NOT NULL DEFAULT 'Portefeuille principal',active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,last_run TIMESTAMPTZ,UNIQUE(user_id,bot_type));
 CREATE TABLE IF NOT EXISTS bot_activity(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,action TEXT NOT NULL DEFAULT 'hold',asset TEXT,message TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS bot_ai_decisions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,engine TEXT NOT NULL,provider TEXT NOT NULL,model TEXT,action TEXT NOT NULL,asset TEXT,confidence DOUBLE PRECISION NOT NULL DEFAULT 0,regime TEXT,reason TEXT,features JSONB,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+ALTER TABLE bot_ai_decisions ADD COLUMN IF NOT EXISTS decision_reason TEXT;
+ALTER TABLE bot_ai_decisions ADD COLUMN IF NOT EXISTS proposed_fraction DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE bot_ai_decisions ADD COLUMN IF NOT EXISTS simulation_mode TEXT NOT NULL DEFAULT 'simulation';
+CREATE INDEX IF NOT EXISTS idx_bot_ai_decisions_user_recent ON bot_ai_decisions(user_id,id DESC);
 ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS max_trade_eur DOUBLE PRECISION NOT NULL DEFAULT 250;
 ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS max_position_eur DOUBLE PRECISION NOT NULL DEFAULT 1000;
 ALTER TABLE bot_subscriptions ADD COLUMN IF NOT EXISTS stop_loss_pct DOUBLE PRECISION NOT NULL DEFAULT 8;
@@ -1019,8 +1023,8 @@ async function botSignal(type,userId,subscription={}){
  const news=await getBotNewsForAI();
  const decision=await evaluateBot({type,market:marketSnapshot,histories,portfolio:{cash,total,positions:weighted},subscription,news});
  await pool.query(
-   "INSERT INTO bot_ai_decisions(user_id,bot_type,engine,provider,model,action,asset,confidence,regime,reason,features) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
-   [userId,type,decision.engine,decision.provider,decision.model,decision.action,decision.asset,decision.confidence,decision.regime?.name||"unknown",decision.message,JSON.stringify({selected:decision.selected,portfolioRisk:decision.portfolioRisk,sentiment:decision.sentiment})]
+   "INSERT INTO bot_ai_decisions(user_id,bot_type,engine,provider,model,action,asset,confidence,regime,reason,features,decision_reason,proposed_fraction,simulation_mode) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'simulation')",
+   [userId,type,decision.engine,decision.provider,decision.model,decision.action,decision.asset,decision.confidence,decision.regime?.name||"unknown",decision.message,JSON.stringify({selected:decision.selected,portfolioRisk:decision.portfolioRisk,sentiment:decision.sentiment}),decision.decisionReason,decision.fraction]
  );
  return decision;
 }
@@ -1186,6 +1190,18 @@ app.get("/api/bots/comparator",auth,async(req,res)=>{
     const byBot=new Map(robustness.map(item=>[item.botType,item.robustness]));
     res.json({ok:true,mode:"simulation",source:"CoinGecko",days,bots:results.map(({curve,...result})=>({...result,robustness:byBot.get(result.botType)||null}))});
   }catch(e){console.error("[BOT-AI] comparator error",e.message);res.status(502).json({error:"Comparateur IA temporairement indisponible."})}
+});
+app.get("/api/bots/decisions/history",auth,async(req,res)=>{
+ try{
+  const limit=Math.min(100,Math.max(1,Number.parseInt(String(req.query.limit||"30"),10)||30));
+  const botType=String(req.query.botType||"").trim().toLowerCase();
+  if(botType&&!botDefinition(botType))return res.status(400).json({error:"Bot inconnu."});
+  const rows=await pool.query(
+   "SELECT id,bot_type,action,asset,confidence,regime,reason,decision_reason,proposed_fraction,simulation_mode,features,created_at FROM bot_ai_decisions WHERE user_id=$1 AND ($2::text='' OR bot_type=$2) ORDER BY id DESC LIMIT $3",
+   [req.user.sub,botType,limit]
+  );
+  res.json({mode:"simulation",decisions:rows.rows});
+ }catch(e){console.error("[BOT] decision history error",e.message);res.status(500).json({error:"Historique des décisions indisponible."})}
 });
 app.get("/api/bots/:botType/decision",auth,async(req,res)=>{try{const botType=String(req.params.botType||"").toLowerCase();if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});const sub=(await pool.query("SELECT min_cash_pct FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||{min_cash_pct:20};res.json(await botSignal(botType,req.user.sub,sub))}catch(e){console.error("[BOT-AI] decision error",e.message);res.status(500).json({error:"Impossible de calculer la décision IA."})}});
 app.get("/api/bots/:botType",auth,async(req,res)=>{const botType=String(req.params.botType||"").toLowerCase(),def=botDefinition(botType);if(!def)return res.status(404).json({error:"Bot inconnu."});const row=(await pool.query("SELECT bot_type,portfolio_name,active,max_trade_eur,max_position_eur,stop_loss_pct,min_cash_pct,created_at,last_run FROM bot_subscriptions WHERE user_id=$1 AND bot_type=$2",[req.user.sub,botType])).rows[0]||null;res.json({bot:def,subscription:row})});
