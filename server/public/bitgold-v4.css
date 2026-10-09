@@ -1,0 +1,42 @@
+/* BitGold V4 — soft glass, financial semantics, responsive bento */
+:root{--v4-mint:#b3ffca;--v4-loss:#f87171;--v4-critical:#ef4444;--v4-warning:#fbbf24;--v4-ink:#f3f7f4;--v4-muted:#a6b7ae;--v4-glass:rgba(20,37,29,.86);--v4-border:rgba(179,255,202,.16);--v4-radius:24px;--v4-ease:cubic-bezier(.22,1,.36,1)}
+.v4-feature-showcase{margin:50px auto 22px;max-width:1390px;min-width:0}
+.v4-showcase-head{display:flex;justify-content:space-between;align-items:end;gap:26px;margin-bottom:23px}
+.v4-showcase-head h2{font-size:clamp(1.65rem,3.4vw,3rem);letter-spacing:-.045em;line-height:1.12;margin:9px 0}
+.v4-showcase-head p{max-width:690px;color:var(--v4-muted);margin:0}
+.v4-showcase-controls{display:flex;gap:10px;flex-shrink:0}
+.v4-showcase-controls button,.v4-feature-dots button{cursor:pointer;border:1px solid var(--v4-border);background:rgba(27,44,35,.85);color:var(--v4-ink);transition:transform .2s var(--v4-ease),background .2s var(--v4-ease)}
+.v4-showcase-controls button{width:46px;height:46px;border-radius:14px;font-size:21px}
+.v4-showcase-controls button:hover{background:rgba(179,255,202,.14);transform:translateY(-2px)}
+.v4-showcase-controls button:focus-visible,.v4-feature-dots button:focus-visible{outline:3px solid var(--v4-mint);outline-offset:3px}
+.v4-feature-stage{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.85fr);align-items:stretch;gap:0;min-width:0;border:1px solid var(--v4-border);border-radius:var(--v4-radius);overflow:hidden;background:var(--v4-glass);box-shadow:0 22px 65px rgba(0,0,0,.19);backdrop-filter:blur(15px)}
+.v4-feature-capture{position:relative;min-width:0;min-height:350px;overflow:hidden;background:#0a130e;border-right:1px solid var(--v4-border)}
+.v4-capture-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 17px;font-size:10px;letter-spacing:.09em;font-weight:750;background:#0f1b14;color:var(--v4-mint);border-bottom:1px solid var(--v4-border)}
+.v4-capture-header span:last-child{color:#a5c5ad;font-size:9px}
+.v4-feature-capture iframe{width:1440px;height:900px;position:absolute;top:38px;left:0;transform:scale(.59);transform-origin:top left;border:0;pointer-events:none;background:#0a130e}
+.v4-capture-overlay{position:absolute;inset:auto 0 0;height:65px;background:linear-gradient(transparent,#101c16);pointer-events:none}
+.v4-feature-copy{padding:clamp(22px,3.4vw,44px);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:17px;min-width:0}
+.v4-feature-count{font-size:12px;color:var(--v4-mint);font-variant-numeric:tabular-nums;letter-spacing:.12em;font-weight:750}
+.v4-feature-category{font-size:11px;letter-spacing:.14em;color:var(--v4-muted);font-weight:700}
+.v4-feature-copy h3{font-size:clamp(1.4rem,2.3vw,2.3rem);letter-spacing:-.035em;line-height:1.16;margin:0}
+.v4-feature-copy>p:not(.v4-feature-disclosure){font-size:1rem;line-height:1.65;color:#c5d3c9;margin:0}
+.v4-feature-benefits{display:flex;flex-wrap:wrap;gap:8px}
+.v4-feature-benefits span{border:1px solid rgba(179,255,202,.23);background:rgba(179,255,202,.055);border-radius:999px;color:#d2f5de;padding:8px 11px;font-size:.8rem}
+.v4-feature-copy .btn{max-width:100%;white-space:normal;text-align:center}
+.v4-feature-disclosure{color:var(--v4-muted);font-size:.72rem;line-height:1.55;margin:3px 0 0}
+.v4-feature-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;margin:19px 0 0}
+.v4-feature-dots button{width:25px;height:7px;border-radius:99px;padding:0;min-width:25px}
+.v4-feature-dots button[aria-current=true]{width:44px;background:var(--v4-mint)}
+/* Fintech states — red risk must not be overridden by mint */
+[data-negative=true],.v4-negative,.v4-risk-high,.v4-risk-critical{color:var(--v4-loss)!important}
+.v4-risk-high,.v4-risk-critical{border-color:rgba(248,113,113,.42)!important}
+.v4-warning{color:var(--v4-warning)!important}
+.v4-positive{color:var(--v4-mint)!important}
+/* Organic motion only on useful surfaces */
+.bg3-dashboard .pro-panel,.bg3-bots .bot-card,.bg3-markets .market-card{transition:transform .26s var(--v4-ease),border-color .26s var(--v4-ease)}
+@media(hover:hover){.bg3-dashboard .pro-panel:hover,.bg3-bots .bot-card:hover,.bg3-markets .market-card:hover{transform:translateY(-3px);border-color:rgba(179,255,202,.28)}}
+@media(max-width:1050px){.v4-feature-stage{grid-template-columns:minmax(0,1.25fr) minmax(250px,1fr)}.v4-feature-capture iframe{transform:scale(.5)}.v4-feature-capture{min-height:340px}}
+@media(max-width:760px){.v4-feature-showcase{margin:32px auto}.v4-showcase-head{align-items:start}.v4-showcase-head h2{font-size:clamp(1.7rem,7vw,2.5rem)}.v4-feature-stage{grid-template-columns:minmax(0,1fr)}.v4-feature-capture{min-height:240px;border-right:0;border-bottom:1px solid var(--v4-border)}.v4-feature-capture iframe{width:1100px;height:800px;transform:scale(.48)}.v4-feature-copy{padding:25px;gap:13px}.v4-feature-copy h3{font-size:1.55rem}.v4-feature-disclosure{font-size:.73rem}.v4-showcase-controls button{width:42px;height:42px}}
+@media(max-width:440px){.v4-showcase-head{gap:10px}.v4-showcase-controls{gap:6px}.v4-showcase-controls button{width:38px;height:38px}.v4-feature-capture{min-height:185px}.v4-feature-capture iframe{transform:scale(.36)}.v4-capture-header{font-size:9px;padding:8px 10px}.v4-capture-header span:last-child{font-size:7px}.v4-feature-copy{padding:21px}}
+@media(prefers-reduced-transparency:reduce){.v4-feature-stage{backdrop-filter:none;background:#13241b}}
+@media(prefers-reduced-motion:reduce){.v4-feature-showcase *, .bg3-dashboard .pro-panel,.bg3-bots .bot-card,.bg3-markets .market-card{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
