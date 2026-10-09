@@ -1204,6 +1204,7 @@ window.addEventListener("DOMContentLoaded",()=>{if(apiToken){const b=document.cr
 
 /* BitGold AI comparator — simulation only. */
 let comparatorCachedRows=[];
+let comparatorRequestVersion=0;
 const comparatorBotNames={shield:"Shield","adaptive-ai":"Adaptive AI","quant-pulse":"Quant Pulse",silver:"Silver",gold:"Gold","macro-rotation":"Macro Rotation"};
 function comparatorNumber(value,fallback=0){return Number.isFinite(Number(value))?Number(value):fallback}
 function comparatorPct(value){return value!==null&&value!==undefined&&Number.isFinite(Number(value))?((Number(value)>0?"+":"")+Number(value).toFixed(2)+" %"):"—"}
@@ -1244,6 +1245,7 @@ function renderBotComparator(rows){
   }).join("");
 }
 async function loadBotComparator(){
+  const requestVersion=++comparatorRequestVersion;
   const panel=document.getElementById("botComparatorPanel");
   if(!panel)return;
   const days=Number(document.getElementById("botComparatorDays")?.value||90);
@@ -1262,11 +1264,13 @@ async function loadBotComparator(){
   if(status)status.textContent="Calcul en cours…";
   try{
     const data=await apiFetch("/api/bots/comparator?days="+encodeURIComponent(days)+"&bots="+encodeURIComponent(selected.join(",")));
+    if(requestVersion!==comparatorRequestVersion)return;
     const rows=Array.isArray(data?.bots)?data.bots:[];
     comparatorCachedRows=rows;
     renderBotComparator(rows);
     if(status)status.textContent=rows.length+" stratégies · historique identique · simulation uniquement.";
   }catch(error){
+    if(requestVersion!==comparatorRequestVersion)return;
     comparatorCachedRows=[];
     const summary=document.getElementById("botComparatorSummary");
     if(summary)summary.hidden=true;
@@ -1283,7 +1287,23 @@ function initBotComparator(){
   const panel=document.getElementById("botComparatorPanel");
   if(!panel)return;
   panel.querySelector("[data-comparator-run]")?.addEventListener("click",loadBotComparator);
-  panel.querySelectorAll("#botComparatorBots input").forEach(input=>input.addEventListener("change",updateBotComparatorSelection));
+  panel.querySelectorAll("#botComparatorBots input").forEach(input=>input.addEventListener("change",()=>{
+    comparatorRequestVersion++;
+    comparatorCachedRows=[];
+    const summary=document.getElementById("botComparatorSummary");
+    if(summary)summary.hidden=true;
+    const body=panel.querySelector("[data-comparator-body]");
+    if(body)body.innerHTML='<div class="comparator-empty">Sélection modifiée : relancez la comparaison.</div>';
+    updateBotComparatorSelection();
+  }));
+  document.getElementById("botComparatorDays")?.addEventListener("change",()=>{
+    comparatorRequestVersion++;
+    comparatorCachedRows=[];
+    const summary=document.getElementById("botComparatorSummary");
+    if(summary)summary.hidden=true;
+    const body=panel.querySelector("[data-comparator-body]");
+    if(body)body.innerHTML='<div class="comparator-empty">Période modifiée : relancez la comparaison.</div>';
+  });
   document.getElementById("botComparatorSort")?.addEventListener("change",()=>{
     const cards=panel.querySelectorAll(".comparator-card");
     if(cards.length)renderBotComparator(comparatorCachedRows);
