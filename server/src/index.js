@@ -100,6 +100,8 @@ CREATE TABLE IF NOT EXISTS trade_idempotency(user_id INTEGER NOT NULL REFERENCES
 CREATE TABLE IF NOT EXISTS bot_subscriptions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,portfolio_name TEXT NOT NULL DEFAULT 'Portefeuille principal',active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,last_run TIMESTAMPTZ,UNIQUE(user_id,bot_type));
 CREATE TABLE IF NOT EXISTS bot_activity(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,action TEXT NOT NULL DEFAULT 'hold',asset TEXT,message TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS bot_ai_decisions(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,engine TEXT NOT NULL,provider TEXT NOT NULL,model TEXT,action TEXT NOT NULL,asset TEXT,confidence DOUBLE PRECISION NOT NULL DEFAULT 0,regime TEXT,reason TEXT,features JSONB,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS bot_execution_audit(id BIGSERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,bot_type TEXT NOT NULL,decision_id INTEGER REFERENCES bot_ai_decisions(id) ON DELETE SET NULL,trade_id INTEGER REFERENCES trades(id) ON DELETE SET NULL,action TEXT NOT NULL,asset TEXT,status TEXT NOT NULL CHECK(status IN ('executed','blocked','held')),reason TEXT NOT NULL,amount_eur DOUBLE PRECISION,quantity DOUBLE PRECISION,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX IF NOT EXISTS idx_bot_execution_audit_user_recent ON bot_execution_audit(user_id,id DESC);
 ALTER TABLE bot_ai_decisions ADD COLUMN IF NOT EXISTS decision_reason TEXT;
 ALTER TABLE bot_ai_decisions ADD COLUMN IF NOT EXISTS proposed_fraction DOUBLE PRECISION NOT NULL DEFAULT 0;
 ALTER TABLE bot_ai_decisions ADD COLUMN IF NOT EXISTS simulation_mode TEXT NOT NULL DEFAULT 'simulation';
@@ -1046,7 +1048,12 @@ async function executeBotDecision(subscription,signal){
   const action=signal?.action;
   const cash=Number(w.rows[0]?.cash);
   if(!def||!w.rows.length||!["buy","sell","hold"].includes(action)||!Number.isFinite(cash)||cash<0)throw Error("Bot: invalid signal or wallet state.");
+  const audit=async(status,reason,amount=null,quantity=null,tradeId=null)=>{
+    const decision=(await client.query("SELECT id FROM bot_ai_decisions WHERE user_id=$1 AND bot_type=$2 ORDER BY id DESC LIMIT 1",[subscription.user_id,subscription.bot_type])).rows[0];
+    await client.query("INSERT INTO bot_execution_audit(user_id,bot_type,decision_id,trade_id,action,asset,status,reason,amount_eur,quantity) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",[subscription.user_id,subscription.bot_type,decision?.id||null,tradeId,action,asset||null,status,reason,amount,quantity]);
+  };
   if(action==="hold"){
+    await audit("held",signal.message||"Aucun ordre simulé.");
     await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",asset||null,signal.message||"Aucun ordre simulé."]);
     await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);
     await client.query("COMMIT");return;
@@ -1055,6 +1062,7 @@ async function executeBotDecision(subscription,signal){
   const price=Number(quote?.price);
   const fraction=Number(signal.fraction);
   if(!marketUpdatedAt||Date.now()-marketUpdatedAt>120000||!quote||!Number.isFinite(price)||price<=0){
+    await audit("blocked","Cotation absente ou périmée.");
     await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",asset||null,"Ordre simulé ignoré : cotation absente ou périmée."]);
     await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);
     await client.query("COMMIT");return;
@@ -1068,11 +1076,12 @@ async function executeBotDecision(subscription,signal){
   if(signal.action==="buy"){const maxTrade=Number(subscription.max_trade_eur||250);const maxPosition=Number(subscription.max_position_eur||1000);const currentPosition=qty*price;const remaining=Math.max(0,maxPosition-currentPosition);const reserve=Math.max(0,Math.min(90,Number(subscription.min_cash_pct||20)))/100;const spendable=Math.max(0,cash*(1-reserve));amount=Math.min(cash*signal.fraction,cash*def.allocation/100,maxTrade,remaining,spendable);quantity=price?amount/price:0}
   if(signal.action==="sell"){amount=Math.min(qty*price,(qty*price)*signal.fraction);quantity=price?amount/price:0}
   if(signal.action!=="hold"&&amount>0&&quantity>0){await complianceCheck(amount);await agentPayments.authorize({userId:subscription.user_id,botType:subscription.bot_type,asset:signal.asset,amountEur:amount});}
-  if(signal.action==="hold"||amount<=0||quantity<=0){await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",signal.asset,signal.message]);await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");return}
+  if(signal.action==="hold"||amount<=0||quantity<=0){await audit("blocked","Limite de risque, solde ou position insuffisante.");await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",signal.asset,signal.message]);await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");return}
   if(!Number.isFinite(amount)||!Number.isFinite(quantity)||amount<=0||quantity<=0||(signal.action==="buy"&&amount>Number(subscription.max_trade_eur||250)+1e-8)||(signal.action==="buy"&&amount>cash+1e-8)||(signal.action==="sell"&&quantity>qty+1e-10))throw Error("Bot: trade risk limit exceeded.");
   await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2",[signal.action==="buy"?-amount:amount,subscription.user_id]);
   await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3",[signal.action==="buy"?quantity:-quantity,subscription.user_id,signal.asset]);
-  await client.query("INSERT INTO trades(user_id,side,asset,amount_eur,price_eur,quantity) VALUES($1,$2,$3,$4,$5,$6)",[subscription.user_id,signal.action,signal.asset,amount,price,quantity]);
+  const tradeResult=await client.query("INSERT INTO trades(user_id,side,asset,amount_eur,price_eur,quantity) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",[subscription.user_id,signal.action,signal.asset,amount,price,quantity]);
+  await audit("executed",signal.message||"Ordre simulé exécuté.",amount,quantity,tradeResult.rows[0].id);
   await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,signal.action,signal.asset,signal.message+" Montant simulé : "+amount.toFixed(2)+" €."]);
   await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);await client.query("COMMIT");
  }catch(e){await client.query("ROLLBACK");console.error("[BOT] execution error",e.message)}finally{client.release()}
@@ -1190,6 +1199,13 @@ app.get("/api/bots/comparator",auth,async(req,res)=>{
     const byBot=new Map(robustness.map(item=>[item.botType,item.robustness]));
     res.json({ok:true,mode:"simulation",source:"CoinGecko",days,bots:results.map(({curve,...result})=>({...result,robustness:byBot.get(result.botType)||null}))});
   }catch(e){console.error("[BOT-AI] comparator error",e.message);res.status(502).json({error:"Comparateur IA temporairement indisponible."})}
+});
+app.get("/api/bots/executions/history",auth,async(req,res)=>{
+ try{
+  const limit=Math.min(100,Math.max(1,Number.parseInt(String(req.query.limit||"30"),10)||30));
+  const rows=await pool.query("SELECT id,bot_type,decision_id,trade_id,action,asset,status,reason,amount_eur,quantity,created_at FROM bot_execution_audit WHERE user_id=$1 ORDER BY id DESC LIMIT $2",[req.user.sub,limit]);
+  res.json({mode:"simulation",executions:rows.rows});
+ }catch(e){console.error("[BOT] execution history error",e.message);res.status(500).json({error:"Historique des exécutions indisponible."})}
 });
 app.get("/api/bots/decisions/history",auth,async(req,res)=>{
  try{
