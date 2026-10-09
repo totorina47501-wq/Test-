@@ -68,3 +68,20 @@ test("visitor can reach markets and bots without authentication", async ({ page 
   await page.locator('.bg3-feature-row a[href="#bots"]').click();
   await expect(page).toHaveURL(/#bots$/);
 });
+
+
+test("V4 showcase navigates without reloading the current preview unnecessarily", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const stage = page.locator("#v4FeatureStage");
+  const frame = page.locator("#v4FeatureFrame");
+  await expect(frame).toHaveAttribute("src", "/investir");
+  await expect(page.locator("#v4FeatureCount")).toHaveText("01 / 05");
+  await page.locator("#v4FeatureNext").click();
+  await expect(page.locator("#v4FeatureCount")).toHaveText("02 / 05");
+  await expect(frame).toHaveAttribute("src", "/#dashboard");
+  await stage.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.locator("#v4FeatureCount")).toHaveText("01 / 05");
+  await expect(page.locator("#v4FeatureDots button").first()).toHaveAttribute("aria-current", "true");
+  await expect(page.locator(".v4-feature-disclosure")).toContainText("non une capture");
+});
