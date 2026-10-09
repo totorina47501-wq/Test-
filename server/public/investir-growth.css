@@ -1,0 +1,17 @@
+/* Scoped conversion experience for /investir. */
+.growth-journey{max-width:1240px;margin:32px auto;padding:clamp(24px,5vw,64px);border:1px solid rgba(179,255,202,.2);border-radius:26px;background:linear-gradient(135deg,#132c22,#0d1714);color:#f1fff6}
+.growth-journey h1{font-size:clamp(2rem,4vw,3.4rem);line-height:1.12;max-width:820px;margin:14px 0}
+.growth-journey>p{max-width:700px;line-height:1.6;color:#d3e4d9}
+.growth-eyebrow{color:#b3ffca;font-weight:750;letter-spacing:.1em;font-size:.78rem}
+.growth-actions{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+.growth-risk{font-size:.82rem}
+.growth-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:28px;scroll-margin-top:100px}
+.growth-steps article{border:1px solid rgba(179,255,202,.18);background:rgba(255,255,255,.035);border-radius:18px;padding:20px}
+.growth-steps article>span{color:#b3ffca;font-weight:800}
+.growth-steps h2{font-size:1.2rem;margin:10px 0}
+.growth-steps p{line-height:1.5;color:#d3e4d9}
+.growth-sticky{position:fixed;z-index:120;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:space-between;gap:20px;width:min(92vw,650px);padding:10px 12px 10px 22px;border-radius:18px;background:#12271f;color:#f1fff6;border:1px solid #517761;box-shadow:0 12px 42px #0009}
+.growth-sticky[hidden]{display:none}
+.growth-journey :focus-visible,.growth-sticky :focus-visible{outline:3px solid #b3ffca;outline-offset:3px}
+@media(max-width:700px){.growth-steps{grid-template-columns:1fr}.growth-sticky{bottom:72px;width:calc(100% - 24px);padding:10px}.growth-sticky span{display:none}.growth-sticky button{width:100%}}
+@media(prefers-reduced-motion:reduce){.growth-journey *{scroll-behavior:auto!important}}
