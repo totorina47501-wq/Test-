@@ -720,6 +720,14 @@ function renderDashboard(data){
   if(ret)ret.textContent=(Number(p.returnPct)>=0?"+":"")+Number(p.returnPct||0).toFixed(2).replace(".",",")+" % depuis le début";
   if(perfEl)perfEl.textContent=(Number(perf.returnPct)>=0?"+":"")+Number(perf.returnPct||0).toFixed(2).replace(".",",")+" %";
   if(riskEl)riskEl.textContent=risk.label||"—";
+  const health=data?.health;
+  if(riskEl&&health){
+    let detail=document.getElementById("dashHealthDetails");
+    if(!detail){detail=document.createElement("div");detail.id="dashHealthDetails";detail.setAttribute("role","status");detail.style.cssText="font-size:.8rem;line-height:1.55;margin-top:10px;max-width:350px";riskEl.insertAdjacentElement("afterend",detail)}
+    const parts=[health.label+" · score pédagogique "+health.score+"/100","Diversification : "+health.diversification,"Exposition crypto : "+health.exposure+" %","Liquidités : "+health.cashPercent+" %",health.method,...(health.alerts||[]).map(a=>"⚠ "+a.message)];
+    detail.replaceChildren(...parts.map(part=>{const p=document.createElement("p");p.textContent=part;p.style.margin="4px 0";return p}));
+  }
+
   if(botsEl)botsEl.textContent=Number(data?.bots?.active||0)+" / "+Number(data?.bots?.total||0);
   const returnEur=document.getElementById("dashReturnEur");if(returnEur)returnEur.textContent=(Number(perf.returnEur)>=0?"+":"")+formatEuro(perf.returnEur);
   const initial=document.getElementById("dashInitial");if(initial)initial.textContent=formatEuro(p.initialCapital||10000);
