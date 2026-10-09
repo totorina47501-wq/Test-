@@ -720,6 +720,15 @@ function renderDashboard(data){
   if(ret)ret.textContent=(Number(p.returnPct)>=0?"+":"")+Number(p.returnPct||0).toFixed(2).replace(".",",")+" % depuis le début";
   if(perfEl)perfEl.textContent=(Number(perf.returnPct)>=0?"+":"")+Number(perf.returnPct||0).toFixed(2).replace(".",",")+" %";
   if(riskEl)riskEl.textContent=risk.label||"—";
+  const copilot=data?.copilot;
+  if(riskEl&&copilot?.notes){
+    let panel=document.getElementById("dashCopilotExplanations");
+    if(!panel){panel=document.createElement("section");panel.id="dashCopilotExplanations";panel.setAttribute("aria-label","Explications du copilote");panel.style.cssText="margin:12px 0;padding:12px;border:1px solid #2f6454;border-radius:12px;font-size:.83rem;line-height:1.5";riskEl.insertAdjacentElement("afterend",panel)}
+    const heading=document.createElement("strong");heading.textContent="Copilote · Explications";
+    const disclaimer=document.createElement("p");disclaimer.textContent=copilot.disclaimer||"Données simulées.";
+    panel.replaceChildren(heading,disclaimer);
+    for(const note of copilot.notes){const p=document.createElement("p");p.style.margin="8px 0";p.textContent=(note.title||"Analyse")+" : "+(note.message||"")+" · Source : "+(note.source||"indisponible");panel.append(p)}
+  }
   const health=data?.health;
   if(riskEl&&health){
     let detail=document.getElementById("dashHealthDetails");

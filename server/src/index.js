@@ -1,3 +1,4 @@
+import {dashboardCopilot} from "./dashboard-copilot.js";
 import {portfolioHealth} from "./portfolio-health.js";
 import "dotenv/config";
 import express from "express";
@@ -1361,6 +1362,7 @@ app.get("/api/dashboard",auth,async(req,res)=>{
       performance:{label:"Depuis le début",returnEur,returnPct,trades:tradeRows.rows.length,buys:tradeRows.rows.filter(row=>row.side==="buy").length,sells:tradeRows.rows.filter(row=>row.side==="sell").length},
       risk:{score:riskScore,label:riskLabel,concentration,cashPct,activeBots},
       health:portfolioHealth({cash,positions,activeBots}),
+      copilot:dashboardCopilot({portfolio:{returnEur},health:portfolioHealth({cash,positions,activeBots}),latestDecision:latestDecisionRows[0]||null}),
       bots:{active:activeBots,total:botRows.rows.length,items:botRows.rows},
       subscription:{plan:userPlan.plan,label:userPlan.plan==="elite"?"BitGold Elite":userPlan.plan==="pro"?"BitGold Pro":"BitGold Free",botLimit:userPlan.plan==="elite"?5:userPlan.plan==="pro"?3:1},
       transferFees:getTransferFeePolicy(userPlan.plan),
