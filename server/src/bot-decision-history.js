@@ -4,7 +4,7 @@ export function presentDecision(row){
  const raw=row.features;
  let features={};
  try{features=typeof raw==="string"?JSON.parse(raw):raw||{}}catch{features={}}
- const selected=features.selected&&typeof features.selected==="object"?features.selected:{};
+ const selected=features.selected?.features&&typeof features.selected.features==="object"?features.selected.features:{};
  const indicators={};
  for(const [key,label] of [["momentum7d","Momentum 7j"],["rsi","RSI"],["volatility","Volatilité"],["trend","Tendance"],["macdHistogram","MACD histogramme"],["maxDrawdown","Drawdown"]]){
   if(typeof selected[key]==="number"&&Number.isFinite(selected[key]))indicators[key]={label,value:selected[key]};
