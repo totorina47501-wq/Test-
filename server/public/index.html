@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="ux-cockpit-1-5.css?v=1">
 <link rel="stylesheet" href="ux-bots-guide-1-5.css?v=1">
 <link rel="stylesheet" href="bitgold-2.css?v=20261009-mint2"><link rel="stylesheet" href="bitgold-v3.css?v=20261009-mint2">
+<link rel="stylesheet" href="bitgold-v4.css?v=20261009-v4a">
 </head>
 <body>
 <header class="topbar">
@@ -67,6 +68,14 @@
       <div class="bg3-app-caption">Aperçu illustratif · données personnelles affichées après connexion</div>
     </div>
   </div>
+  <section class="v4-feature-showcase" id="fonctionnalites" aria-labelledby="v4-feature-title">
+    <div class="v4-showcase-head"><div><span class="eyebrow">BITGOLD · VOS OUTILS</span><h2 id="v4-feature-title">Une plateforme. Toutes vos décisions.</h2><p>Découvrez les vrais espaces BitGold, des marchés aux bots intelligents. Chaque aperçu ouvre l'outil correspondant.</p></div><div class="v4-showcase-controls"><button id="v4FeaturePrev" type="button" aria-label="Fonction précédente">←</button><button id="v4FeatureNext" type="button" aria-label="Fonction suivante">→</button></div></div>
+    <div class="v4-feature-stage" id="v4FeatureStage" tabindex="0" aria-roledescription="carrousel" aria-label="Présentation des outils BitGold">
+      <div class="v4-feature-capture" aria-label="Aperçu de l'outil"><div class="v4-capture-header"><span>₿ BitGold</span><span>APERÇU INTERFACE · MODE DÉMO</span></div><iframe id="v4FeatureFrame" src="/investir" title="Aperçu réel de l'outil Investir BitGold" loading="lazy" tabindex="-1"></iframe><div class="v4-capture-overlay" aria-hidden="true"></div></div>
+      <div class="v4-feature-copy"><span id="v4FeatureCount" class="v4-feature-count">01 / 05</span><div id="v4FeatureLive" class="v4-feature-category">OUTIL BITGOLD</div><h3 id="v4FeatureName">Investir et explorer les marchés</h3><p id="v4FeatureDescription">Suivez les cours, analysez les graphiques et découvrez les cryptomonnaies.</p><div id="v4FeatureBenefits" class="v4-feature-benefits"><span>Cours en euros</span><span>Graphiques détaillés</span></div><a id="v4FeatureAction" class="btn btn-primary" href="/investir">Explorer cet outil ↗</a><p class="v4-feature-disclosure">Aperçu interactif en lecture seule du véritable site BitGold. Les données et les fonctions accessibles dépendent du mode de connexion.</p></div>
+    </div>
+    <div id="v4FeatureDots" class="v4-feature-dots" aria-label="Sélectionner une fonctionnalité"></div>
+  </section>
   <div class="bg3-feature-row">
     <a href="/investir"><span class="bg3-feature-glyph">↗</span><span><strong>Marchés crypto</strong><small>Prix, graphiques et indicateurs</small></span><span aria-hidden="true">→</span></a>
     <a href="#bots"><span class="bg3-feature-glyph">✦</span><span><strong>Bots intelligents</strong><small>Silver, Shield et Gold</small></span><span aria-hidden="true">→</span></a>
@@ -516,5 +525,5 @@
   <div><label for="profileRisk">Profil de risque</label><select id="profileRisk"><option value="conservative">Prudent</option><option value="moderate">Modéré</option><option value="dynamic">Dynamique</option></select></div>
 </div>
 <div class="profile-actions"><button type="button" id="profileSave" class="btn btn-primary">Enregistrer les modifications</button><button type="button" id="profileLogout" class="btn btn-ghost">Se déconnecter</button></div><div id="profileResult" class="result"></div></div></div>
-<script src="app.js?v=20261009-mint1"></script>
+<script src="app.js?v=20261009-mint1"></script><script src="bitgold-v4.js?v=20261009-v4a" defer></script>
 <div id="languageToast" class="language-toast" role="status" aria-live="polite" hidden></div></body></html>
