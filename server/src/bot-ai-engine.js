@@ -61,16 +61,25 @@ export async function evaluateBot({type,market,histories,portfolio,subscription,
  const selected=pickAsset(safeType,forecasts,eligibleFeatures,regime,positions);
  let base=selected?baseDecision(safeType,selected.symbol,features,forecasts[selected.symbol],regime,risk,positions):{action:"hold",asset:null,fraction:0};
  let ai=null;
+ let decisionReason=selected?"strategy_signal":"no_eligible_market_data";
  if(ranked.length)try{ai=await aiOverlay(safeType,regime,ranked,risk,sentiment)}catch(error){console.warn("[BOT-AI] provider unavailable:",error.message)}
- if(ai&&ai.confidence>=.62){
-  if(ai.bias!==base.action&&base.action!=="hold"){
-   base={action:"hold",asset:base.asset,fraction:0};
-  }
+ if(base.action==="hold"&&selected)decisionReason="strategy_hold";
+ // External AI can veto a proposed simulated order, never originate one.
+ // A disagreement on the asset is also a veto, even if the direction matches.
+ if(ai&&ai.confidence>=.62&&base.action!=="hold"&&(ai.bias!==base.action||ai.asset!==base.asset)){
+  base={action:"hold",asset:base.asset,fraction:0};
+  decisionReason="ai_veto";
  }
- if(base.action!=="hold"&&(!base.asset||!features[base.asset]||features[base.asset].historyPoints<4||!Number.isFinite(features[base.asset].price)||features[base.asset].price<=0))base={action:"hold",asset:base.asset||null,fraction:0};
- if(base.action==="buy"&&(risk.cashPct<finite(subscription?.min_cash_pct,20)||risk.score>=82))base={action:"hold",asset:base.asset,fraction:0};
+ if(base.action!=="hold"&&(!base.asset||!eligibleFeatures[base.asset]||!Number.isFinite(eligibleFeatures[base.asset].price)||eligibleFeatures[base.asset].price<=0)){
+  base={action:"hold",asset:base.asset||null,fraction:0};
+  decisionReason="invalid_market_data";
+ }
+ if(base.action==="buy"&&(risk.cashPct<finite(subscription?.min_cash_pct,20)||risk.score>=82)){
+  base={action:"hold",asset:base.asset,fraction:0};
+  decisionReason="risk_limit";
+ }
  const selectedFeatures=base.asset?features[base.asset]:null;
  const selectedForecast=base.asset?forecasts[base.asset]:null;
  const message=base.action==="buy"?"IA favorable : "+regime.label+" · score "+Math.round((selectedForecast?.upProbability||.5)*100)+" % · momentum "+finite(selectedFeatures?.momentum7d).toFixed(1)+" %." :base.action==="sell"?"IA défensive : "+regime.label+" · risque "+risk.score+"/100 · drawdown "+finite(selectedFeatures?.maxDrawdown).toFixed(1)+" %." :"IA en attente : "+regime.label+" · risque "+risk.score+"/100 · signal insuffisant pour agir.";
- return{...base,confidence:Number((ai?.confidence??selectedForecast?.upProbability??.5).toFixed(3)),engine:"ensemble-v2",provider:configuredProvider(),model:getBotAIConfig().model,regime,ai,sentiment,features,forecasts,portfolioRisk:risk,selected:selectedForecast?{asset:base.asset,features:selectedFeatures,forecast:selectedForecast}:null,message,generatedAt:Date.now()};
+ return{...base,decisionReason,aiConfidence:ai?.confidence??null,confidence:Number((selectedForecast?.upProbability??.5).toFixed(3)),engine:"ensemble-v2",provider:configuredProvider(),model:getBotAIConfig().model,regime,ai,sentiment,features,forecasts,portfolioRisk:risk,selected:selectedForecast?{asset:base.asset,features:selectedFeatures,forecast:selectedForecast}:null,message,generatedAt:Date.now()};
 }
