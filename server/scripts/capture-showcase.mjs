@@ -15,9 +15,7 @@ try {
   const screens = [
     { filename: "investir.png", path: "/investir", selector: "body" },
     { filename: "cockpit.png", path: "/#dashboard", selector: "body" },
-    { filename: "bots.png", path: "/investir", selector: "body" },
-    { filename: "activite.png", path: "/activite", selector: "body" },
-    { filename: "transparence.png", path: "/investir", selector: "body" }
+    { filename: "activite.png", path: "/activite", selector: "body" }
   ];
   for (const screen of screens) {
     const response = await page.goto(baseURL + screen.path, { waitUntil: "domcontentloaded" });
@@ -25,8 +23,6 @@ try {
     await page.locator(screen.selector).first().waitFor({ state: "visible" });
     await page.waitForTimeout(350);
     await page.evaluate(() => { window.scrollTo(0, 0); document.querySelectorAll("iframe").forEach(node => node.remove()); });
-    if (screen.filename === "bots.png") await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight * 0.35));
-    if (screen.filename === "transparence.png") await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.screenshot({ path: new URL(screen.filename, dest).pathname, animations: "disabled", timeout: 15000 });
   }
 } finally {
