@@ -1216,15 +1216,52 @@ function comparatorScore(row,sort){
   if(sort==="robustness")return comparatorNumber(row.robustness?.confidence?.p50,-Infinity);
   return comparatorNumber(row.totalReturn,-Infinity);
 }
+function renderComparatorChart(rows){
+  const host=document.getElementById("botComparatorChart");
+  if(!host)return;
+  const eligible=rows.filter(row=>Array.isArray(row.curve)&&row.curve.length>1);
+  if(!eligible.length){host.hidden=true;host.innerHTML="";return;}
+  const byTime=new Map();
+  const series=eligible.map((row,index)=>({
+    name:comparatorBotNames[row.botType]||row.botType,
+    color:["#B3FFCA","#7eb8ff","#f5c66d","#e3a3ff","#ff9f9f","#a9e0da"][index%6],
+    values:row.curve.filter(p=>Number.isFinite(p.timestamp)&&Number.isFinite(p.equity)).map(p=>({time:p.timestamp,value:p.equity/row.initialCash*1000}))
+  }));
+  const btc=eligible[0];
+  if(Array.isArray(btc.benchmarkCurve)&&btc.benchmarkCurve.length>1)series.push({
+    name:"Bitcoin (référence)",color:"#ffffff",dashed:true,
+    values:btc.benchmarkCurve.filter(p=>Number.isFinite(p.timestamp)&&Number.isFinite(p.equity)).map(p=>({time:p.timestamp,value:p.equity/btc.initialCash*1000}))
+  });
+  for(const line of series)for(const p of line.values)byTime.set(p.time,true);
+  const times=[...byTime.keys()].sort((a,b)=>a-b);
+  if(times.length<2){host.hidden=true;return;}
+  const minTime=times[0],maxTime=times.at(-1);
+  const values=series.flatMap(line=>line.values.map(p=>p.value));
+  const low=Math.min(1000,...values),high=Math.max(1000,...values),padding=Math.max((high-low)*.08,1);
+  const bottom=low-padding,top=high+padding;
+  const x=t=>52+(t-minTime)/(maxTime-minTime)*824;
+  const y=v=>18+(top-v)/(top-bottom)*244;
+  const fmt=v=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:0}).format(v)+" €";
+  const grid=Array.from({length:5},(_,i)=>{const value=bottom+(top-bottom)*i/4;const py=y(value);return '<line x1="52" x2="876" y1="'+py+'" y2="'+py+'" stroke="#294238" stroke-width="1"/><text x="45" y="'+(py+4)+'" text-anchor="end" fill="#9db5a6" font-size="12">'+fmt(value)+'</text>';}).join("");
+  const lines=series.map(line=>{
+    const points=line.values.map(p=>x(p.time).toFixed(1)+","+y(p.value).toFixed(1)).join(" ");
+    return '<polyline fill="none" stroke="'+line.color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"'+(line.dashed?' stroke-dasharray="6 5"':'')+' points="'+points+'"><title>'+escapeHtml(line.name)+'</title></polyline>';
+  }).join("");
+  const legend=series.map(line=>'<span class="comparator-chart-legend"><i style="background:'+line.color+'"></i>'+escapeHtml(line.name)+'</span>').join("");
+  host.hidden=false;
+  host.innerHTML='<div class="comparator-chart-heading"><strong>Évolution simulée de 1 000 €</strong><span>Capital normalisé · même période · frais inclus</span></div><div class="comparator-chart-scroll"><svg role="img" aria-label="Courbes de performance simulée des stratégies et du Bitcoin" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet">'+grid+lines+'<text x="52" y="292" fill="#9db5a6" font-size="12">'+new Date(minTime).toLocaleDateString("fr-FR")+'</text><text x="876" y="292" text-anchor="end" fill="#9db5a6" font-size="12">'+new Date(maxTime).toLocaleDateString("fr-FR")+'</text></svg></div><div class="comparator-chart-legends">'+legend+'</div><p class="comparator-chart-note">Simulation historique indicative, sans garantie de rendement futur. Les courbes sont ramenées à un capital initial commun de 1 000 €.</p>';
+}
 function renderBotComparator(rows){
   const body=document.querySelector("#botComparatorPanel [data-comparator-body]");
   const summary=document.getElementById("botComparatorSummary");
   if(!body)return;
   if(!rows.length){
+    renderComparatorChart([]);
     if(summary)summary.hidden=true;
     body.innerHTML='<div class="comparator-empty">Aucun résultat.</div>';
     return;
   }
+  renderComparatorChart(rows);
   const sort=document.getElementById("botComparatorSort")?.value||"return";
   const ranked=rows.slice().sort((a,b)=>comparatorScore(b,sort)-comparatorScore(a,sort));
   const best=ranked[0];
@@ -1253,6 +1290,7 @@ async function loadBotComparator(){
   const body=panel.querySelector("[data-comparator-body]");
   const status=document.getElementById("botComparatorStatus");
   if(selected.length<2){
+    renderComparatorChart([]);
     comparatorCachedRows=[];
     const summary=document.getElementById("botComparatorSummary");
     if(summary)summary.hidden=true;
@@ -1272,6 +1310,7 @@ async function loadBotComparator(){
   }catch(error){
     if(requestVersion!==comparatorRequestVersion)return;
     comparatorCachedRows=[];
+    renderComparatorChart([]);
     const summary=document.getElementById("botComparatorSummary");
     if(summary)summary.hidden=true;
     if(body)body.innerHTML=`<div class="comparator-empty">${escapeHtml(error.message||"Comparateur indisponible.")}</div>`;
@@ -1290,6 +1329,7 @@ function initBotComparator(){
   panel.querySelectorAll("#botComparatorBots input").forEach(input=>input.addEventListener("change",()=>{
     comparatorRequestVersion++;
     comparatorCachedRows=[];
+    renderComparatorChart([]);
     const summary=document.getElementById("botComparatorSummary");
     if(summary)summary.hidden=true;
     const body=panel.querySelector("[data-comparator-body]");

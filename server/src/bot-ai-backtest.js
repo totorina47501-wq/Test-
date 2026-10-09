@@ -126,6 +126,7 @@ export function simulateBacktest({
   const sortino=downside?avg/downside*ann:0;
   const firstBtc=series.BTC.find(p=>p.timestamp===curve[0]?.timestamp)?.price,lastBtc=series.BTC.find(p=>p.timestamp===curve.at(-1)?.timestamp)?.price;
   const benchmarkReturn=firstBtc&&lastBtc?lastBtc/firstBtc-1:0;
+  const benchmarkCurve=curve.map(point=>({timestamp:point.timestamp,equity:Number((firstBtc?initialCash*(finite(series.BTC.find(p=>p.timestamp===point.timestamp)?.price,firstBtc)/firstBtc):initialCash).toFixed(2))}));
   return{
     botType,
     initialCash:Number(initialCash.toFixed(2)),
@@ -146,6 +147,7 @@ export function simulateBacktest({
     periodPoints:curve.length,
     periodStart:curve[0]?.timestamp||null,
     periodEnd:curve.at(-1)?.timestamp||null,
-    curve:curve.slice(-200)
+    curve:curve.slice(-200),
+    benchmarkCurve:benchmarkCurve.slice(-200)
   };
 }
