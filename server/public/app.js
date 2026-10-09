@@ -1275,6 +1275,22 @@ function renderComparatorRisk(rows){
   host.hidden=false;
   host.innerHTML='<div class="comparator-chart-heading"><strong>Baisses depuis les sommets (drawdown)</strong><span>0 % = sommet historique de la période · plus bas = perte temporaire plus importante</span></div><div class="comparator-chart-scroll"><svg role="img" aria-label="Historique des baisses simulées depuis les sommets pour chaque bot" viewBox="0 0 900 300">'+grid+paths+'<text x="52" y="292" fill="#9db5a6" font-size="12">'+new Date(minTime).toLocaleDateString("fr-FR")+'</text><text x="876" y="292" text-anchor="end" fill="#9db5a6" font-size="12">'+new Date(maxTime).toLocaleDateString("fr-FR")+'</text></svg></div><div class="comparator-chart-legends">'+legend+'</div><p class="comparator-chart-note">Risque historique simulé. Une baisse passée ne prédit pas les pertes futures.</p>';
 }
+function renderComparatorDecisions(rows){
+  const host=document.getElementById("botComparatorDecisions");
+  if(!host)return;
+  const entries=rows.flatMap(row=>(Array.isArray(row.decisionHistory)?row.decisionHistory:[]).map(item=>({...item,botType:row.botType})))
+    .filter(item=>Number.isFinite(item.timestamp)&&["buy","sell"].includes(item.action)&&Number.isFinite(item.price))
+    .sort((a,b)=>b.timestamp-a.timestamp).slice(0,20);
+  if(!entries.length){host.hidden=false;host.innerHTML='<h3>Journal des décisions simulées</h3><p class="comparator-chart-note">Aucun ordre simulé exécuté pendant cette période pour les stratégies sélectionnées.</p>';return;}
+  const formatAmount=value=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:6}).format(Number(value)||0);
+  host.hidden=false;
+  host.innerHTML='<div class="comparator-chart-heading"><strong>Journal des décisions simulées</strong><span>20 dernières opérations exécutées · aucun ordre réel</span></div><div class="comparator-decision-list">'+entries.map(item=>{
+    const name=comparatorBotNames[item.botType]||item.botType;
+    const action=item.action==="buy"?"Achat simulé":"Vente simulée";
+    const date=new Date(item.timestamp).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"});
+    return '<article class="comparator-decision"><div><strong>'+escapeHtml(name)+' · '+action+'</strong><small>'+escapeHtml(date)+' · '+escapeHtml(String(item.asset||""))+'</small></div><div><strong>'+formatAmount(item.quantity)+' à '+formatAmount(item.price)+' €</strong><small>Frais : '+formatAmount(item.fee)+' €</small></div><p>'+escapeHtml(String(item.reason||"Signal de stratégie simulé."))+'</p></article>';
+  }).join("")+'</div><p class="comparator-chart-note">Les motifs résument la logique générale de la stratégie ; ils ne constituent pas une explication causale exhaustive ni un conseil d’investissement.</p>';
+}
 function renderBotComparator(rows){
   const body=document.querySelector("#botComparatorPanel [data-comparator-body]");
   const summary=document.getElementById("botComparatorSummary");
@@ -1282,12 +1298,14 @@ function renderBotComparator(rows){
   if(!rows.length){
     renderComparatorChart([]);
     renderComparatorRisk([]);
+    renderComparatorDecisions([]);
     if(summary)summary.hidden=true;
     body.innerHTML='<div class="comparator-empty">Aucun résultat.</div>';
     return;
   }
   renderComparatorChart(rows);
   renderComparatorRisk(rows);
+  renderComparatorDecisions(rows);
   const sort=document.getElementById("botComparatorSort")?.value||"return";
   const ranked=rows.slice().sort((a,b)=>comparatorScore(b,sort)-comparatorScore(a,sort));
   const best=ranked[0];

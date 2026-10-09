@@ -76,6 +76,7 @@ export function simulateBacktest({
   const holdings=Object.fromEntries(symbols.map(symbol=>[symbol,0]));
   let fees=0,turnover=0,trades=0,buyTrades=0,sellTrades=0;
   const curve=[];
+  const decisionHistory=[];
   for(let i=14;i<timeline.length;i++){
     const t=timeline[i];
     const points=Object.fromEntries(symbols.map(symbol=>[symbol,series[symbol].filter(p=>p.timestamp<=t)]));
@@ -110,6 +111,7 @@ export function simulateBacktest({
           cash-=requested+fee;
           holdings[asset]=holding+quantity;
           fees+=fee;turnover+=requested;trades++;buyTrades++;
+          decisionHistory.push({timestamp:t,action:"buy",asset,price:Number(executionPrice.toFixed(4)),quantity:Number(quantity.toFixed(8)),fee:Number(fee.toFixed(4)),reason:"Signal d'achat simulé selon la stratégie, le régime de marché et le risque du portefeuille."});
         }
       }
       if(base.action==="sell"&&holding>0){
@@ -120,6 +122,7 @@ export function simulateBacktest({
         cash+=Math.max(0,proceeds-fee);
         holdings[asset]=holding-quantity;
         fees+=fee;turnover+=proceeds;trades++;sellTrades++;
+        if(quantity>0)decisionHistory.push({timestamp:t,action:"sell",asset,price:Number(executionPrice.toFixed(4)),quantity:Number(quantity.toFixed(8)),fee:Number(fee.toFixed(4)),reason:"Signal de réduction simulée de l'exposition selon la stratégie et les limites de risque."});
       }
     }
     const equity=cash+Object.entries(holdings).reduce((sum,[symbol,quantity])=>sum+quantity*finite(current[symbol]?.price),0);
@@ -149,6 +152,7 @@ export function simulateBacktest({
     sortino:Number(sortino.toFixed(2)),
     volatility:Number((vol*100*ann).toFixed(2)),
     trades,
+    decisionHistory:decisionHistory.slice(-30),
     buyTrades,
     sellTrades,
     fees:Number(fees.toFixed(2)),
