@@ -56,6 +56,8 @@ export function simulateBacktest({
   feeRate=.0015,
   slippageRate=.0005
 }={}){
+  if(!Number.isFinite(initialCash)||initialCash<=0)throw Error("Capital initial invalide.");
+  if(!Number.isFinite(feeRate)||feeRate<0||feeRate>=1||!Number.isFinite(slippageRate)||slippageRate<0||slippageRate>=1)throw Error("Frais ou slippage invalides.");
   const symbols=Object.keys(histories).filter(symbol=>symbol!=="USDC");
   const series=Object.fromEntries(symbols.map(symbol=>[symbol,normalize(histories[symbol])]));
   const timeline=normalize(series.BTC||[]).map(p=>p.timestamp);
@@ -122,7 +124,7 @@ export function simulateBacktest({
   const avg=mean(returns),vol=std(returns),downside=std(returns.filter(r=>r<0));
   const sharpe=vol?avg/vol*ann:0;
   const sortino=downside?avg/downside*ann:0;
-  const firstBtc=series.BTC[0]?.price,lastBtc=series.BTC.at(-1)?.price;
+  const firstBtc=series.BTC.find(p=>p.timestamp===curve[0]?.timestamp)?.price,lastBtc=series.BTC.at(-1)?.price;
   const benchmarkReturn=firstBtc&&lastBtc?lastBtc/firstBtc-1:0;
   return{
     botType,
@@ -130,6 +132,8 @@ export function simulateBacktest({
     finalEquity:Number(finalEquity.toFixed(2)),
     totalReturn:Number((totalReturn*100).toFixed(2)),
     benchmarkBTC:Number((benchmarkReturn*100).toFixed(2)),
+    excessReturnBTC:Number(((totalReturn-benchmarkReturn)*100).toFixed(2)),
+    benchmarkPeriod:"same-as-strategy",
     maxDrawdown:Number(maxDrawdown(curve).toFixed(2)),
     sharpe:Number(sharpe.toFixed(2)),
     sortino:Number(sortino.toFixed(2)),
