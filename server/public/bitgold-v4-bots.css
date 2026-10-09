@@ -24,3 +24,8 @@
 @media(max-width:760px){.bg3-bots .v4-bots-intro{grid-template-columns:minmax(0,1fr)}.bg3-bots .v4-bots-intro-main,.bg3-bots .v4-bots-intro-side{padding:22px}.bg3-bots .bot-grid.v4-bots-bento{grid-template-columns:minmax(0,1fr)!important}.bg3-bots .v4-bots-intro-main h3{font-size:1.8rem}}
 @media(prefers-reduced-motion:reduce){.bg3-bots .v4-bots-bento>*{transition:none!important}.bg3-bots .v4-bots-bento>*:hover{transform:none!important}}
 @media(prefers-reduced-transparency:reduce){.bg3-bots .v4-bots-intro-main,.bg3-bots .v4-bots-intro-side,.bg3-bots .v4-bots-bento>*{background:#14251b!important;backdrop-filter:none!important}}
+
+/* V4.7: transparent, accessible risk guidance ahead of bot selection. */
+.bg3-bots .v47-bot-guardrail-note{margin:18px 0 20px;padding:15px 18px;border:1px solid rgba(179,255,202,.26);border-left:3px solid #b3ffca;border-radius:12px;background:rgba(179,255,202,.055);color:#d7e9db;font-size:.88rem;line-height:1.65}
+.bg3-bots .v47-bot-guardrail-note strong{color:#b3ffca}
+@media(max-width:760px){.bg3-bots .v47-bot-guardrail-note{padding:13px 14px;font-size:.84rem}}
