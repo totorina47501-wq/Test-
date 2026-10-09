@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: public.ecr.aws/docker/library/postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -59,7 +59,7 @@ jobs:
           docker network create bitgold-ci-net
           docker run -d --name bitgold-ci-db --network bitgold-ci-net \
             -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
-            -e POSTGRES_DB=bitgold_test postgres:16
+            -e POSTGRES_DB=bitgold_test public.ecr.aws/docker/library/postgres:16
           for i in $(seq 1 30); do
             if docker exec bitgold-ci-db pg_isready -U postgres -d bitgold_test; then break; fi
             sleep 2
