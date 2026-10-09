@@ -15,9 +15,9 @@ try {
   const screens = [
     { filename: "investir.png", path: "/investir", selector: "body" },
     { filename: "cockpit.png", path: "/#dashboard", selector: "body" },
-    { filename: "bots.png", path: "/#bots", selector: "body" },
+    { filename: "bots.png", path: "/bots", selector: "body" },
     { filename: "activite.png", path: "/activite", selector: "body" },
-    { filename: "transparence.png", path: "/#transparence", selector: "body" }
+    { filename: "transparence.png", path: "/transparence", selector: "body" }
   ];
   for (const screen of screens) {
     const response = await page.goto(baseURL + screen.path, { waitUntil: "domcontentloaded" });
