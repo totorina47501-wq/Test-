@@ -9,12 +9,12 @@ const bullish={name:"bullish"};
 const riskOff={name:"risk-off"};
 
 test("Shield holds under risk-off despite strong bullish signal",()=>{
- assert.equal(baseDecision("shield","BTC",features,forecast,risk,riskOff,[]).action,"hold");
+ assert.equal(baseDecision("shield","BTC",features,forecast,riskOff,risk,[]).action,"hold");
 });
 test("Gold holds in risk-off and requires momentum",()=>{
- assert.equal(baseDecision("gold","BTC",features,forecast,risk,riskOff,[]).action,"hold");
- assert.equal(baseDecision("gold","BTC",{BTC:{...features.BTC,momentum7d:1}},forecast,risk,bullish,[]).action,"hold");
- assert.equal(baseDecision("gold","BTC",features,forecast,risk,bullish,[]).action,"buy");
+ assert.equal(baseDecision("gold","BTC",features,forecast,riskOff,risk,[]).action,"hold");
+ assert.equal(baseDecision("gold","BTC",{BTC:{...features.BTC,momentum7d:1}},forecast,bullish,risk,[]).action,"hold");
+ assert.equal(baseDecision("gold","BTC",features,forecast,bullish,risk,[]).action,"buy");
 });
 test("RSI uses equal gain and loss periods",()=>{
  const points=[100,110,105,115,110,120].map((price,timestamp)=>({price,timestamp}));
