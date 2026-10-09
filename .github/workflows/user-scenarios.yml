@@ -74,6 +74,15 @@ jobs:
           exit 1
       - name: Execute user scenarios (simulation only)
         run: node scripts/user-scenarios.mjs
+      - name: Generate visitor showcase captures
+        run: node scripts/capture-showcase.mjs
+      - name: Upload anonymized showcase captures
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitgold-showcase-captures
+          path: server/public/showcase/*.png
+          if-no-files-found: error
+          retention-days: 14
       - name: Browser E2E (desktop and mobile)
         run: npx playwright test --config=playwright.config.mjs
       - name: Upload scenario reports
