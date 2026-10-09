@@ -14,3 +14,10 @@
 .bg3-home a:focus-visible,.bg3-home button:focus-visible{outline:2px solid #b3ffca;outline-offset:3px}
 @media(max-width:780px){.bg3-home .bg3-hero-copy h1{font-size:clamp(2.5rem,10vw,4rem)}.bg3-home .v4-feature-stage{border-radius:17px}.bg3-home .bg3-hero-actions{display:flex;flex-wrap:wrap;gap:10px}.bg3-home .bg3-hero-actions>*{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.bg3-home *{scroll-behavior:auto!important}}
+
+/* V4.2: mint-first premium carousel. */
+.bg3-home .v4-feature-stage{box-shadow:0 28px 80px rgba(0,0,0,.24);border-color:rgba(179,255,202,.3)}
+.bg3-home .v4-feature-category,.bg3-home .v4-capture-header{color:#b3ffca}
+.bg3-home .v4-feature-count{font-variant-numeric:tabular-nums}
+.bg3-home .v4-feature-dots button[aria-current="true"]{background:#b3ffca;box-shadow:0 0 0 5px rgba(179,255,202,.1)}
+@media(max-width:780px){.bg3-home .v4-feature-stage{box-shadow:0 14px 38px rgba(0,0,0,.24)}}
