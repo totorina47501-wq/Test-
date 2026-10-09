@@ -298,3 +298,13 @@ test("bot trading requires a recent real quote and degrades to hold",()=>{
   assert.match(execution,/Ordre simulé ignoré : cotation absente ou périmée/);
   assert.match(execution,/UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP/);
 });
+
+test("AI decisions require valid quotes and enough historical observations",()=>{
+  const engine=fs.readFileSync(path.join(root,"src/bot-ai-engine.js"),"utf8");
+  assert.match(engine,/const validMarket=/);
+  assert.match(engine,/Number\(row\.price\)>0/);
+  assert.match(engine,/historyPoints<4/);
+  assert.match(engine,/base=\{action:"hold"/);
+  assert.match(app,/bot-risk-clarity/);
+  assert.match(app,/sans garantie de rendement/);
+});
