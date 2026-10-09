@@ -211,6 +211,15 @@ app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,
   }catch(e){console.error("[STRIPE] webhook handler error",e.message);res.status(500).json({error:"Erreur webhook Stripe."})}
 });
 
+// Northflank terminates TLS at a reverse proxy. Trust only the configured number
+// of proxy hops so express-rate-limit uses the actual client IP rather than
+// treating all users as one IP. Never use trust proxy=true unconditionally.
+const trustedProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? (process.env.NODE_ENV === "production" ? 1 : 0));
+if (!Number.isSafeInteger(trustedProxyHops) || trustedProxyHops < 0 || trustedProxyHops > 5) {
+  throw new Error("TRUST_PROXY_HOPS must be an integer between 0 and 5.");
+}
+app.set("trust proxy", trustedProxyHops);
+
 app.use(express.json());
 app.use(rateLimit({ windowMs: 60000, max: process.env.NODE_ENV === "test" ? 2000 : 120, standardHeaders: true, legacyHeaders: false }));
 const authRateLimit = rateLimit({
