@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {presentDecision,decisionFilters} from "../src/bot-decision-history.js";
 test("preserves actual decision evidence without inventing confidence",()=>{
- const row=presentDecision({action:"hold",reason:"Risk guard",confidence:null,features:{selected:{rsi:54,volatility:2},portfolioRisk:{score:42}}});
+ const row=presentDecision({action:"hold",reason:"Risk guard",confidence:null,features:{selected:{features:{rsi:54,volatility:2}},portfolioRisk:{score:42}}});
  assert.equal(row.actionLabel,"CONSERVATION");assert.equal(row.explanation,"Risk guard");
  assert.equal(row.confidence,null);assert.equal(row.indicators.rsi.value,54);assert.equal(row.risk.score,42);
  assert.equal(row.simulation,true);
