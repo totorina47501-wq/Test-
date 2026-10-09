@@ -21,3 +21,19 @@
 .bg3-home .v4-feature-count{font-variant-numeric:tabular-nums}
 .bg3-home .v4-feature-dots button[aria-current="true"]{background:#b3ffca;box-shadow:0 0 0 5px rgba(179,255,202,.1)}
 @media(max-width:780px){.bg3-home .v4-feature-stage{box-shadow:0 14px 38px rgba(0,0,0,.24)}}
+
+/* V4.5: clear visitor reading order: promise -> primary action -> proof -> exploration. */
+.bg3-home .bg3-hero-copy{max-width:680px}
+.bg3-home .bg3-hero-copy>p:not(.risk){max-width:56ch;line-height:1.7}
+.bg3-home .bg3-hero-actions .btn-primary{font-weight:750;box-shadow:0 10px 32px rgba(179,255,202,.15)}
+.bg3-home .bg3-trust{opacity:.88}
+.bg3-home .v4-showcase-head>div>p{max-width:64ch}
+.bg3-home .v4-feature-description{line-height:1.65}
+.bg3-home .v4-feature-disclosure{max-width:56ch}
+@media(max-width:780px){.bg3-home .bg3-hero-copy{max-width:100%}.bg3-home .bg3-hero-actions .btn{flex:1 1 160px;text-align:center}}
+
+/* Connected view: KPI and risk information precede secondary shortcuts visually. */
+.bg3-dashboard .dashboard-section-title .section-subtitle{max-width:62ch}
+.bg3-dashboard .v4-cockpit-guide{border-color:rgba(179,255,202,.22)}
+.bg3-dashboard .bg2-shortcuts a{min-height:72px}
+.bg3-dashboard .ux15-quickstart{margin-top:12px}
