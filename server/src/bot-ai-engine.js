@@ -50,13 +50,15 @@ export async function evaluateBot({type,market,histories,portfolio,subscription,
  const safeType=String(type||"").toLowerCase();
  const validMarket=(Array.isArray(market)?market:[]).filter(row=>row&&typeof row.symbol==="string"&&Number.isFinite(Number(row.price))&&Number(row.price)>0);
  const features=Object.fromEntries(validMarket.map(row=>[row.symbol,buildAssetFeatures(row,histories?.[row.symbol])]));
- const regime=detectRegime(validMarket,features);
+ const eligibleMarket=validMarket.filter(row=>features[row.symbol].historyPoints>=4);
+ const eligibleFeatures=Object.fromEntries(eligibleMarket.map(row=>[row.symbol,features[row.symbol]]));
+ const regime=detectRegime(eligibleMarket,eligibleFeatures);
  const sentiment=scoreNews(news||[]);
- const forecasts=Object.fromEntries(Object.entries(features).map(([symbol,f])=>[symbol,blendForecastWithSentiment(forecast(f),sentiment.perAsset[symbol]||sentiment)]));
+ const forecasts=Object.fromEntries(Object.entries(eligibleFeatures).map(([symbol,f])=>[symbol,blendForecastWithSentiment(forecast(f),sentiment.perAsset[symbol]||sentiment)]));
  const risk=portfolioRisk(portfolio||{},features);
  const positions=Array.isArray(portfolio?.positions)?portfolio.positions:[];
  const ranked=Object.keys(forecasts).map(symbol=>({symbol,...forecasts[symbol],momentum7d:features[symbol].momentum7d,volatility:features[symbol].volatility})).sort((a,b)=>b.score-a.score);
- const selected=pickAsset(safeType,forecasts,features,regime,positions);
+ const selected=pickAsset(safeType,forecasts,eligibleFeatures,regime,positions);
  let base=selected?baseDecision(safeType,selected.symbol,features,forecasts[selected.symbol],regime,risk,positions):{action:"hold",asset:null,fraction:0};
  let ai=null;
  if(ranked.length)try{ai=await aiOverlay(safeType,regime,ranked,risk)}catch(error){console.warn("[BOT-AI] provider unavailable:",error.message)}
