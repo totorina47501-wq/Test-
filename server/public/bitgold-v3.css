@@ -144,3 +144,8 @@ body{background:var(--v3-bg);color:var(--v3-ink)}
 
 /* V3.3 — honest strategy disclosure */
 .bg3-bots .bot-risk-clarity{margin:12px 0!important;padding:11px 13px;border:1px solid #354c3a;border-radius:10px;color:#b8d1bf;font-size:.78rem;line-height:1.5;background:rgba(17,33,23,.55)}
+
+/* V3.4.1 — Unified mint accent for interactive states and chart surfaces. */
+:root{--v3-mint:#b3ffca;--bg2-green:#b3ffca}
+.market-periods button.active,.market-filter.active,.market-filter[aria-pressed="true"]{background:#b3ffca;color:#08140e}
+.market-sparkline svg polyline,.market-sparkline svg path[fill="none"]{stroke:#b3ffca}
