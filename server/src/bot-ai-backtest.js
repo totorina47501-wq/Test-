@@ -21,6 +21,15 @@ function maxDrawdown(curve){
   for(const row of curve){peak=Math.max(peak,row.equity);if(peak>0)best=Math.max(best,(peak-row.equity)/peak*100);}
   return best;
 }
+export function drawdownSeries(curve=[]){
+  let peak=0;
+  return curve.map(point=>{
+    const equity=Number(point?.equity);
+    if(!Number.isFinite(equity)||equity<=0)return{timestamp:point?.timestamp??null,drawdownPct:0};
+    peak=Math.max(peak,equity);
+    return{timestamp:point.timestamp,drawdownPct:Number((peak>0?(peak-equity)/peak*100:0).toFixed(2))};
+  });
+}
 function annualizationFactor(timeline){
   const gaps=[];
   for(let i=1;i<timeline.length;i++)if(timeline[i]>timeline[i-1])gaps.push(timeline[i]-timeline[i-1]);
@@ -148,6 +157,7 @@ export function simulateBacktest({
     periodStart:curve[0]?.timestamp||null,
     periodEnd:curve.at(-1)?.timestamp||null,
     curve:curve.slice(-200),
+    drawdownCurve:drawdownSeries(curve).slice(-200),
     benchmarkCurve:benchmarkCurve.slice(-200)
   };
 }
