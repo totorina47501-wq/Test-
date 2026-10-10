@@ -25,7 +25,7 @@ export function useAccountData(token:string){
 
   const reload=useCallback(()=>{
     if(!token)return;
-    setPortfolio({status:"loading"});setActivity({status:"loading"});setBots({status:"loading"});
+    setPortfolio(previous=>previous.data?previous:{status:"loading"});setActivity(previous=>previous.data?previous:{status:"loading"});setBots(previous=>previous.data?previous:{status:"loading"});
     api<Portfolio>("/api/portfolio",token).then(data=>setPortfolio({status:"ready",data})).catch((e:unknown)=>setPortfolio({status:"error",error:e instanceof Error?e.message:"Erreur portefeuille"}));
     api<ActivityData>("/api/activity",token).then(data=>setActivity({status:"ready",data})).catch((e:unknown)=>setActivity({status:"error",error:e instanceof Error?e.message:"Erreur activités"}));
     api<BotsData>("/api/bots",token).then(data=>setBots({status:"ready",data})).catch((e:unknown)=>setBots({status:"error",error:e instanceof Error?e.message:"Erreur bots"}));
