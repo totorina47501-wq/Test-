@@ -249,6 +249,10 @@ const twoFactorRateLimit = rateLimit({
   legacyHeaders: false,
   message: { error: "Trop de tentatives 2FA. Réessayez plus tard." }
 });
+// React preview is opt-in and only exists in the alternate React Docker image.
+const reactPreviewRoot=path.join(__dirname,"../react-preview");
+app.use("/react-preview",express.static(reactPreviewRoot,{index:false,setHeaders:(res,filePath)=>{if(filePath.endsWith(".html"))res.setHeader("Cache-Control","no-store, max-age=0")}}));
+app.get(/^\/react-preview\/?$/,(req,res)=>res.sendFile(path.join(reactPreviewRoot,"index.html"),err=>{if(err&&!res.headersSent)res.status(404).json({error:"Aperçu React non disponible sur ce déploiement."})}));
 app.use(express.static(path.join(__dirname, "../public"), { setHeaders: (res, filePath) => { if(filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) res.setHeader("Cache-Control", "no-store, max-age=0"); } }));
 app.get(/^\/bot\/(shield|silver|gold|adaptive-ai|quant-pulse|macro-rotation)\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
 app.get(/^\/activite\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
