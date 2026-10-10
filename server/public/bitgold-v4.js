@@ -10,3 +10,9 @@ if (/^\/investir\/?$/.test(location.pathname)) {
   script.src = '/investir-growth.js?v=1'; script.defer = true;
   document.head.append(script);
 }
+
+/* V5.3: opt-in educational checklist, scoped to /investir. */
+if (/^\/investir\/?$/.test(location.pathname)) {
+  const style = document.createElement('link'); style.rel='stylesheet'; style.href='/onboarding-v5-3.css?v=1'; document.head.append(style);
+  const script = document.createElement('script'); script.src='/onboarding-v5-3.js?v=1'; script.defer=true; document.head.append(script);
+}
