@@ -75,7 +75,7 @@ test("React login completes the existing 2FA challenge without bypassing it", as
   await page.getByRole("button", { name: "Se connecter" }).first().click();
   await page.getByLabel("E-mail").fill(user.email);
   await page.getByLabel("Mot de passe").fill(user.password);
-  await page.getByRole("button", { name: "Connexion" }).click();
+  await page.getByRole("button", { name: "Connexion", exact: true }).last().click();
 
   await expect(page.getByText("Vérification en deux étapes")).toBeVisible();
   await page.getByLabel("Code Google Authenticator ou récupération").fill(await generate({ secret: setupBody.secret }));
