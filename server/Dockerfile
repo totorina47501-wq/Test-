@@ -1,7 +1,7 @@
 FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS react-build
 WORKDIR /frontend
 COPY frontend/package*.json ./
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
 ENV VITE_BASE_PATH=/
 RUN npm run build
