@@ -231,7 +231,10 @@ if (!Number.isSafeInteger(trustedProxyHops) || trustedProxyHops < 0 || trustedPr
 app.set("trust proxy", trustedProxyHops);
 
 app.use(express.json());
-app.use(rateLimit({ windowMs: 60000, max: process.env.NODE_ENV === "test" ? 2000 : 120, standardHeaders: true, legacyHeaders: false }));
+// Apply general throttling only to API calls. Static assets and app navigation
+// must not consume the shared API budget (important on mobile/reloads).
+// Authentication and 2FA retain their separate, stricter limiters.
+app.use("/api", rateLimit({ windowMs: 60000, max: process.env.NODE_ENV === "test" ? 2000 : 120, standardHeaders: true, legacyHeaders: false }));
 const authRateLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 10,

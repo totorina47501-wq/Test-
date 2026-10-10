@@ -11,7 +11,10 @@ test("public deep links redirect to existing hash sections", () => {
   }
 });
 
-test("public rate limit and proxy trust remain enabled", () => {
-  assert.match(source, /app\.set\("trust proxy", trustedProxyHops\)/);
-  assert.match(source, /app\.use\(rateLimit\(\{ windowMs: 60000/);
+test("API throttling spares public assets and retains auth protections", () => {
+  assert.ok(source.includes('app.use("/api", rateLimit({ windowMs: 60000'));
+  assert.ok(!source.includes("app.use(rateLimit({ windowMs: 60000"));
+  assert.ok(source.includes("const authRateLimit = rateLimit("));
+  assert.ok(source.includes("const twoFactorRateLimit = rateLimit("));
+  assert.ok(source.includes('app.set("trust proxy", trustedProxyHops)'));
 });
