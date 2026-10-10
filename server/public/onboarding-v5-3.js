@@ -86,7 +86,7 @@
       if((e.detail?.holdingsCount||0)>0)complete('trade');
     });
     window.addEventListener('bitgold:simulated-trade',()=>{if(isAuthed()){complete('trade');track('onboarding_first_trade');}});
-    if(isInvestir())complete('markets');
+    if(isInvestir() && isAuthed())complete('markets');
     if(isAuthed()){track('onboarding_view');d1();}
     draw();
   }
