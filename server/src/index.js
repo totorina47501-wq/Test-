@@ -1,3 +1,4 @@
+import {resolveMarketQuote} from "./market-freshness.js";
 import {dashboardCopilot} from "./dashboard-copilot.js";
 import {portfolioHealth} from "./portfolio-health.js";
 import "dotenv/config";
@@ -309,10 +310,13 @@ async function refreshMarket(force=false) {
       const change24h = Number(item.eur_24h_change);
       const marketCap = Number(item.eur_market_cap);
       const volume24h = Number(item.eur_24h_vol);
-      if(Number.isFinite(price) && price > 0) prices[symbol] = price;
+      const quote=resolveMarketQuote(item,prices[symbol],marketSnapshot.find(row=>row.symbol===symbol)?.priceUpdatedAt,Date.now());
+      if(quote.priceFresh) prices[symbol] = quote.price;
       return {
         symbol,
-        price: Number.isFinite(price) && price > 0 ? price : prices[symbol],
+        price: quote.price,
+        priceFresh: quote.priceFresh,
+        priceUpdatedAt: quote.priceUpdatedAt,
         change24h: Number.isFinite(change24h) ? change24h : 0,
         marketCap: Number.isFinite(marketCap) ? marketCap : null,
         volume24h: Number.isFinite(volume24h) ? volume24h : null,
@@ -323,7 +327,7 @@ async function refreshMarket(force=false) {
     const tickTimestamp=marketUpdatedAt;
     for(const row of marketSnapshot){
       const ticks=marketTickHistory.get(row.symbol)||[];
-      ticks.push({timestamp:tickTimestamp,price:Number(row.price)});
+      if(row.priceFresh)ticks.push({timestamp:tickTimestamp,price:Number(row.price)});
       const cutoff=tickTimestamp-10*60*1000;
       marketTickHistory.set(row.symbol,ticks.filter(point=>point.timestamp>=cutoff).slice(-120));
     }
