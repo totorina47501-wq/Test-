@@ -56,7 +56,7 @@ jobs:
           grep -q 'COPY --from=react-build' Dockerfile
       - name: Build production container
         working-directory: .
-        run: docker build -f server/Dockerfile -t bitgold-ci:${{ github.sha }} .
+        run: docker build --build-arg BITGOLD_BUILD_SHA=${{ github.sha }} -f server/Dockerfile -t bitgold-ci:${{ github.sha }} .
       - name: Smoke-test production container and health endpoint
         run: |
           set -eu
