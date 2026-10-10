@@ -11,6 +11,7 @@ function normalize(points){
     .filter(p=>p.timestamp>0&&p.price>0)
     .sort((a,b)=>a.timestamp-b.timestamp);
 }
+export function isFreshBacktestQuote(row,timestamp){return Boolean(row&&row.timestamp===timestamp&&Number.isFinite(row.price)&&row.price>0);}
 function latestAt(points,timestamp,pointer={i:0}){
   while(pointer.i+1<points.length&&points[pointer.i+1].timestamp<=timestamp)pointer.i++;
   const row=points[pointer.i];
@@ -85,7 +86,7 @@ export function simulateBacktest({
       const row=current[symbol];
       const previous=series[symbol].filter(p=>p.timestamp<t).at(-1);
       return{symbol,price:row?.price||0,change24h:previous?.price?((row.price/previous.price)-1)*100:0};
-    }).filter(row=>row.price>0);
+    }).filter(row=>row.price>0&&isFreshBacktestQuote(current[row.symbol],t));
     const features=Object.fromEntries(market.map(row=>[row.symbol,buildAssetFeatures(row,points[row.symbol])])); 
     const forecasts=Object.fromEntries(Object.entries(features).map(([symbol,f])=>[symbol,forecast(f)]));
     const regime=detectRegime(market,features);
@@ -100,7 +101,7 @@ export function simulateBacktest({
     const base=selected?baseDecision(botType,selected.symbol,features,forecasts[selected.symbol],regime,risk,weighted):{action:"hold",asset:null,fraction:0};
     const asset=base.asset;
     const price=finite(current[asset]?.price);
-    if(asset&&price>0&&base.action!=="hold"){
+    if(asset&&price>0&&isFreshBacktestQuote(current[asset],t)&&base.action!=="hold"){
       const holding=Math.max(0,finite(holdings[asset]));
       if(base.action==="buy"&&cash>0){
         const requested=Math.min(cash/(1+feeRate),cash*Math.max(0,finite(base.fraction)));
