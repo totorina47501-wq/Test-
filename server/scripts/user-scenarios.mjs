@@ -19,10 +19,16 @@ async function main(){
   const signup=await request("/api/auth/signup",{method:"POST",body:{email,password,first_name:"Scenario",last_name:"Test",country:"France",city:"Paris",postal_code:"75001"}});
   assert.equal(signup.status,201,`signup: ${JSON.stringify(signup.data)}`);
   assert.ok(signup.data.token,"signup token");
-  const badLogin=await request("/api/auth/login",{method:"POST",body:{email,password:password+"-wrong"}});\n  assert.equal(badLogin.status,401,"wrong password must be rejected");\n  const login=await request("/api/auth/login",{method:"POST",body:{email,password}});\n  assert.equal(login.status,200,"login");assert.ok(login.data.token,"login token");
+  const badLogin=await request("/api/auth/login",{method:"POST",body:{email,password:password+"-wrong"}});
+  assert.equal(badLogin.status,401,"wrong password must be rejected");
+  const login=await request("/api/auth/login",{method:"POST",body:{email,password}});
+  assert.equal(login.status,200,"login");assert.ok(login.data.token,"login token");
   const token=login.data.token;
   const denied=await request("/api/portfolio");assert.equal(denied.status,401,"protected portfolio");
-  const dashboard=await request("/api/dashboard",{token});assert.equal(dashboard.status,200,"authenticated dashboard");\n  const analytics=await request("/api/dashboard/analytics",{token});assert.equal(analytics.status,200,"authenticated dashboard analytics");\n  const malformed=await request("/api/dashboard",{token:"invalid.jwt.token"});assert.equal(malformed.status,401,"invalid token rejected");\n  const initial=await request("/api/portfolio",{token});assert.equal(initial.status,200,"initial portfolio");
+  const dashboard=await request("/api/dashboard",{token});assert.equal(dashboard.status,200,"authenticated dashboard");
+  const analytics=await request("/api/dashboard/analytics",{token});assert.equal(analytics.status,200,"authenticated dashboard analytics");
+  const malformed=await request("/api/dashboard",{token:"invalid.jwt.token"});assert.equal(malformed.status,401,"invalid token rejected");
+  const initial=await request("/api/portfolio",{token});assert.equal(initial.status,200,"initial portfolio");
   assert.ok(Number(initial.data.cash)>=20,"demo cash available");
   const buy=await request("/api/trades",{method:"POST",token,body:{side:"buy",asset:"BTC",amount:10}});
   assert.equal(buy.status,201,`demo buy: ${JSON.stringify(buy.data)}`);
