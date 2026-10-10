@@ -1,9 +1,18 @@
+# Build the isolated React preview without changing the legacy home page.
+FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS react-build
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm install --no-audit --no-fund
+COPY frontend/ ./
+RUN npm run build
+
 FROM public.ecr.aws/docker/library/node:22-bookworm-slim
 WORKDIR /app
-COPY package*.json ./
+COPY server/package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
-COPY src ./src
-COPY public ./public
+COPY server/src ./src
+COPY server/public ./public
+COPY --from=react-build /frontend/dist ./react-preview
 ENV NODE_ENV=production
 EXPOSE 3000
 CMD ["node","src/index.js"]
