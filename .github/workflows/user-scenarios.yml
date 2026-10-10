@@ -59,7 +59,7 @@ jobs:
       - name: Build React preview for authenticated browser journeys
         working-directory: frontend
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run build
       - name: Mount React preview into the isolated server
         run: |
