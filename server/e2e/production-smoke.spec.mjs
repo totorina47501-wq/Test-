@@ -26,3 +26,12 @@ test("guest Investir page loads", async ({ page }) => {
   await expect(page.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Investir" })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("expired JWT is rejected on live production", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("bitgold-token", "invalid.jwt.token"));
+  const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByText("Votre session a expiré. Reconnectez-vous.")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("bitgold-token"))).toBeNull();
+  await expect(page.getByText("Votre espace privé")).toBeVisible();
+});
