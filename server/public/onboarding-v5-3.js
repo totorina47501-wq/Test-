@@ -71,7 +71,7 @@
         const badge=document.createElement('span');badge.className='bitgold-onboarding-badge';badge.textContent=done[step.id]?'✓':'○';
         badge.setAttribute('aria-label',done[step.id]?'Terminé':'À découvrir');
         const link=document.createElement('a');link.href=step.href;link.textContent=step.title;
-        link.addEventListener('click',()=>{if(step.id==='markets'||step.id==='wallet'||step.id==='bots')complete(step.id);});
+        link.addEventListener('click',()=>{if(step.id==='markets'||step.id==='wallet')complete(step.id);});
         li.append(badge,' ',link);list.append(li);
       });
     };
@@ -84,9 +84,11 @@
     window.addEventListener('bitgold:wallet-loaded',e=>{
       if(!isAuthed())return;
       complete('wallet');
-      if((e.detail?.holdingsCount||0)>0)complete('trade');
     });
     window.addEventListener('bitgold:simulated-trade',()=>{if(isAuthed()){complete('trade');track('onboarding_first_trade');}});
+    const markBotsVisited=()=>{if(isAuthed() && (location.hash==='#bots' || location.hash.startsWith('#bots-')))complete('bots');};
+    window.addEventListener('hashchange',markBotsVisited);
+    markBotsVisited();
     if(isInvestir() && isAuthed())complete('markets');
     if(isAuthed()){track('onboarding_view');d1();}
     draw();

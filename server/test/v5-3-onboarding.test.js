@@ -32,3 +32,16 @@ test('V5.3 guides empty portfolio without actual-money action',()=>{
  assert.match(app,/première opération simulée/);
  assert.match(css,/bitgold-portfolio-empty/);
 });
+
+test('V5.3 does not mistake existing holdings for a first trade',()=>{
+ const src=read('onboarding-v5-3.js');
+ assert.doesNotMatch(src,/holdingsCount\s*\|\|\s*0\)\s*>\s*0\)\s*complete\('trade'\)/);
+ assert.match(src,/bitgold:simulated-trade/);
+ assert.match(src,/complete\('trade'\);track\('onboarding_first_trade'\)/);
+});
+test('V5.3 marks bots visited on actual navigation, not link click',()=>{
+ const src=read('onboarding-v5-3.js');
+ assert.match(src,/window\.addEventListener\('hashchange',markBotsVisited\)/);
+ assert.match(src,/location\.hash===\x27#bots\x27/);
+ assert.doesNotMatch(src,/step\.id===\x27bots\x27\)complete\(step\.id\)/);
+});
