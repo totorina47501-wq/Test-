@@ -10,3 +10,15 @@ if (/^\/investir\/?$/.test(location.pathname)) {
   script.src = '/investir-growth.js?v=1'; script.defer = true;
   document.head.append(script);
 }
+
+/* V5.3: opt-in educational checklist, scoped to /investir. */
+if (/^\/investir\/?$/.test(location.pathname)) {
+  const style = document.createElement('link'); style.rel='stylesheet'; style.href='/onboarding-v5-3.css?v=2'; document.head.append(style);
+  const script = document.createElement('script'); script.src='/onboarding-v5-3.js?v=2'; script.defer=true; document.head.append(script);
+}
+
+/* V5.3 dashboard onboarding for authenticated users (same module, loaded once). */
+if (location.pathname === '/' || location.pathname === '/index.html') {
+  const onboardingCss=document.createElement('link');onboardingCss.rel='stylesheet';onboardingCss.href='/onboarding-v5-3.css?v=2';document.head.append(onboardingCss);
+  const onboardingScript=document.createElement('script');onboardingScript.src='/onboarding-v5-3.js?v=2';onboardingScript.defer=true;document.head.append(onboardingScript);
+}
