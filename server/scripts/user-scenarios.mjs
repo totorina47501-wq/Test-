@@ -19,10 +19,15 @@ async function main(){
   const signup=await request("/api/auth/signup",{method:"POST",body:{email,password,first_name:"Scenario",last_name:"Test",country:"France",city:"Paris",postal_code:"75001"}});
   assert.equal(signup.status,201,`signup: ${JSON.stringify(signup.data)}`);
   assert.ok(signup.data.token,"signup token");
+  const badLogin=await request("/api/auth/login",{method:"POST",body:{email,password:password+"-wrong"}});
+  assert.equal(badLogin.status,401,"wrong password must be rejected");
   const login=await request("/api/auth/login",{method:"POST",body:{email,password}});
   assert.equal(login.status,200,"login");assert.ok(login.data.token,"login token");
   const token=login.data.token;
   const denied=await request("/api/portfolio");assert.equal(denied.status,401,"protected portfolio");
+  const dashboard=await request("/api/dashboard",{token});assert.equal(dashboard.status,200,"authenticated dashboard");
+  const analytics=await request("/api/dashboard/analytics",{token});assert.equal(analytics.status,200,"authenticated dashboard analytics");
+  const malformed=await request("/api/dashboard",{token:"invalid.jwt.token"});assert.equal(malformed.status,401,"invalid token rejected");
   const initial=await request("/api/portfolio",{token});assert.equal(initial.status,200,"initial portfolio");
   assert.ok(Number(initial.data.cash)>=20,"demo cash available");
   const buy=await request("/api/trades",{method:"POST",token,body:{side:"buy",asset:"BTC",amount:10}});
@@ -69,6 +74,6 @@ async function main(){
   const activity=await request("/api/activity",{token});assert.equal(activity.status,200,"activity");
   assert.ok(activity.data.trades?.some(t=>t.side==="buy"&&t.asset==="BTC"),"buy recorded");
   assert.ok(activity.data.trades?.some(t=>t.side==="sell"&&t.asset==="BTC"),"sell recorded");
-  console.log("PASS: health, signup, login, protected route, demo buy, demo sell, portfolio, activity");
+  console.log("PASS: health, signup, wrong-password rejection, login/JWT, protected dashboard/analytics, invalid-token rejection, demo buy/sell, portfolio, activity");
 }
 main().catch(e=>{console.error("USER SCENARIO FAILED:",e);process.exitCode=1});
