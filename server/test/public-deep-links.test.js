@@ -6,7 +6,7 @@ const source = readFileSync(new URL("../src/index.js", import.meta.url), "utf8")
 
 test("public deep links redirect to existing hash sections", () => {
   assert.match(source, /app\.get\(\/\^\\\/\(\?:bots-ia\|faq\|portefeuille\)/);
-  for (const mapping of ['"bots-ia":"bots"', 'faq:"faq"', 'portefeuille:"dashboard"']) {
+  for (const mapping of ['bots:"bots"', '"bots-ia":"bots"', 'faq:"faq"', 'portefeuille:"dashboard"']) {
     assert.ok(source.includes(mapping), `Missing route mapping: ${mapping}`);
   }
 });
