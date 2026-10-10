@@ -27,17 +27,18 @@
     bar.setAttribute('aria-label', 'Créer un portefeuille virtuel');
     bar.innerHTML = '<span>100 % simulation · sans argent réel</span><button type="button" class="btn btn-primary" data-growth-action="signup">Créer mon portefeuille virtuel</button>';
     document.body.append(bar);
-    const sync = () => { bar.hidden = !document.querySelector('.visitor-hero:not([hidden])') && document.getElementById('authState')?.textContent?.toLowerCase().includes('connecté'); };
+    const sync = () => { bar.hidden = Boolean(document.getElementById('authState')?.textContent?.toLowerCase().includes('connecté')); };
     const track = name => {
       try { window.dispatchEvent(new CustomEvent('bitgold:analytics', { detail: { event: name, page: '/investir' } })); } catch (_) {}
     };
-    document.querySelectorAll('[data-growth-action="signup"]').forEach(button => button.addEventListener('click', () => {
+    section.querySelectorAll('[data-growth-action="signup"]').forEach(button => button.addEventListener('click', () => {
       track('growth_cta_click');
       const signup = document.getElementById('heroSignup');
       const login = document.getElementById('topLogin');
       (signup || login)?.click();
     }));
-    document.querySelector('a[href="#growthSteps"]')?.addEventListener('click', () => track('growth_how_it_works_click'));
+    bar.querySelector('[data-growth-action="signup"]')?.addEventListener('click', () => { track('growth_cta_click'); (document.getElementById('heroSignup') || document.getElementById('topLogin'))?.click(); });
+    section.querySelector('a[href="#growthSteps"]')?.addEventListener('click', () => track('growth_how_it_works_click'));
     sync();
     new MutationObserver(sync).observe(document.getElementById('authState') || document.body, {childList:true,subtree:true});
   };
