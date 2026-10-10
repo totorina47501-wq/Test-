@@ -59,9 +59,9 @@ test("React account space covers portfolio, activity and bot strategy management
 
   await page.getByRole("button", { name: "Bots IA" }).click();
   await expect(page.getByRole("heading", { name: "Bots IA" })).toBeVisible();
-  await expect(page.getByText("Shield Bot")).toBeVisible();
-  await expect(page.getByText("Silver Bot")).toBeVisible();
-  await expect(page.getByText("Gold Bot")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Shield Bot" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Silver Bot" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Gold Bot" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
 
   await page.getByRole("button", { name: /Configurer Silver Bot/ }).click();
