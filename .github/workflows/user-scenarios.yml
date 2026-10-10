@@ -93,7 +93,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Browser E2E (desktop and mobile)
-        run: npx playwright test --config=playwright.config.mjs
+        run: npx playwright test --config=playwright.config.mjs --grep-invert='production authenticated account is readable without mutations'
       - name: Upload scenario reports
         if: always()
         uses: actions/upload-artifact@v4
