@@ -66,7 +66,7 @@ jobs:
             echo "::error::Missing dedicated BitGold production E2E account secrets"
             exit 1
           fi
-          npx playwright test e2e/production-auth-readonly.spec.mjs --config=playwright.config.mjs --project=desktop --project=mobile --trace=off --screenshot=off
+          npx playwright test e2e/production-auth-readonly.spec.mjs --config=playwright.config.mjs --project=desktop --project=mobile --trace=off
 
       - name: Upload failure traces and report
         if: always()
