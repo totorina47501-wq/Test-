@@ -1,0 +1,51 @@
+name: BitGold production guest smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 5 * * *'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-guest-smoke-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  production-smoke:
+    name: Live Northflank guest E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: server
+    env:
+      BITGOLD_PROD_URL: https://p01--service-bitgold--dvn9t2gvmtgx.code.run
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Install Playwright runner
+        run: npm install --no-save @playwright/test@1.58.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run production guest smoke tests
+        run: npx playwright test e2e/production-smoke.spec.mjs --config=playwright.config.mjs --project=desktop --project=mobile
+      - name: Upload failure traces and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-guest-smoke-report
+          path: |
+            server/playwright-report/
+            server/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
