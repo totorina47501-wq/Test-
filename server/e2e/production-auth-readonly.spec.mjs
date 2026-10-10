@@ -42,5 +42,9 @@ test("production authenticated account is readable without mutations", async ({ 
   }
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
   await page.getByRole("button", { name: "Se déconnecter" }).click();
+  // Bots become public after logout; private portfolio access must still be denied.
+  await expect(page.getByRole("heading", { name: "Comparer les bots BitGold" })).toBeVisible();
+  const privateResponse = await page.goto("/portefeuille", { waitUntil: "domcontentloaded" });
+  expect(privateResponse?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Connexion requise" })).toBeVisible();
 });
