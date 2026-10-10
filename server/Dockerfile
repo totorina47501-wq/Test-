@@ -1,4 +1,4 @@
-# Build the isolated React preview without changing the legacy home page.
+# React preview requires repository-root build context (-f server/Dockerfile .).
 FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS react-build
 WORKDIR /frontend
 COPY frontend/package*.json ./
