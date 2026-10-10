@@ -7,6 +7,8 @@ test("Northflank trusted proxy is bounded and configured before rate limiters",(
   assert.match(source,/Number\.isSafeInteger\(trustedProxyHops\)/);
   assert.match(source,/trustedProxyHops < 0 \|\| trustedProxyHops > 5/);
   assert.match(source,/app\.set\("trust proxy", trustedProxyHops\)/);
-  assert.ok(source.indexOf('app.set("trust proxy", trustedProxyHops)') < source.indexOf('app.use(rateLimit('));
+  const proxyIndex = source.indexOf('app.set("trust proxy", trustedProxyHops)');
+  const apiLimiterIndex = source.indexOf('app.use("/api", rateLimit(');
+  assert.ok(proxyIndex >= 0 && apiLimiterIndex > proxyIndex, "Trusted proxy must be configured before API throttling");
   assert.doesNotMatch(source,/app\.set\(["']trust proxy["'],\s*true\)/);
 });
