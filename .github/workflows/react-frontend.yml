@@ -26,7 +26,7 @@ jobs:
           node-version: '22'
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Typecheck and build React
         working-directory: frontend
         run: npm run build
