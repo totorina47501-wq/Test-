@@ -56,7 +56,7 @@ test("React Investir shows EUR markets, crypto details, ranges and submits simul
   await page.goto(preview);
 
   await expect(page.getByRole("heading", { name: "Investir" })).toBeVisible();
-  await expect(page.getByText("68\u202f000,00\u00a0€")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Bitcoin/ }).getByText("68\u202f000,00\u00a0€")).toBeVisible();
   await page.getByRole("button", { name: /Ethereum/ }).click();
 
   await expect(page.getByRole("heading", { name: "Ethereum" })).toBeVisible();
