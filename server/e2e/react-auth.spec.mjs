@@ -25,17 +25,17 @@ test("React signup persists the JWT across reload and logout clears the session"
   await page.getByLabel("E-mail").fill(user.email);
   await page.getByLabel("Mot de passe").fill(user.password);
   await page.getByLabel("Prénom").fill(user.first_name);
-  await page.getByLabel("Nom").fill(user.last_name);
+  await page.getByLabel("Nom", { exact: true }).fill(user.last_name);
   await page.getByLabel("Pays").fill(user.country);
   await page.getByLabel("Ville").fill(user.city);
   await page.getByLabel("Code postal").fill(user.postal_code);
   await page.getByRole("button", { name: "Créer mon compte" }).click();
 
-  await expect(page.getByText("Session authentifiée · simulation")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Se déconnecter" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("bitgold-token"))).toBeTruthy();
 
   await page.reload();
-  await expect(page.getByText("Session authentifiée · simulation")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Se déconnecter" })).toBeVisible();
 
   await page.getByRole("button", { name: "Se déconnecter" }).click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("bitgold-token"))).toBeNull();
@@ -81,6 +81,6 @@ test("React login completes the existing 2FA challenge without bypassing it", as
   await page.getByLabel("Code Google Authenticator ou récupération").fill(await generate({ secret: setupBody.secret }));
   await page.getByRole("button", { name: "Vérifier" }).click();
 
-  await expect(page.getByText("Session authentifiée · simulation")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Se déconnecter" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("bitgold-token"))).toBeTruthy();
 });
