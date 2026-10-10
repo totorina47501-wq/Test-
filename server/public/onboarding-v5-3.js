@@ -77,7 +77,8 @@
     };
     box.append(title,desc,progress,list);
     anchor.parentNode.insertBefore(box,anchor);
-    const observer=new MutationObserver(()=>{draw();d1();});
+    let wasAuthed=isAuthed();
+    const observer=new MutationObserver(()=>{const nowAuthed=isAuthed();if(nowAuthed&&!wasAuthed){track('onboarding_view');if(isInvestir())complete('markets');}wasAuthed=nowAuthed;draw();d1();});
     observer.observe(document.body,{attributes:true,attributeFilter:['class']});
     window.addEventListener('bitgold:onboarding:update',draw);
     window.addEventListener('bitgold:wallet-loaded',e=>{
