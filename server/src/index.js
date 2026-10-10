@@ -334,7 +334,7 @@ async function refreshMarket(force=false) {
   } catch(e) {
     console.error("[MARKET] refresh error", e.message);
     if(!marketSnapshot.length) {
-      marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0,marketCap:null,volume24h:null,marketCapRank:null}));
+      marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,priceFresh:false,priceUpdatedAt:null,change24h:0,marketCap:null,volume24h:null,marketCapRank:null}));
     }
   }
   return marketSnapshot;
