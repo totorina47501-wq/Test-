@@ -2,25 +2,8 @@ import { test, expect } from "@playwright/test";
 
 const preview = "/react-preview/";
 
-async function createSession(request) {
-  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const signup = await request.post("/api/auth/signup", {
-    data: {
-      email: `react-cockpit-${suffix}@example.com`,
-      password: "Correct-Horse-Battery-42!",
-      first_name: "React",
-      last_name: "Cockpit",
-      country: "France",
-      city: "Paris",
-      postal_code: "75001"
-    }
-  });
-  expect(signup.status()).toBe(201);
-  return (await signup.json()).token;
-}
-
-test("authenticated React cockpit exposes OHLC ranges and recent simulated transactions", async ({ page, request }) => {
-  const token = await createSession(request);
+test("authenticated React cockpit exposes OHLC ranges and recent simulated transactions", async ({ page }) => {
+  const token = "e2e-authenticated-cockpit-token";
 
   await page.route("**/api/dashboard", route => route.fulfill({
     contentType: "application/json",
