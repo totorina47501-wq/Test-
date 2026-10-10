@@ -4,6 +4,8 @@ on:
     branches: [staging, main]
     paths:
       - 'frontend/**'
+      - 'server/Dockerfile.react-preview'
+      - 'server/src/index.js'
       - 'server/public/bitgold-v4.js'
       - '.github/workflows/react-frontend.yml'
   push:
@@ -30,3 +32,13 @@ jobs:
         run: npm run build
       - name: Check legacy carousel script syntax
         run: node --check server/public/bitgold-v4.js
+
+  preview-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build optional React preview image
+        run: docker build -f server/Dockerfile.react-preview -t bitgold-react-preview .
+      - name: Check bundled React preview assets
+        run: |
+          docker run --rm --entrypoint sh bitgold-react-preview -c 'test -f /app/react-preview/index.html && test -d /app/react-preview/assets'
