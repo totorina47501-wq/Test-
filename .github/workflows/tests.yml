@@ -51,8 +51,12 @@ jobs:
           grep -q 'NODE_ENV=production' Dockerfile
           grep -q 'JWT_SECRET must be configured' src/index.js
           grep -q 'TWO_FACTOR_ENCRYPTION_KEY must be configured' src/index.js
+          grep -q 'FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS react-build' Dockerfile
+          grep -q 'COPY frontend/' Dockerfile
+          grep -q 'COPY --from=react-build' Dockerfile
       - name: Build production container
-        run: docker build -t bitgold-ci:${{ github.sha }} .
+        working-directory: .
+        run: docker build -f server/Dockerfile -t bitgold-ci:${{ github.sha }} .
       - name: Smoke-test production container and health endpoint
         run: |
           set -eu
@@ -83,6 +87,17 @@ jobs:
             docker logs bitgold-ci-app
             exit 1
           fi
+          docker exec bitgold-ci-app node -e 'fetch("http://127.0.0.1:3000/").then(r=>r.text()).then(t=>{if(!t.includes("id=\"root\"")||!t.includes("/assets/"))process.exit(1)}).catch(()=>process.exit(1))'
+          docker run -d --name bitgold-ci-legacy --network bitgold-ci-net \
+            -e NODE_ENV=production -e FRONTEND_MODE=legacy -e DATABASE_SSL=false \
+            -e DATABASE_URL=postgresql://postgres:postgres@bitgold-ci-db:5432/bitgold_test \
+            -e JWT_SECRET=ci-smoke-jwt-secret-32-characters-long \
+            -e TWO_FACTOR_ENCRYPTION_KEY=ci-smoke-2fa-key-32-characters-long \
+            bitgold-ci:${{ github.sha }}
+          for i in $(seq 1 40); do
+            if docker exec bitgold-ci-legacy node -e 'fetch("http://127.0.0.1:3000/").then(r=>r.text()).then(t=>{if(!t.includes("visitor-hero"))process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
+            sleep 2
+          done
       - name: Run quality checks and tests in parallel
         run: |
           set +e
