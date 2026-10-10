@@ -1,0 +1,32 @@
+name: BitGold React frontend
+on:
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - 'frontend/**'
+      - 'server/public/bitgold-v4.js'
+      - '.github/workflows/react-frontend.yml'
+  push:
+    branches: [staging, main]
+    paths:
+      - 'frontend/**'
+      - 'server/public/bitgold-v4.js'
+      - '.github/workflows/react-frontend.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install --no-audit --no-fund
+      - name: Typecheck and build React
+        working-directory: frontend
+        run: npm run build
+      - name: Check legacy carousel script syntax
+        run: node --check server/public/bitgold-v4.js
