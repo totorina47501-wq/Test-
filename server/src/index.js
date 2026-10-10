@@ -249,16 +249,34 @@ const twoFactorRateLimit = rateLimit({
   legacyHeaders: false,
   message: { error: "Trop de tentatives 2FA. Réessayez plus tard." }
 });
-// React preview is opt-in and only exists in the alternate React Docker image.
+// React preview remains available in the opt-in preview image used by CI/E2E.
 const reactPreviewRoot=path.join(__dirname,"../react-preview");
 app.use("/react-preview",express.static(reactPreviewRoot,{index:false,setHeaders:(res,filePath)=>{if(filePath.endsWith(".html"))res.setHeader("Cache-Control","no-store, max-age=0")}}));
 app.get(/^\/react-preview\/?$/,(req,res)=>res.sendFile(path.join(reactPreviewRoot,"index.html"),err=>{if(err&&!res.headersSent)res.status(404).json({error:"Aperçu React non disponible sur ce déploiement."})}));
-app.use(express.static(path.join(__dirname, "../public"), { setHeaders: (res, filePath) => { if(filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) res.setHeader("Cache-Control", "no-store, max-age=0"); } }));
-app.get(/^\/bot\/(shield|silver|gold|adaptive-ai|quant-pulse|macro-rotation)\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
-app.get(/^\/activite\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
-app.get(/^\/investir\/?$/, (req,res)=>res.sendFile(path.join(__dirname,"../public/index.html")));
-// Keep legacy public deep links functional; the application uses hash navigation.
-app.get(/^\/(?:bots|bots-ia|faq|portefeuille)\/?$/, (req,res)=>res.redirect(302, "/#"+({ bots:"bots", "bots-ia":"bots", faq:"faq", portefeuille:"dashboard" })[req.path.replace(/^\/|\/$/g,"")]));
+
+const legacyPublicRoot=path.join(__dirname,"../public");
+const reactAppRoot=path.join(__dirname,"../react-app");
+const requestedFrontendMode=String(process.env.FRONTEND_MODE||(isProduction?"react":"legacy")).trim().toLowerCase();
+const frontendMode=requestedFrontendMode==="legacy"?"legacy":"react";
+const noStoreStatic={index:false,setHeaders:(res,filePath)=>{if(filePath.endsWith(".html")||filePath.endsWith(".js")||filePath.endsWith(".css"))res.setHeader("Cache-Control","no-store, max-age=0")}};
+
+if(frontendMode==="react"){
+  app.use(express.static(reactAppRoot,noStoreStatic));
+  // Explicit rollback surface: legacy remains reachable for operational comparison.
+  app.use("/legacy",express.static(legacyPublicRoot,noStoreStatic));
+  app.get(/^\/legacy\/?$/,(req,res)=>res.sendFile(path.join(legacyPublicRoot,"index.html")));
+  const sendReact=(req,res)=>res.sendFile(path.join(reactAppRoot,"index.html"),err=>{if(err&&!res.headersSent)res.status(503).json({error:"Frontend React indisponible.",rollback:"Définir FRONTEND_MODE=legacy puis redéployer."})});
+  app.get(/^\/$/,sendReact);
+  app.get(/^\/(?:investir|activite|portefeuille|bots|bots-ia)\/?$/,sendReact);
+  app.get(/^\/bot\/(shield|silver|gold|adaptive-ai|quant-pulse|macro-rotation)\/?$/,(req,res)=>res.redirect(302,"/bots"));
+  app.get(/^\/faq\/?$/,(req,res)=>res.redirect(302,"/legacy/#faq"));
+}else{
+  app.use(express.static(legacyPublicRoot,{setHeaders:(res,filePath)=>{if(filePath.endsWith(".html")||filePath.endsWith(".js")||filePath.endsWith(".css"))res.setHeader("Cache-Control","no-store, max-age=0")}}));
+  app.get(/^\/bot\/(shield|silver|gold|adaptive-ai|quant-pulse|macro-rotation)\/?$/,(req,res)=>res.sendFile(path.join(legacyPublicRoot,"index.html")));
+  app.get(/^\/activite\/?$/,(req,res)=>res.sendFile(path.join(legacyPublicRoot,"index.html")));
+  app.get(/^\/investir\/?$/,(req,res)=>res.sendFile(path.join(legacyPublicRoot,"index.html")));
+  app.get(/^\/(?:bots|bots-ia|faq|portefeuille)\/?$/, (req,res)=>res.redirect(302, "/#"+({ bots:"bots", "bots-ia":"bots", faq:"faq", portefeuille:"dashboard" })[req.path.replace(/^\/|\/$/g,"")]));
+}
 
 const prices = { BTC: 67420.10, ETH: 3248.70, SOL: 154.20, USDC: 0.92, LINK: 17.84, AVAX: 28.16 };
 const marketIds = {
