@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 const preview = "/react-preview/?view=investir";
 
-test("React Investir shows EUR markets, crypto details, ranges and submits simulated buy through existing API", async ({ page }) => {
+test("React Investir shows EUR markets, crypto details, ranges and submits simulated buy and sell through existing API", async ({ page }) => {
   const market = {
     updatedAt: Date.now(),
     source: "CoinGecko",
@@ -44,10 +44,10 @@ test("React Investir shows EUR markets, crypto details, ranges and submits simul
     });
   });
 
-  let tradePayload = null;
+  const tradePayloads = [];
   let tradeAuth = "";
   await page.route("**/api/trades", async route => {
-    tradePayload = route.request().postDataJSON();
+    tradePayloads.push(route.request().postDataJSON());
     tradeAuth = route.request().headers().authorization || "";
     await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, tradeId: 77 }) });
   });
@@ -69,8 +69,14 @@ test("React Investir shows EUR markets, crypto details, ranges and submits simul
   await page.getByRole("button", { name: "Acheter en simulation" }).click();
 
   await expect(page.getByText("Ordre simulé enregistré")).toBeVisible();
-  expect(tradePayload).toEqual({ side: "buy", asset: "ETH", amount: 500 });
+  expect(tradePayloads[0]).toEqual({ side: "buy", asset: "ETH", amount: 500 });
   expect(tradeAuth).toBe("Bearer investir-e2e-token");
+
+  await page.getByRole("button", { name: "Vendre" }).click();
+  await expect(page.getByRole("button", { name: "Vendre en simulation" })).toBeVisible();
+  await page.getByRole("button", { name: "Vendre en simulation" }).click();
+  await expect(page.getByText("Vente simulée enregistrée")).toBeVisible();
+  expect(tradePayloads[1]).toEqual({ side: "sell", asset: "ETH", amount: 500 });
 });
 
 test("React Investir stays responsive on mobile without horizontal overflow", async ({ page, isMobile }) => {
