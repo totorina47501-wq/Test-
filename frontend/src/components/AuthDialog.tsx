@@ -1,4 +1,4 @@
-import {useEffect,useState,type FormEvent} from "react";
+import {useEffect,useRef,useState,type FormEvent,type KeyboardEvent} from "react";
 import {X} from "lucide-react";
 import {Button} from "./ui";
 import {useAuth} from "../auth/AuthContext";
@@ -7,17 +7,35 @@ type Mode="login"|"signup";
 const inputClass="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/20";
 export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
   const auth=useAuth();
+  const dialogRef=useRef<HTMLDivElement>(null);
+  const closeRef=useRef<HTMLButtonElement>(null);
+  const previousFocusRef=useRef<HTMLElement|null>(null);
   const [mode,setMode]=useState<Mode>("login");
   const [form,setForm]=useState({email:"",password:"",first_name:"",last_name:"",country:"France",city:"",postal_code:"",code:""});
   useEffect(()=>{if(open)auth.clearError()},[open]);
   useEffect(()=>{if(auth.status==="authenticated"&&open)onClose()},[auth.status,open,onClose]);
+  useEffect(()=>{
+    if(!open)return;
+    previousFocusRef.current=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    closeRef.current?.focus();
+    return ()=>{previousFocusRef.current?.focus();};
+  },[open]);
+  const onDialogKeyDown=(event:KeyboardEvent<HTMLDivElement>)=>{
+    if(event.key==="Escape"){event.stopPropagation();onClose();return;}
+    if(event.key!=="Tab")return;
+    const elements=Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')??[]).filter(el=>el.getClientRects().length>0);
+    if(!elements.length){event.preventDefault();return;}
+    const first=elements[0],last=elements[elements.length-1];
+    if(event.shiftKey&&(document.activeElement===first||!dialogRef.current?.contains(document.activeElement))){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&(document.activeElement===last||!dialogRef.current?.contains(document.activeElement))){event.preventDefault();first.focus();}
+  };
   if(!open)return null;
   const update=(key:string,value:string)=>setForm(v=>({...v,[key]:value}));
   const submit=async(e:FormEvent)=>{e.preventDefault();try{if(auth.status==="twoFactor"){await auth.verify2FA(form.code);return}if(mode==="login"){await auth.login(form.email,form.password)}else{await auth.signup({email:form.email,password:form.password,first_name:form.first_name,last_name:form.last_name,country:form.country,city:form.city,postal_code:form.postal_code})}}catch{}};
   const busy=auth.status==="authenticating";
   return <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" onMouseDown={e=>{if(e.currentTarget===e.target)onClose()}}>
-    <div role="dialog" aria-modal="true" aria-label="Authentification BitGold" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111419] p-5 shadow-2xl">
-      <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-emerald-300">Espace sécurisé</p><h2 className="mt-1 text-2xl font-bold">{auth.status==="twoFactor"?"Vérification en deux étapes":"Bienvenue sur BitGold"}</h2></div><button aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={onClose}><X size={20}/></button></div>
+    <div ref={dialogRef} onKeyDown={onDialogKeyDown} role="dialog" aria-modal="true" aria-label="Authentification BitGold" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111419] p-5 shadow-2xl">
+      <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-emerald-300">Espace sécurisé</p><h2 className="mt-1 text-2xl font-bold">{auth.status==="twoFactor"?"Vérification en deux étapes":"Bienvenue sur BitGold"}</h2></div><button ref={closeRef} type="button" aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={onClose}><X size={20}/></button></div>
       {auth.status!=="twoFactor"&&<div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1"><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="login"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("login");auth.clearError()}}>Connexion</button><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="signup"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("signup");auth.clearError()}}>Créer un compte</button></div>}
       <form className="mt-5 space-y-4" onSubmit={submit}>
         {auth.status==="twoFactor"?<>
