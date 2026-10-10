@@ -3,6 +3,8 @@ WORKDIR /frontend
 COPY frontend/package*.json ./
 RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
+ARG BITGOLD_BUILD_SHA=unknown
+ENV BITGOLD_BUILD_SHA=${BITGOLD_BUILD_SHA}
 ENV VITE_BASE_PATH=/
 RUN npm run build
 
