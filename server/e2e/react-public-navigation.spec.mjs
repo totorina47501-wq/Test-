@@ -5,7 +5,8 @@ test("public React navigation reaches Investir, bots and cockpit", async ({ page
   expect(home?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: /Explorez, comprenez et simulez avec BitGold/ })).toBeVisible();
 
-  const cockpit = page.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: /Cockpit/ });
+  const nav = page.getByRole("navigation", { name: "Navigation principale" });
+  const cockpit = nav.getByRole("link", { name: /Cockpit/ });
   await expect(cockpit).toHaveAttribute("href", "/#cockpit");
   await cockpit.click();
   await expect(page).toHaveURL(/\/#cockpit$/);
