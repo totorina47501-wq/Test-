@@ -54,7 +54,7 @@ export function useMarketDetail(symbol:string,range:string){
   return state;
 }
 
-export async function submitSimulatedTrade(token:string,asset:string,amount:number){
+export async function submitSimulatedTrade(token:string,side:"buy"|"sell",asset:string,amount:number){
   const response=await fetch("/api/trades",{
     method:"POST",
     headers:{
@@ -62,7 +62,7 @@ export async function submitSimulatedTrade(token:string,asset:string,amount:numb
       "Content-Type":"application/json",
       Accept:"application/json"
     },
-    body:JSON.stringify({side:"buy",asset,amount})
+    body:JSON.stringify({side,asset,amount})
   });
   return readJson<{ok:boolean;tradeId:number}>(response);
 }

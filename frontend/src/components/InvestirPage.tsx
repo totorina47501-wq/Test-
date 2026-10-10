@@ -29,6 +29,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   const [selected,setSelected]=useState("BTC");
   const [range,setRange]=useState("24h");
   const [amount,setAmount]=useState("500");
+  const [side,setSide]=useState<"buy"|"sell">("buy");
   const [tradeState,setTradeState]=useState<"idle"|"submitting"|"success"|"error">("idle");
   const [tradeMessage,setTradeMessage]=useState("");
   const detail=useMarketDetail(selected,range);
@@ -47,14 +48,14 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
     price:Number(point.price)
   })).filter(point=>Number.isFinite(point.price))??[],[detail.data]);
 
-  async function buy(){
+  async function submitTrade(){
     if(!auth.token){onAuth();return}
     if(!Number.isFinite(numericAmount)||numericAmount<=0||!selected)return;
     setTradeState("submitting");setTradeMessage("");
     try{
-      await submitSimulatedTrade(auth.token,selected,numericAmount);
+      await submitSimulatedTrade(auth.token,side,selected,numericAmount);
       setTradeState("success");
-      setTradeMessage("Ordre simulé enregistré");
+      setTradeMessage(side==="buy"?"Ordre simulé enregistré":"Vente simulée enregistrée");
     }catch(error){
       setTradeState("error");
       setTradeMessage(error instanceof Error?error.message:"Impossible d’enregistrer l’ordre simulé.");
@@ -124,8 +125,12 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
 
         <Card className="h-fit">
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">Simulateur</p>
-          <h2 className="mt-2 text-xl font-bold">Simuler un achat</h2>
+          <h2 className="mt-2 text-xl font-bold">Simuler une opération</h2>
           <p className="mt-2 text-sm leading-6 text-slate-400">L’ordre reste virtuel et utilise le moteur de trading simulé BitGold.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2" aria-label="Type d’opération">
+            <button type="button" aria-pressed={side==="buy"} onClick={()=>{setSide("buy");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="buy"?"border-emerald-400/40 bg-emerald-400/15 text-emerald-300":"border-white/10 text-slate-400"}`}>Acheter</button>
+            <button type="button" aria-pressed={side==="sell"} onClick={()=>{setSide("sell");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="sell"?"border-rose-400/40 bg-rose-400/15 text-rose-300":"border-white/10 text-slate-400"}`}>Vendre</button>
+          </div>
           <label className="mt-5 block text-sm font-medium" htmlFor="invest-amount">Montant en euros</label>
           <div className="mt-2 flex items-center rounded-xl border border-white/15 bg-black/20 px-3">
             <span className="text-slate-500">€</span>
@@ -136,7 +141,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
             <p className="mt-1 text-lg font-semibold">≈ {qty(estimated)} {selected}</p>
             <p className="mt-1 text-xs text-slate-500">{price>0?eur(price)+" / "+selected:"Cours indisponible"}</p>
           </div>
-          <Button className="mt-5 w-full" disabled={tradeState==="submitting"||!estimated} onClick={buy}>{tradeState==="submitting"?"Enregistrement…":auth.token?"Acheter en simulation":"Se connecter pour simuler"} <ArrowRight size={16}/></Button>
+          <Button className="mt-5 w-full" disabled={tradeState==="submitting"||!estimated} onClick={submitTrade}>{tradeState==="submitting"?"Enregistrement…":auth.token?(side==="buy"?"Acheter en simulation":"Vendre en simulation"):"Se connecter pour simuler"} <ArrowRight size={16}/></Button>
           {tradeMessage&&<p role={tradeState==="error"?"alert":"status"} className={`mt-3 text-sm ${tradeState==="error"?"text-rose-300":"text-emerald-300"}`}>{tradeMessage}</p>}
           <p className="mt-4 text-xs leading-5 text-slate-500">Aucun actif réel n’est acheté. Cette action modifie uniquement votre portefeuille de simulation.</p>
         </Card>
