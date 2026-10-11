@@ -1,3 +1,4 @@
+import {CryptoAssetMark} from "./CryptoAssetMark";
 import {BotBacktestPanel} from "./BotBacktestPanel";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
@@ -25,7 +26,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
     <Card>
       <h2 className="text-lg font-semibold">Positions</h2>
       {data.positions?.length?<div className="mt-4 space-y-3">{data.positions.map(position=><div key={position.asset} className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 pb-3">
-        <div><p className="font-semibold">{position.asset}</p><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div>
+        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><p className="font-semibold">{position.asset}</p><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
         <div className="text-right"><p className="font-semibold">{eur(Number(position.value||0))}</p><p className="text-xs text-slate-500">{eur(Number(position.price||0))} / unité</p></div>
       </div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucune position ouverte.</p>}
     </Card>
