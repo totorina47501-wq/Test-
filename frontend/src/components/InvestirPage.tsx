@@ -22,6 +22,12 @@ const names:Record<string,string>={
 const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
 const compact=(value:number)=>new Intl.NumberFormat("fr-FR",{notation:"compact",maximumFractionDigits:1}).format(value);
 const qty=(value:number)=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:8}).format(value);
+const formatChartTick=(timestamp:number,range:string)=>{
+  const date=new Date(timestamp);
+  if(range==="5m"||range==="1h"||range==="24h")return date.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  if(range==="1y"||range==="5y")return date.toLocaleDateString("fr-FR",{month:"short",year:"2-digit"});
+  return date.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
+};
 
 export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   const auth=useAuth();
@@ -112,7 +118,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
           {detail.status==="ready"&&chartData.length>1?<div className="mt-5 h-72 min-w-0" role="img" aria-label={`Courbe ${selected} ${range}`}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
-                <XAxis dataKey="timestamp" type="number" domain={["dataMin","dataMax"]} tickFormatter={(value)=>new Date(Number(value)).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"})} tick={{fill:"#94a3b8",fontSize:11}}/>
+                <XAxis dataKey="timestamp" type="number" domain={["dataMin","dataMax"]} tickFormatter={(value)=>formatChartTick(Number(value),range)} tick={{fill:"#94a3b8",fontSize:11}}/>
                 <YAxis domain={["auto","auto"]} tickFormatter={(value)=>eur(Number(value))} width={82} tick={{fill:"#94a3b8",fontSize:10}}/>
                 <Tooltip labelFormatter={(value)=>new Date(Number(value)).toLocaleString("fr-FR")} formatter={(value:number)=>[eur(Number(value)),"Cours"]}/>
                 <Area type="monotone" dataKey="price" stroke="#34d399" fill="#34d399" fillOpacity={.08}/>
