@@ -86,6 +86,25 @@ function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDe
   </Card>;
 }
 
+
+function BotScenarioPreview({bot}:{bot:BotDefinition}){
+  const [cashPct,setCashPct]=useState(40);
+  const budget=bot.id==="shield"?25:bot.id==="silver"?45:bot.id==="gold"?65:null;
+  if(budget===null)return null;
+  const invested=10000*(100-cashPct)/100;
+  const scenarios=[{name:"Hausse rapide",shock:15},{name:"Chute brutale",shock:-25},{name:"Marché stable",shock:0}];
+  return <Card className="border-emerald-400/20">
+    <Badge>Strategy DNA · Laboratoire</Badge>
+    <h3 className="mt-3 text-xl font-bold">Tester {bot.name} avant activation</h3>
+    <p className="mt-2 text-sm text-slate-400">Projection pédagogique d'un portefeuille fictif de 10 000 €. Ce test ne déclenche aucun ordre.</p>
+    <label className="mt-4 block text-sm" htmlFor="bot-lab-cash">Réserve de liquidités : {cashPct} %</label>
+    <input id="bot-lab-cash" aria-label="Liquidités du laboratoire" type="range" min="0" max="100" step="5" value={cashPct} onChange={event=>setCashPct(Number(event.target.value))} className="mt-2 w-full accent-emerald-400"/>
+    <div className="mt-4 grid gap-3 sm:grid-cols-3">{scenarios.map(s=><div key={s.name} className="rounded-xl border border-white/10 bg-black/20 p-3"><p className="text-sm text-slate-400">{s.name} ({s.shock>0?"+":""}{s.shock} %)</p><p className="mt-2 text-lg font-bold">{eur(10000+invested*s.shock/100)}</p></div>)}</div>
+    {(100-cashPct)>budget&&<p role="status" className="mt-3 text-sm text-amber-300">Exposition de {100-cashPct} % supérieure au profil indicatif {bot.name} ({budget} %).</p>}
+    <p className="mt-3 text-xs text-slate-500">Hypothèses : choc uniforme, liquidités inchangées, sans frais ni rééquilibrage. Ni prévision, ni backtest, ni conseil financier.</p>
+  </Card>;
+}
+
 function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccountData>["bots"]["data"];token:string;reload:()=>void;onExpired:()=>void}){
   const [selected,setSelected]=useState<BotDefinition|null>(null);
   const [message,setMessage]=useState("");
@@ -101,6 +120,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
       <div className="mt-4 space-y-1 text-xs text-slate-500"><p>Risque : {bot.risk}</p><p>Allocation cible : {bot.allocation} %</p><p>Actifs : {bot.compatible_assets?.join(", ")}</p>{sub&&<p>Limite ordre : {eur(Number(sub.max_trade_eur||0))}</p>}</div>
       <Button variant="secondary" className="mt-5" onClick={()=>setSelected(bot)} aria-label={`Configurer ${bot.name}`}>Configurer</Button>
     </Card>})}</div>
+    {selected&&<BotScenarioPreview bot={selected}/>}
     {selected&&<BotConfig bot={selected} subscription={subscriptions.get(selected.id)} token={token} onExpired={onExpired} onDone={done} onCancel={()=>setSelected(null)}/>}
     <StrategyCompare bots={data.catalog||[]}/>
   </section>;
