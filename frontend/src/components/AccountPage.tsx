@@ -1,3 +1,4 @@
+import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
 import {Badge,Button,Card} from "./ui";
@@ -134,6 +135,7 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
   if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous depuis l’accueil pour accéder à votre espace privé.</p><Button className="mt-4" onClick={onBack}>Retour à l’accueil</Button></Card></main>;
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
     <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400"><ArrowLeft size={16}/> Retour au cockpit</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> Actualiser</Button></div>
+    <ReactOnboarding/>
     <nav aria-label="Espace connecté" className="flex max-w-full flex-wrap gap-2 rounded-2xl border border-white/10 bg-[#15171b]/80 p-2">
       <button type="button" onClick={()=>setTab("portfolio")} aria-current={tab==="portfolio"?"page":undefined} aria-pressed={tab==="portfolio"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="portfolio"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Wallet size={16}/> Portefeuille</button>
       <button type="button" onClick={()=>setTab("activity")} aria-current={tab==="activity"?"page":undefined} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="activity"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Activity size={16}/> Activités</button>
