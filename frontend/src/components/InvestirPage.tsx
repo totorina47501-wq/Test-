@@ -64,6 +64,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
     setTradeState("submitting");setTradeMessage("");
     try{
       await submitSimulatedTrade(auth.token,side,selected,numericAmount);
+      market.reload();
       setTradeState("success");
       setTradeMessage(side==="buy"?"Ordre simulé enregistré":"Vente simulée enregistrée");
     }catch(error){
