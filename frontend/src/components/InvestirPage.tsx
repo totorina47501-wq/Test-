@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {ArrowLeft,ArrowRight,RefreshCw,TrendingDown,TrendingUp} from "lucide-react";
 import {Area,AreaChart,ResponsiveContainer,Tooltip,XAxis,YAxis} from "recharts";
 import {Badge,Button,Card} from "./ui";
@@ -39,6 +39,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   const [side,setSide]=useState<"buy"|"sell">("buy");
   const [tradeState,setTradeState]=useState<"idle"|"submitting"|"success"|"error">("idle");
   const [tradeMessage,setTradeMessage]=useState("");
+  const tradePending=useRef(false);
   const detail=useMarketDetail(selected,range);
 
   useEffect(()=>{
@@ -61,7 +62,8 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
 
   async function submitTrade(){
     if(!auth.token){onAuth();return}
-    if(tradeState==="submitting"||!Number.isFinite(numericAmount)||numericAmount<=0||!selected||price<=0)return;
+    if(tradePending.current||!Number.isFinite(numericAmount)||numericAmount<=0||!selected||price<=0)return;
+    tradePending.current=true;
     const submittedSide=side;
     const submittedAsset=selected;
     setTradeState("submitting");setTradeMessage("");
@@ -75,6 +77,8 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
       if(error instanceof TradeSessionExpiredError)auth.expireSession();
       setTradeState("error");
       setTradeMessage(error instanceof Error?error.message:"Impossible d’enregistrer l’ordre simulé.");
+    }finally{
+      tradePending.current=false;
     }
   }
 

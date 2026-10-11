@@ -148,3 +148,38 @@ test("React Investir uses time labels for short chart ranges", async ({ page }) 
   await expect(page.getByRole("img", { name: "Courbe BTC 5m" })).toBeVisible();
   await expect(page.locator(".recharts-xAxis")).toContainText(/\d{2}:\d{2}/);
 });
+
+
+test("React Investir prevents duplicate orders while the first request is pending", async ({ page }) => {
+  await page.route("**/api/market", route => route.fulfill({contentType:"application/json",body:JSON.stringify({markets:[{symbol:"BTC",price:68000,change24h:1}]})}));
+  await page.route("**/api/market/details/*", route => route.fulfill({contentType:"application/json",body:JSON.stringify({symbol:"BTC",name:"Bitcoin",price:68000,history:{range:"24h",points:[]}})}));
+  let requests=0;
+  let release;
+  const pending=new Promise(resolve=>{release=resolve});
+  await page.route("**/api/trades",async route=>{
+    requests++;
+    await pending;
+    await route.fulfill({status:201,contentType:"application/json",body:JSON.stringify({ok:true,tradeId:88})});
+  });
+  await page.addInitScript(()=>localStorage.setItem("bitgold-token","investir-e2e-token"));
+  await page.goto(preview);
+  const submit=page.getByRole("button",{name:"Acheter en simulation"});
+  await expect(submit).toBeEnabled();
+  await submit.dblclick({force:true});
+  await expect(page.getByRole("button",{name:/Enregistrement/})).toBeDisabled();
+  expect(requests).toBe(1);
+  release();
+  await expect(page.getByRole("status")).toContainText("Achat simulé(e) de BTC enregistré(e)");
+  expect(requests).toBe(1);
+});
+
+test("React Investir reports rejected trades without claiming success", async ({ page }) => {
+  await page.route("**/api/market", route => route.fulfill({contentType:"application/json",body:JSON.stringify({markets:[{symbol:"BTC",price:68000,change24h:1}]})}));
+  await page.route("**/api/market/details/*", route => route.fulfill({contentType:"application/json",body:JSON.stringify({symbol:"BTC",name:"Bitcoin",price:68000,history:{range:"24h",points:[]}})}));
+  await page.route("**/api/trades",route=>route.fulfill({status:400,contentType:"application/json",body:JSON.stringify({error:"Solde insuffisant"})}));
+  await page.addInitScript(()=>localStorage.setItem("bitgold-token","investir-e2e-token"));
+  await page.goto(preview);
+  await page.getByRole("button",{name:"Acheter en simulation"}).click();
+  await expect(page.getByRole("alert")).toContainText("Solde insuffisant");
+  await expect(page.getByRole("link",{name:"Voir mon portefeuille"})).toHaveCount(0);
+});
