@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 
 const prod = process.env.BITGOLD_PROD_URL || "https://p01--service-bitgold--dvn9t2gvmtgx.code.run";
 test.use({
@@ -30,6 +31,12 @@ test("production authenticated account is readable without mutations", async ({ 
   await expect(page.getByRole("button", { name: "Se déconnecter" })).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole("region", { name: "Cockpit connecté" })).toBeVisible();
   await expect(page.getByText("Solde total").first()).toBeVisible();
+  const capture = process.env.BITGOLD_CAPTURE_AUTH === "true";
+  const dest = "test-results/auth-showcase";
+  if (capture) {
+    await mkdir(dest, { recursive: true });
+    await page.screenshot({ path: dest + "/cockpit-" + test.info().project.name + ".png", animations: "disabled" });
+  }
 
   for (const [url, heading] of [
     ["/portefeuille", "Portefeuille"],
@@ -39,6 +46,9 @@ test("production authenticated account is readable without mutations", async ({ 
     const response = await page.goto(url, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    if (capture && ["/portefeuille", "/bots"].includes(url)) {
+      await page.screenshot({ path: dest + "/" + url.slice(1) + "-" + test.info().project.name + ".png", animations: "disabled" });
+    }
   }
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
   // Validate the real authenticated bot configuration preview without activating a bot.
