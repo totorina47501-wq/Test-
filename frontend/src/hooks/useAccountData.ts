@@ -9,27 +9,31 @@ export type BotSubscription={bot_type:string;active:boolean;max_trade_eur:number
 export type BotsData={catalog:BotDefinition[];items:BotSubscription[];activity:BotLog[];plan:{plan:string}};
 export type ActivityData={trades:Trade[];botLogs:BotLog[]};
 
+export class SessionExpiredError extends Error { constructor(){super("Session expirée. Reconnectez-vous.");this.name="SessionExpiredError"} }
 type State<T>={status:"loading"|"ready"|"error";data?:T;error?:string};
 
 async function api<T>(path:string,token:string,init:RequestInit={}):Promise<T>{
   const response=await fetch(path,{...init,headers:{Accept:"application/json",Authorization:`Bearer ${token}`,...(init.headers||{})}});
   const body=await response.json().catch(()=>({}));
+  if(response.status===401)throw new SessionExpiredError();
   if(!response.ok)throw new Error(typeof body.error==="string"?body.error:`Erreur API (${response.status})`);
   return body as T;
 }
 
-export function useAccountData(token:string){
+export function useAccountData(token:string,onExpired:()=>void){
   const [portfolio,setPortfolio]=useState<State<Portfolio>>({status:"loading"});
   const [activity,setActivity]=useState<State<ActivityData>>({status:"loading"});
   const [bots,setBots]=useState<State<BotsData>>({status:"loading"});
 
   const reload=useCallback(()=>{
     if(!token)return;
+    let expired=false;
+    const handleError=(e:unknown)=>{if(e instanceof SessionExpiredError&&!expired){expired=true;onExpired()}return e instanceof Error?e.message:"Données indisponibles"};
     setPortfolio(previous=>previous.data?previous:{status:"loading"});setActivity(previous=>previous.data?previous:{status:"loading"});setBots(previous=>previous.data?previous:{status:"loading"});
-    api<Portfolio>("/api/portfolio",token).then(data=>setPortfolio({status:"ready",data})).catch((e:unknown)=>setPortfolio({status:"error",error:e instanceof Error?e.message:"Erreur portefeuille"}));
-    api<ActivityData>("/api/activity",token).then(data=>setActivity({status:"ready",data})).catch((e:unknown)=>setActivity({status:"error",error:e instanceof Error?e.message:"Erreur activités"}));
-    api<BotsData>("/api/bots",token).then(data=>setBots({status:"ready",data})).catch((e:unknown)=>setBots({status:"error",error:e instanceof Error?e.message:"Erreur bots"}));
-  },[token]);
+    api<Portfolio>("/api/portfolio",token).then(data=>setPortfolio({status:"ready",data})).catch((e:unknown)=>setPortfolio({status:"error",error:handleError(e)}));
+    api<ActivityData>("/api/activity",token).then(data=>setActivity({status:"ready",data})).catch((e:unknown)=>setActivity({status:"error",error:handleError(e)}));
+    api<BotsData>("/api/bots",token).then(data=>setBots({status:"ready",data})).catch((e:unknown)=>setBots({status:"error",error:handleError(e)}));
+  },[token,onExpired]);
 
   useEffect(()=>{reload()},[reload]);
   return {portfolio,activity,bots,reload};

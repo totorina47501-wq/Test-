@@ -2,7 +2,7 @@ import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
 import {Badge,Button,Card} from "./ui";
 import {useAuth} from "../auth/AuthContext";
-import {activateBot,deactivateBot,useAccountData,type BotDefinition,type BotSubscription} from "../hooks/useAccountData";
+import {SessionExpiredError,activateBot,deactivateBot,useAccountData,type BotDefinition,type BotSubscription} from "../hooks/useAccountData";
 
 type Tab="portfolio"|"activity"|"bots";
 const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
@@ -51,7 +51,7 @@ function StrategyCompare({bots}:{bots:BotDefinition[]}){
   </Card>;
 }
 
-function BotConfig({bot,subscription,token,onDone,onCancel}:{bot:BotDefinition;subscription?:BotSubscription;token:string;onDone:(message:string)=>void;onCancel:()=>void}){
+function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDefinition;subscription?:BotSubscription;token:string;onDone:(message:string)=>void;onCancel:()=>void;onExpired:()=>void}){
   const [maxTrade,setMaxTrade]=useState(String(subscription?.max_trade_eur??(bot.id==="shield"?250:1000)));
   const [maxPosition,setMaxPosition]=useState(String(subscription?.max_position_eur??5000));
   const [stopLoss,setStopLoss]=useState(String(subscription?.stop_loss_pct??5));
@@ -63,11 +63,11 @@ function BotConfig({bot,subscription,token,onDone,onCancel}:{bot:BotDefinition;s
     try{
       await activateBot(token,{botType:bot.id,maxTradeEur:Number(maxTrade),maxPositionEur:Number(maxPosition),stopLossPct:Number(stopLoss),minCashPct:Number(minCash)});
       onDone(`${bot.name} activé en simulation`);
-    }catch(e){setError(e instanceof Error?e.message:"Activation impossible.");setBusy(false)}
+    }catch(e){if(e instanceof SessionExpiredError)onExpired();setError(e instanceof Error?e.message:"Activation impossible.");setBusy(false)}
   }
   async function remove(){
     setBusy(true);setError("");
-    try{await deactivateBot(token,bot.id);onDone(`${bot.name} désactivé`)}catch(e){setError(e instanceof Error?e.message:"Désactivation impossible.");setBusy(false)}
+    try{await deactivateBot(token,bot.id);onDone(`${bot.name} désactivé`)}catch(e){if(e instanceof SessionExpiredError)onExpired();setError(e instanceof Error?e.message:"Désactivation impossible.");setBusy(false)}
   }
   return <Card className="border-violet-400/20">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><Badge>{bot.tier}</Badge><h3 className="mt-2 text-xl font-bold">Configurer {bot.name}</h3><p className="mt-1 text-sm text-slate-400">{bot.summary}</p></div><button type="button" onClick={onCancel} className="text-sm text-slate-400 hover:text-white">Fermer</button></div>
@@ -82,7 +82,7 @@ function BotConfig({bot,subscription,token,onDone,onCancel}:{bot:BotDefinition;s
   </Card>;
 }
 
-function BotsView({data,token,reload}:{data:ReturnType<typeof useAccountData>["bots"]["data"];token:string;reload:()=>void}){
+function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccountData>["bots"]["data"];token:string;reload:()=>void;onExpired:()=>void}){
   const [selected,setSelected]=useState<BotDefinition|null>(null);
   const [message,setMessage]=useState("");
   const subscriptions=useMemo(()=>new Map((data?.items||[]).map(item=>[item.bot_type,item])),[data]);
@@ -97,7 +97,7 @@ function BotsView({data,token,reload}:{data:ReturnType<typeof useAccountData>["b
       <div className="mt-4 space-y-1 text-xs text-slate-500"><p>Risque : {bot.risk}</p><p>Allocation cible : {bot.allocation} %</p><p>Actifs : {bot.compatible_assets?.join(", ")}</p>{sub&&<p>Limite ordre : {eur(Number(sub.max_trade_eur||0))}</p>}</div>
       <Button variant="secondary" className="mt-5" onClick={()=>setSelected(bot)} aria-label={`Configurer ${bot.name}`}>Configurer</Button>
     </Card>})}</div>
-    {selected&&<BotConfig bot={selected} subscription={subscriptions.get(selected.id)} token={token} onDone={done} onCancel={()=>setSelected(null)}/>}
+    {selected&&<BotConfig bot={selected} subscription={subscriptions.get(selected.id)} token={token} onExpired={onExpired} onDone={done} onCancel={()=>setSelected(null)}/>}
     <StrategyCompare bots={data.catalog||[]}/>
   </section>;
 }
@@ -105,9 +105,9 @@ function BotsView({data,token,reload}:{data:ReturnType<typeof useAccountData>["b
 export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onBack:()=>void}){
   const auth=useAuth();
   const [tab,setTab]=useState<Tab>(initialTab);
-  const {portfolio,activity,bots,reload}=useAccountData(auth.token);
+  const {portfolio,activity,bots,reload}=useAccountData(auth.token,auth.expireSession);
   useEffect(()=>setTab(initialTab),[initialTab]);
-  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">Connexion requise</h1><p className="mt-2 text-slate-400">Connectez-vous pour accéder à votre espace privé.</p></Card></main>;
+  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous pour accéder à votre espace privé.</p></Card></main>;
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
     <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400"><ArrowLeft size={16}/> Retour au cockpit</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> Actualiser</Button></div>
     <nav aria-label="Espace connecté" className="flex max-w-full flex-wrap gap-2 rounded-2xl border border-white/10 bg-[#15171b]/80 p-2">
@@ -117,7 +117,7 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
     </nav>
     {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
     {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
-    {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload}/>)}
+    {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload} onExpired={auth.expireSession}/>)}
     <p className="text-center text-xs text-slate-500">Simulation uniquement · aucun ordre ou investissement réel.</p>
   </main>;
 }
