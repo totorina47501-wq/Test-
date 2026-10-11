@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 
 const preview = "/react-preview/";
 
@@ -75,4 +76,11 @@ test("authenticated React cockpit exposes OHLC ranges and recent simulated trans
   await expect(page.getByRole("heading", { name: "Transactions récentes" })).toBeVisible();
   await expect(page.getByText("Achat BTC")).toBeVisible();
   await expect(page.getByText("Vente ETH")).toBeVisible();
+  // Actual React UI with deterministic isolated E2E simulation fixtures.
+  const captureDir = "test-results/react-demo-showcase";
+  await mkdir(captureDir, { recursive: true });
+  await page.screenshot({ path: captureDir + "/cockpit-desktop.png", animations: "disabled" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("heading", { name: "Marché BTC" })).toBeVisible();
+  await page.screenshot({ path: captureDir + "/cockpit-mobile.png", animations: "disabled" });
 });
