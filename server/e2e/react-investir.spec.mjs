@@ -122,3 +122,27 @@ test("React Investir safely handles invalid historical chart points", async ({ p
   await expect(page.getByText("Historique insuffisant pour cette période.")).toBeVisible();
   await expect(page.getByRole("img", { name: /Courbe BTC/ })).toHaveCount(0);
 });
+
+
+test("React Investir uses time labels for short chart ranges", async ({ page }) => {
+  await page.route("**/api/market", route => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ markets: [{ symbol: "BTC", price: 68000, change24h: 1.2 }] })
+  }));
+  await page.route("**/api/market/details/*", route => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({
+      symbol: "BTC", name: "Bitcoin", price: 68000, change24h: 1.2,
+      history: { range: "5m", label: "5 min", points: [
+        { timestamp: 1791622800000, price: 67500 },
+        { timestamp: 1791622860000, price: 68000 },
+        { timestamp: 1791622920000, price: 67800 },
+        { timestamp: 1791622980000, price: 67900 }
+      ] }
+    })
+  }));
+  await page.goto(preview);
+  await page.getByRole("button", { name: "5 min" }).click();
+  await expect(page.getByRole("img", { name: "Courbe BTC 5m" })).toBeVisible();
+  await expect(page.locator(".recharts-xAxis")).toContainText(/\d{2}:\d{2}/);
+});
