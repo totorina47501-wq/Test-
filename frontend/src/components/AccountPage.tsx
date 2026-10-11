@@ -1,4 +1,5 @@
 import {CryptoAssetMark} from "./CryptoAssetMark";
+import {PieChart,Pie,Cell,ResponsiveContainer,Tooltip} from "recharts";
 import {BotBacktestPanel} from "./BotBacktestPanel";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
@@ -23,6 +24,20 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
       <Card><p className="text-sm text-slate-400">Liquidités</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.cash||0))}</p></Card>
       <Card><p className="text-sm text-slate-400">Investi</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.invested||0))}</p></Card>
     </div>
+    {data.positions?.length? <Card>
+      <h2 className="text-lg font-semibold">Répartition du portefeuille virtuel</h2>
+      <p className="mt-1 text-xs text-slate-400">Répartition calculée à partir de vos positions simulées et de vos liquidités.</p>
+      <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr] md:items-center">
+        <div className="h-52 min-w-0" role="img" aria-label="Graphique de répartition du portefeuille simulé">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart><Pie data={[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0)} dataKey="value" nameKey="name" innerRadius={54} outerRadius={84} paddingAngle={2} stroke="none">
+              {[...data.positions,{asset:"Liquidités"}].map((p,i)=><Cell key={p.asset} fill={["#34d399","#60a5fa","#a78bfa","#fbbf24","#fb7185","#2dd4bf"][i%6]}/>)}
+            </Pie><Tooltip formatter={(value:number)=>eur(Number(value))}/></PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="space-y-2">{[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0).map((p,i)=><div key={p.name} className="flex items-center justify-between gap-3 text-sm"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{background:["#34d399","#60a5fa","#a78bfa","#fbbf24","#fb7185","#2dd4bf"][i%6]}}/>{p.name}</span><strong>{eur(p.value)}</strong></div>)}</div>
+      </div>
+    </Card>:null}
     <Card>
       <h2 className="text-lg font-semibold">Positions</h2>
       {data.positions?.length?<div className="mt-4 space-y-3">{data.positions.map(position=><div key={position.asset} className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 pb-3">
