@@ -25,7 +25,24 @@ export function volatility(points){const v=series(points).map(p=>p.price);if(v.l
 export function trend(points){const v=series(points).map(p=>p.price);if(v.length<6)return 0;const half=Math.floor(v.length/2);const fast=mean(v.slice(-half)),slow=mean(v.slice(0,half));return slow?((fast/slow)-1)*100:0}
 export function maxDrawdown(points){const v=series(points).map(p=>p.price);let peak=0,best=0;for(const price of v){peak=Math.max(peak,price);if(peak>0)best=Math.max(best,(peak-price)/peak*100)}return best}
 export function ema(points,period=12){const prices=series(points).map(p=>p.price);if(!Number.isInteger(period)||period<2||prices.length<period)return null;let result=prices.slice(0,period).reduce((a,b)=>a+b,0)/period;const alpha=2/(period+1);for(let i=period;i<prices.length;i++)result=alpha*prices[i]+(1-alpha)*result;return result}
-export function macd(points){const prices=series(points);if(prices.length<34)return{value:null,signal:null,histogram:null};const values=[];for(let i=26;i<=prices.length;i++){const subset=prices.slice(0,i);values.push(ema(subset,12)-ema(subset,26))}let signal=values.slice(0,9).reduce((a,b)=>a+b,0)/9;for(let i=9;i<values.length;i++)signal=.2*values[i]+.8*signal;const value=values.at(-1);return{value,signal,histogram:value-signal}}
+export function macd(points){
+ const prices=series(points);
+ if(prices.length<34)return{value:null,signal:null,histogram:null};
+ // Streaming EMAs replace repeated prefix slicing and recomputation (quadratic work).
+ let fast=0,slow=0,signal=0,signalCount=0,value=0;
+ for(let i=0;i<prices.length;i++){
+  const price=prices[i].price;
+  if(i<12)fast+=price;
+  else if(i===12)fast=fast/12+(price-fast/12)*(2/13);
+  else fast+= (price-fast)*(2/13);
+  if(i<26){slow+=price;if(i===25)slow/=26;continue}
+  slow+=(price-slow)*(2/27);
+  value=fast-slow;
+  if(signalCount<9){signal+=value;signalCount++;if(signalCount===9)signal/=9}
+  else signal=.2*value+.8*signal;
+ }
+ return{value,signal,histogram:value-signal};
+}
 export function buildAssetFeatures(marketRow,history){const h=series(history);const m7=momentum(h),tr=trend(h),vol=volatility(h),rs=rsi(h);const day=finite(marketRow?.change24h);const technical=macd(h);return{ema12:ema(h,12),ema26:ema(h,26),macd:technical.value,macdSignal:technical.signal,macdHistogram:technical.histogram,price:finite(marketRow?.price),change24h:day,momentum7d:m7,trend:tr,volatility:vol,rsi:rs,maxDrawdown:maxDrawdown(h),historyPoints:h.length}}
 export function detectRegime(market,features){const btc=market.find(x=>x.symbol==="BTC"),eth=market.find(x=>x.symbol==="ETH");const bf=features.BTC||{},ef=features.ETH||{};const btcDay=finite(btc?.change24h),ethDay=finite(eth?.change24h);const vol=mean([finite(bf.volatility),finite(ef.volatility)]);const score=mean([btcDay/3,ethDay/3,bf.momentum7d/8,ef.momentum7d/8]);if(score>0.9&&vol<6)return{name:"bullish",score:clamp(0.5+score*.15,0,1),label:"Bullish"};if(score<-0.8||vol>9&&score<0)return{name:"risk-off",score:clamp(0.5+score*.15,0,1),label:"Risk-Off"};if(vol>9)return{name:"high-volatility",score:0.5,label:"High Volatility"};return{name:"range",score:clamp(0.5+score*.12,0,1),label:"Range"}}
 export function forecast(feature){const momentumScore=clamp((feature.momentum7d+12)/24,0,1);const trendScore=clamp((feature.trend+8)/16,0,1);const dayScore=clamp((feature.change24h+6)/12,0,1);const rsiScore=feature.rsi<30?0.72:feature.rsi>78?0.28:clamp(1-Math.abs(feature.rsi-52)/70,0,1);const volPenalty=clamp(feature.volatility/12,0,1)*.18;const macdBias=Number.isFinite(feature.macdHistogram)&&feature.price>0?clamp(feature.macdHistogram/feature.price*100,-2,2)*.025:0;const score=clamp(.32*momentumScore+.28*trendScore+.22*dayScore+.18*rsiScore+macdBias-volPenalty,0,1);return{score,upProbability:clamp(.5+(score-.5)*1.25,0,1)}}
