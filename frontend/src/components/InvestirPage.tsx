@@ -1,3 +1,4 @@
+import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {ArrowLeft,ArrowRight,RefreshCw,TrendingDown,TrendingUp} from "lucide-react";
 import {Area,AreaChart,ResponsiveContainer,Tooltip,XAxis,YAxis} from "recharts";
@@ -82,7 +83,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
     }
   }
 
-  return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
+  return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">{auth.status==="authenticated"&&<ReactOnboarding/>}
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Retour au cockpit</button>
