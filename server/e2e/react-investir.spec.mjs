@@ -68,14 +68,16 @@ test("React Investir shows EUR markets, crypto details, ranges and submits simul
   await expect(page.getByText(/≈ 0,147/)).toBeVisible();
   await page.getByRole("button", { name: "Acheter en simulation" }).click();
 
-  await expect(page.getByText("Ordre simulé enregistré")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Achat simulé(e) de ETH enregistré(e)");
+  await expect(page.getByRole("link", { name: "Voir mon portefeuille" })).toHaveAttribute("href", "/portefeuille");
+  await expect(page.getByRole("link", { name: "Voir mes activités" })).toHaveAttribute("href", "/activite");
   expect(tradePayloads[0]).toEqual({ side: "buy", asset: "ETH", amount: 500 });
   expect(tradeAuth).toBe("Bearer investir-e2e-token");
 
   await page.getByRole("button", { name: "Vendre" }).click();
   await expect(page.getByRole("button", { name: "Vendre en simulation" })).toBeVisible();
   await page.getByRole("button", { name: "Vendre en simulation" }).click();
-  await expect(page.getByText("Vente simulée enregistrée")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Vente simulé(e) de ETH enregistré(e)");
   expect(tradePayloads[1]).toEqual({ side: "sell", asset: "ETH", amount: 500 });
 });
 
