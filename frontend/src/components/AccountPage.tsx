@@ -58,7 +58,10 @@ function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDe
   const [minCash,setMinCash]=useState(String(subscription?.min_cash_pct??20));
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
+  const limits=[Number(maxTrade),Number(maxPosition),Number(stopLoss),Number(minCash)];
+  const validLimits=limits.every(Number.isFinite)&&limits[0]>0&&limits[1]>0&&limits[0]<=limits[1]&&limits[2]>=0&&limits[2]<=100&&limits[3]>=0&&limits[3]<=100;
   async function activate(){
+    if(!validLimits){setError("Vérifiez les limites configurées.");return}
     setBusy(true);setError("");
     try{
       await activateBot(token,{botType:bot.id,maxTradeEur:Number(maxTrade),maxPositionEur:Number(maxPosition),stopLossPct:Number(stopLoss),minCashPct:Number(minCash)});
@@ -77,7 +80,8 @@ function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDe
       <label className="text-sm">Stop loss (%)<input aria-label="Stop loss" value={stopLoss} onChange={e=>setStopLoss(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 outline-none focus:border-emerald-400/50"/></label>
       <label className="text-sm">Cash minimum (%)<input aria-label="Cash minimum" value={minCash} onChange={e=>setMinCash(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 outline-none focus:border-emerald-400/50"/></label>
     </div>
-    <div className="mt-5 flex flex-wrap gap-3"><Button disabled={busy} onClick={activate}>{busy?"Enregistrement…":`Activer ${bot.name}`}</Button>{subscription?.active&&<Button variant="secondary" disabled={busy} onClick={remove}>Désactiver</Button>}</div>
+    <div className="mt-5 flex flex-wrap gap-3"><Button disabled={busy||!validLimits} onClick={activate}>{busy?"Enregistrement…":`Activer ${bot.name}`}</Button>{subscription?.active&&<Button variant="secondary" disabled={busy} onClick={remove}>Désactiver</Button>}</div>
+    {!validLimits&&<p role="alert" className="mt-3 text-sm text-amber-300">Ordre et position positifs, ordre inférieur ou égal à la position, pourcentages entre 0 et 100.</p>}
     {error&&<p role="alert" className="mt-3 text-sm text-rose-300">{error}</p>}
   </Card>;
 }
@@ -107,13 +111,13 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
   const [tab,setTab]=useState<Tab>(initialTab);
   const {portfolio,activity,bots,reload}=useAccountData(auth.token,auth.expireSession);
   useEffect(()=>setTab(initialTab),[initialTab]);
-  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous pour accéder à votre espace privé.</p></Card></main>;
+  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous depuis l’accueil pour accéder à votre espace privé.</p><Button className="mt-4" onClick={onBack}>Retour à l’accueil</Button></Card></main>;
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
     <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400"><ArrowLeft size={16}/> Retour au cockpit</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> Actualiser</Button></div>
     <nav aria-label="Espace connecté" className="flex max-w-full flex-wrap gap-2 rounded-2xl border border-white/10 bg-[#15171b]/80 p-2">
-      <button type="button" onClick={()=>setTab("portfolio")} aria-pressed={tab==="portfolio"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="portfolio"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Wallet size={16}/> Portefeuille</button>
-      <button type="button" onClick={()=>setTab("activity")} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="activity"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Activity size={16}/> Activités</button>
-      <button type="button" onClick={()=>setTab("bots")} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="bots"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Bot size={16}/> Bots IA</button>
+      <button type="button" onClick={()=>setTab("portfolio")} aria-current={tab==="portfolio"?"page":undefined} aria-pressed={tab==="portfolio"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="portfolio"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Wallet size={16}/> Portefeuille</button>
+      <button type="button" onClick={()=>setTab("activity")} aria-current={tab==="activity"?"page":undefined} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="activity"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Activity size={16}/> Activités</button>
+      <button type="button" onClick={()=>setTab("bots")} aria-current={tab==="bots"?"page":undefined} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${tab==="bots"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Bot size={16}/> Bots IA</button>
     </nav>
     {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
     {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
