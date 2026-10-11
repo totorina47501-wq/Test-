@@ -1,24 +1,34 @@
-# BitGold React — déploiement progressif
+# BitGold React — interface de production
 
-Le site historique reste à la racine `/`. Le cockpit React est un aperçu en lecture seule accessible sur `/react-preview/` **uniquement** avec l'image Docker optionnelle.
+React (Vite/TypeScript) est l'interface principale de BitGold en production. L'image `server/Dockerfile` construit le frontend React et le sert à la racine `/` avec `FRONTEND_MODE=react` par défaut. Le frontend historique reste présent pour un éventuel rollback contrôlé.
 
 ## Développement
+
 ```sh
 cd frontend
-npm install
+npm ci
 npm run build
 npm run dev
 ```
+
 Le serveur Vite redirige les appels `/api` vers Express sur le port 3000.
 
-## Image de prévisualisation
-Depuis la racine du dépôt :
+## Prévisualisation optionnelle
+
+L'image `server/Dockerfile.react-preview` reste disponible pour un environnement de test isolé. Depuis la racine du dépôt :
+
 ```sh
 docker build -f server/Dockerfile.react-preview -t bitgold-react-preview .
 ```
-L'image contient le serveur historique et les fichiers React compilés. Elle sert `/react-preview/`, sans modifier les routes historiques.
 
-## Northflank
-Le service actuel qui construit `server/Dockerfile` avec le contexte `server` **ne change pas**. Pour activer l'aperçu sur Northflank, créer de préférence un service de test avec **build context racine du dépôt** (`.`) et **Dockerfile `server/Dockerfile.react-preview`**, ou ajuster ces paramètres sur un environnement staging. Conserver les variables d'environnement et secrets existants du backend, sans les publier. Ne pas basculer la production avant vérification des parcours utilisateur.
+Elle sert React sur `/react-preview/`, sans changer la configuration de production.
 
-L'authentification du cockpit utilise le jeton BitGold existant dans le navigateur. L'aperçu et le site historique doivent partager la même origine pour réutiliser la session. Aucun ordre d'achat ou de vente n'est émis depuis React.
+## Production et sécurité
+
+- Utiliser `server/Dockerfile` avec le contexte de build à la racine du dépôt.
+- Garder les variables d'environnement et secrets backend dans Northflank, jamais dans le dépôt.
+- L'authentification React réutilise les jetons et contrôles de session existants ; ne pas introduire de contournement 2FA.
+- Les achats/ventes disponibles dans React sont des **simulations**, pas des ordres réels.
+- Respecter le flux PR → `staging` (CI vertes) → `main` (CI vertes), puis vérifier les parcours publics et authentifiés en production.
+
+Pour les critères de validation, le diagnostic et le rollback de l'interface, voir [le runbook de production](../docs/react-production-runbook.md).
