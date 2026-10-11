@@ -104,7 +104,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
           </div>
 
           {detail.status==="loading"&&<p role="status" className="py-20 text-center text-sm text-slate-400">Chargement du détail…</p>}
-          {detail.status==="error"&&<p role="alert" className="py-20 text-center text-sm text-rose-300">{detail.error}</p>}
+          {detail.status==="error"&&<div role="alert" className="py-12 text-center"><p className="text-sm text-rose-300">{detail.error||"Détail indisponible."}</p><Button className="mt-4" onClick={detail.reload}>Réessayer le graphique</Button></div>}
           {detail.status==="ready"&&chartData.length>1?<div className="mt-5 h-72 min-w-0" role="img" aria-label={`Courbe ${selected} ${range}`}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>

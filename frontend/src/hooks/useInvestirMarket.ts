@@ -38,6 +38,8 @@ export function useInvestirMarket(){
 
 export function useMarketDetail(symbol:string,range:string){
   const [state,setState]=useState<AsyncState<MarketDetail>>({status:"loading"});
+  const [retryKey,setRetryKey]=useState(0);
+  const reload=useCallback(()=>setRetryKey(value=>value+1),[]);
   useEffect(()=>{
     if(!symbol)return;
     const controller=new AbortController();
@@ -50,8 +52,8 @@ export function useMarketDetail(symbol:string,range:string){
         setState({status:"error",error:error instanceof Error?error.message:"Détail indisponible."});
       });
     return()=>controller.abort();
-  },[symbol,range]);
-  return state;
+  },[symbol,range,retryKey]);
+  return {...state,reload};
 }
 
 export async function submitSimulatedTrade(token:string,side:"buy"|"sell",asset:string,amount:number){
