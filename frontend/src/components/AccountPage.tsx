@@ -1,4 +1,5 @@
 import {CryptoAssetMark} from "./CryptoAssetMark";
+import {PieChart,Pie,Cell,ResponsiveContainer,Tooltip} from "recharts";
 import {BotBacktestPanel} from "./BotBacktestPanel";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
@@ -23,6 +24,20 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
       <Card><p className="text-sm text-slate-400">Liquidités</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.cash||0))}</p></Card>
       <Card><p className="text-sm text-slate-400">Investi</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.invested||0))}</p></Card>
     </div>
+    {data.positions?.length? <Card>
+      <h2 className="text-lg font-semibold">Répartition du portefeuille virtuel</h2>
+      <p className="mt-1 text-xs text-slate-400">Répartition calculée à partir de vos positions simulées et de vos liquidités.</p>
+      <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr] md:items-center">
+        <div className="h-52 min-w-0" role="img" aria-label="Graphique de répartition du portefeuille simulé">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart><Pie data={[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0)} dataKey="value" nameKey="name" innerRadius={54} outerRadius={84} paddingAngle={2} stroke="none">
+              {[...data.positions,{asset:"Liquidités"}].map((p,i)=><Cell key={p.asset} fill={["#34d399","#60a5fa","#a78bfa","#fbbf24","#fb7185","#2dd4bf"][i%6]}/>)}
+            </Pie><Tooltip formatter={(value:number)=>eur(Number(value))}/></PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="space-y-2">{[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0).map((p,i)=><div key={p.name} className="flex items-center justify-between gap-3 text-sm"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{background:["#34d399","#60a5fa","#a78bfa","#fbbf24","#fb7185","#2dd4bf"][i%6]}}/>{p.name}</span><strong>{eur(p.value)}</strong></div>)}</div>
+      </div>
+    </Card>:null}
     <Card>
       <h2 className="text-lg font-semibold">Positions</h2>
       {data.positions?.length?<div className="mt-4 space-y-3">{data.positions.map(position=><div key={position.asset} className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 pb-3">
@@ -50,7 +65,7 @@ function StrategyCompare({bots}:{bots:BotDefinition[]}){
   return <Card>
     <h2 className="text-xl font-bold">Comparateur de stratégies</h2>
     <p className="mt-2 text-sm text-slate-400">Comparez le niveau de risque, l’allocation cible et l’univers d’actifs avant d’activer un bot.</p>
-    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-slate-500"><tr><th className="py-2">Bot</th><th>Risque</th><th>Allocation</th><th>Stratégie</th><th>Actifs</th></tr></thead><tbody>{focus.map(bot=><tr key={bot.id} className="border-t border-white/10"><td className="py-3 font-semibold">{bot.name}</td><td>{bot.risk}</td><td>{bot.allocation} %</td><td>{bot.strategy}</td><td>{bot.compatible_assets?.join(", ")}</td></tr>)}</tbody></table></div>
+    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-slate-500"><tr><th className="py-2">Bot</th><th>Risque</th><th>Allocation</th><th>Stratégie</th><th>Actifs</th></tr></thead><tbody>{focus.map(bot=><tr key={bot.id} className="border-t border-white/10"><td className="py-3 font-semibold">{bot.name}</td><td>{bot.risk}</td><td>{bot.allocation} %</td><td>{bot.strategy}</td><td><div className="flex flex-wrap gap-1">{bot.compatible_assets?.map(asset=><span key={asset} title={asset}><CryptoAssetMark symbol={asset} size={23}/></span>)}</div></td></tr>)}</tbody></table></div>
   </Card>;
 }
 
@@ -120,7 +135,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{data.catalog?.map(bot=>{const sub=subscriptions.get(bot.id);return <Card key={bot.id} className="flex flex-col">
       <div className="flex items-center justify-between gap-3"><Badge>{bot.tier}</Badge>{sub?.active?<span className="inline-flex items-center gap-1 text-xs text-emerald-300"><ShieldCheck size={14}/> Actif</span>:<span className="text-xs text-slate-500">{bot.plan==="free"?"Free":"Pro"}</span>}</div>
       <h2 className="mt-4 text-xl font-bold">{bot.name}</h2><p className="mt-2 text-sm text-slate-400">{bot.summary}</p>
-      <div className="mt-4 space-y-1 text-xs text-slate-500"><p>Risque : {bot.risk}</p><p>Allocation cible : {bot.allocation} %</p><p>Actifs : {bot.compatible_assets?.join(", ")}</p>{sub&&<p>Limite ordre : {eur(Number(sub.max_trade_eur||0))}</p>}</div>
+      <div className="mt-4 space-y-1 text-xs text-slate-500"><p>Risque : {bot.risk}</p><p>Allocation cible : {bot.allocation} %</p><div className="flex flex-wrap items-center gap-1.5"><span>Actifs :</span>{bot.compatible_assets?.map(asset=><span key={asset} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-slate-300"><CryptoAssetMark symbol={asset} size={16}/>{asset}</span>)}</div>{sub&&<p>Limite ordre : {eur(Number(sub.max_trade_eur||0))}</p>}</div>
       <Button variant="secondary" className="mt-5" onClick={()=>setSelected(bot)} aria-label={`Configurer ${bot.name}`}>Configurer</Button>
     </Card>})}</div>
     {selected&&<BotScenarioPreview bot={selected}/>}
