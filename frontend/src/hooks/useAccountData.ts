@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useState} from "react";
+import {onTradeCompleted} from "./tradeEvents";
 
 export type Position={asset:string;quantity:number;price:number;value:number;allocation:number};
 export type Trade={side:"buy"|"sell";asset:string;amount_eur:number;price_eur:number;quantity:number;created_at:string};
@@ -27,6 +28,7 @@ export function useAccountData(token:string,onExpired:()=>void){
 
   const [refreshKey,setRefreshKey]=useState(0);
   const reload=useCallback(()=>setRefreshKey(value=>value+1),[]);
+  useEffect(()=>onTradeCompleted(reload),[reload]);
   useEffect(()=>{
     if(!token){setPortfolio({status:"loading"});setActivity({status:"loading"});setBots({status:"loading"});return}
     const controller=new AbortController();

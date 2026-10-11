@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useState} from "react";
+import {onTradeCompleted} from "./tradeEvents";
 export type Position={asset:string;quantity:number;price:number;value:number;allocation:number};
 export type Dashboard={updatedAt:number;portfolio:{cash:number;invested:number;total:number;returnEur:number;returnPct:number;positions:Position[]};risk:{score:number;label:string;activeBots:number};subscription:{label:string};market:{regime:string};activity:{bot_type:string;action:string;asset:string|null;message:string;created_at:string}[];integrity:{ok:boolean}};
 export type Analytics={performance:{points:{date:string;total:number}[]}};
@@ -8,5 +9,6 @@ const demoAnalytics:Analytics={performance:{points:[{date:"J-5",total:9800},{dat
 function demoMode(){try{return new URLSearchParams(window.location.search).get("testmode")==="1"}catch{return false}}
 async function request<T>(path:string,bearer:string,signal:AbortSignal):Promise<T>{const response=await fetch(path,{signal,headers:{Authorization:`Bearer ${bearer}`,Accept:"application/json"}});if(response.status===401)throw new Error("SESSION_EXPIRED");if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(typeof data.error==="string"?data.error:`Erreur API (${response.status})`)}return response.json() as Promise<T>}
 export function useBitGoldDashboard(token:string,onExpired:()=>void){const [version,setVersion]=useState(0);const [state,setState]=useState<State>({status:"loading"});const refresh=useCallback(()=>setVersion(v=>v+1),[]);
+useEffect(()=>onTradeCompleted(refresh),[refresh]);
 useEffect(()=>{if(demoMode()){setState({status:"ready",dashboard:demoDashboard,analytics:demoAnalytics});return}if(!token){setState({status:"guest"});return}const controller=new AbortController();setState({status:"loading"});Promise.all([request<Dashboard>("/api/dashboard",token,controller.signal),request<Analytics>("/api/dashboard/analytics",token,controller.signal)]).then(([dashboard,analytics])=>{if(!controller.signal.aborted)setState({status:"ready",dashboard,analytics})}).catch((error:unknown)=>{if(controller.signal.aborted)return;const message=error instanceof Error?error.message:"Erreur inconnue";if(message==="SESSION_EXPIRED"){onExpired();setState({status:"expired"})}else setState({status:"error",error:message})});return()=>controller.abort()},[token,version,onExpired]);
 return {...state,refresh}}
