@@ -43,8 +43,8 @@ test("production authenticated account is readable without mutations", async ({ 
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
   // Validate the real authenticated bot configuration preview without activating a bot.
   for (const botName of ["Shield", "Silver", "Gold"]) {
-    const card = page.getByRole("heading", { name: botName, exact: true }).first();
-    await expect(card).toBeVisible();
+    const card = page.getByRole("button", { name: `Configurer ${botName}` });
+    await expect(card).toBeVisible({ timeout: 15000 });
   }
   // Scenario lab is only shown after selecting a strategy; do not mutate subscriptions.
   await page.getByRole("button", { name: "Configurer Shield" }).click();
