@@ -25,17 +25,19 @@ export function useAccountData(token:string,onExpired:()=>void){
   const [activity,setActivity]=useState<State<ActivityData>>({status:"loading"});
   const [bots,setBots]=useState<State<BotsData>>({status:"loading"});
 
-  const reload=useCallback(()=>{
-    if(!token)return;
+  const [refreshKey,setRefreshKey]=useState(0);
+  const reload=useCallback(()=>setRefreshKey(value=>value+1),[]);
+  useEffect(()=>{
+    if(!token){setPortfolio({status:"loading"});setActivity({status:"loading"});setBots({status:"loading"});return}
+    const controller=new AbortController();
     let expired=false;
     const handleError=(e:unknown)=>{if(e instanceof SessionExpiredError&&!expired){expired=true;onExpired()}return e instanceof Error?e.message:"Données indisponibles"};
     setPortfolio(previous=>previous.data?previous:{status:"loading"});setActivity(previous=>previous.data?previous:{status:"loading"});setBots(previous=>previous.data?previous:{status:"loading"});
-    api<Portfolio>("/api/portfolio",token).then(data=>setPortfolio({status:"ready",data})).catch((e:unknown)=>setPortfolio({status:"error",error:handleError(e)}));
-    api<ActivityData>("/api/activity",token).then(data=>setActivity({status:"ready",data})).catch((e:unknown)=>setActivity({status:"error",error:handleError(e)}));
-    api<BotsData>("/api/bots",token).then(data=>setBots({status:"ready",data})).catch((e:unknown)=>setBots({status:"error",error:handleError(e)}));
-  },[token,onExpired]);
-
-  useEffect(()=>{reload()},[reload]);
+    api<Portfolio>("/api/portfolio",token,{signal:controller.signal}).then(data=>{if(!controller.signal.aborted)setPortfolio({status:"ready",data})}).catch((e:unknown)=>{if(!controller.signal.aborted)setPortfolio({status:"error",error:handleError(e)})});
+    api<ActivityData>("/api/activity",token,{signal:controller.signal}).then(data=>{if(!controller.signal.aborted)setActivity({status:"ready",data})}).catch((e:unknown)=>{if(!controller.signal.aborted)setActivity({status:"error",error:handleError(e)})});
+    api<BotsData>("/api/bots",token,{signal:controller.signal}).then(data=>{if(!controller.signal.aborted)setBots({status:"ready",data})}).catch((e:unknown)=>{if(!controller.signal.aborted)setBots({status:"error",error:handleError(e)})});
+    return()=>controller.abort();
+  },[token,onExpired,refreshKey]);
   return {portfolio,activity,bots,reload};
 }
 

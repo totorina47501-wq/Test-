@@ -27,14 +27,17 @@ async function readJson<T>(response:Response):Promise<T>{
 
 export function useInvestirMarket(){
   const [market,setMarket]=useState<AsyncState<MarketRow[]>>({status:"loading"});
-  const reload=useCallback(()=>{
+  const [retryKey,setRetryKey]=useState(0);
+  const reload=useCallback(()=>setRetryKey(value=>value+1),[]);
+  useEffect(()=>{
+    const controller=new AbortController();
     setMarket({status:"loading"});
-    fetch("/api/market",{headers:{Accept:"application/json"}})
+    fetch("/api/market",{signal:controller.signal,headers:{Accept:"application/json"}})
       .then(response=>readJson<{markets:MarketRow[]}>(response))
-      .then(data=>setMarket({status:"ready",data:Array.isArray(data.markets)?data.markets:[]}))
-      .catch((error:unknown)=>setMarket({status:"error",error:error instanceof Error?error.message:"Marchés indisponibles."}));
-  },[]);
-  useEffect(()=>{reload()},[reload]);
+      .then(data=>{if(!controller.signal.aborted)setMarket({status:"ready",data:Array.isArray(data.markets)?data.markets:[]})})
+      .catch((error:unknown)=>{if(!controller.signal.aborted)setMarket({status:"error",error:error instanceof Error?error.message:"Marchés indisponibles."})});
+    return()=>controller.abort();
+  },[retryKey]);
   return {...market,reload};
 }
 
