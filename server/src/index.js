@@ -1095,7 +1095,7 @@ async function executeBotDecision(subscription,signal){
   const quote=marketSnapshot.find(row=>row.symbol===asset);
   const price=Number(quote?.price);
   const fraction=Number(signal.fraction);
-  if(!marketUpdatedAt||Date.now()-marketUpdatedAt>120000||!quote||!Number.isFinite(price)||price<=0){
+  if(!marketUpdatedAt||Date.now()-marketUpdatedAt>120000||!quote||!quote.priceFresh||!Number.isFinite(Number(quote.priceUpdatedAt))||Date.now()-Number(quote.priceUpdatedAt)>120000||!Number.isFinite(price)||price<=0){
     await audit("blocked","Cotation absente ou périmée.");
     await client.query("INSERT INTO bot_activity(user_id,bot_type,action,asset,message) VALUES($1,$2,$3,$4,$5)",[subscription.user_id,subscription.bot_type,"hold",asset||null,"Ordre simulé ignoré : cotation absente ou périmée."]);
     await client.query("UPDATE bot_subscriptions SET last_run=CURRENT_TIMESTAMP WHERE id=$1",[subscription.id]);
@@ -1431,7 +1431,9 @@ app.post("/api/trades",auth,compliance.requireTransactionClearance,async(req,res
       }
     }
     await refreshMarket();
-    const price=Number(prices[asset]);
+    const quote=marketSnapshot.find(row=>row.symbol===asset);
+    const price=Number(quote?.price);
+    if(!quote||!quote.priceFresh||!Number.isFinite(Number(quote.priceUpdatedAt))||Date.now()-Number(quote.priceUpdatedAt)>120000) throw Error("Cotation indisponible ou périmée : ordre simulé refusé.");
     if(!Number.isFinite(price)||price<=0) throw Error("Actif indisponible.");
     const qty=amount/price;
     if(!Number.isFinite(qty)||qty<=0) throw Error("Ordre invalide.");
