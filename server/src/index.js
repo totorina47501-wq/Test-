@@ -942,34 +942,41 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
 });
 
 
+// Share identical in-flight market requests across dashboard, bots and comparator.
+const pendingHistoryRequests=new Map();
 async function fetchHistory(symbol, days) {
   const cacheKey=`${symbol}:${days}`;
   const cached=historyCache.get(cacheKey);
   if(cached && Date.now()-cached.updatedAt<60000) return cached.prices;
-  const id=marketIds[symbol];
-  if(!id) throw Error("Crypto inconnue.");
-  let response;
-  let lastError;
-  for(let attempt=0;attempt<3;attempt++){
-    try{
-      response=await coingeckoFetch(`/coins/${id}/market_chart?vs_currency=eur&days=${days}`);
-      if(response.ok) break;
-      lastError=await coingeckoError(response);
-    }catch(e){ lastError=e; }
-    if(attempt<2) await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
-  }
-  if(!response?.ok) {
-    console.warn("[MARKET] history unavailable",symbol,days,lastError?.message||"CoinGecko indisponible");
-    return cached?.prices||[];
-  }
-  const data=await response.json();
-  const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
-  if(!pricesHistory.length) {
-    console.warn("[MARKET] history unavailable",symbol,days,"Aucune donnée historique");
-    return cached?.prices||[];
-  }
-  historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
-  return pricesHistory;
+  if(pendingHistoryRequests.has(cacheKey)) return pendingHistoryRequests.get(cacheKey);
+  const request=(async()=>{
+    const id=marketIds[symbol];
+    if(!id) throw Error("Crypto inconnue.");
+    let response;
+    let lastError;
+    for(let attempt=0;attempt<3;attempt++){
+      try{
+        response=await coingeckoFetch(`/coins/${id}/market_chart?vs_currency=eur&days=${days}`);
+        if(response.ok) break;
+        lastError=await coingeckoError(response);
+      }catch(e){ lastError=e; }
+      if(attempt<2) await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));
+    }
+    if(!response?.ok) {
+      console.warn("[MARKET] history unavailable",symbol,days,lastError?.message||"CoinGecko indisponible");
+      return cached?.prices||[];
+    }
+    const data=await response.json();
+    const pricesHistory=(data.prices||[]).map(([timestamp,price])=>({timestamp,price:Number(price)})).filter(p=>Number.isFinite(p.price)&&p.price>0);
+    if(!pricesHistory.length) {
+      console.warn("[MARKET] history unavailable",symbol,days,"Aucune donnée historique");
+      return cached?.prices||[];
+    }
+    historyCache.set(cacheKey,{updatedAt:Date.now(),prices:pricesHistory});
+    return pricesHistory;
+  })();
+  pendingHistoryRequests.set(cacheKey,request);
+  try{return await request}finally{pendingHistoryRequests.delete(cacheKey)}
 }
 async function fetchHistoryRange(symbol,range){
   const normalizedRange=String(range||"24h").trim().toLowerCase();
