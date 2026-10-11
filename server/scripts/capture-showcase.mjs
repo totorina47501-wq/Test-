@@ -13,6 +13,7 @@ try {
   const page = await context.newPage();
   await page.addInitScript(() => { localStorage.clear(); sessionStorage.clear(); });
   const screens = [
+    { filename: "landing-desktop.png", path: "/", selector: ".bg-landing .hero" },
     { filename: "investir.png", path: "/investir", selector: "body" },
     { filename: "cockpit.png", path: "/#dashboard", selector: "body" }
   ];
@@ -26,6 +27,12 @@ try {
     if (visibleAuthDialog) throw new Error("Protected or authentication-only capture rejected: " + screen.path);
     await page.screenshot({ path: new URL(screen.filename, dest).pathname, animations: "disabled", timeout: 15000 });
   }
+  // Mobile screenshot of the actual public landing, never an authenticated account.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobile = await page.goto(baseURL + "/", { waitUntil: "domcontentloaded" });
+  if (!mobile?.ok()) throw new Error("Mobile landing unavailable");
+  await page.locator(".bg-landing .hero").waitFor({ state: "visible" });
+  await page.screenshot({ path: new URL("landing-mobile.png", dest).pathname, animations: "disabled", timeout: 15000 });
 } finally {
   await browser.close();
 }
