@@ -4,6 +4,7 @@ import {Area,AreaChart,ResponsiveContainer,Tooltip,XAxis,YAxis} from "recharts";
 import {Badge,Button,Card} from "./ui";
 import {useAuth} from "../auth/AuthContext";
 import {TradeSessionExpiredError,submitSimulatedTrade,useInvestirMarket,useMarketDetail} from "../hooks/useInvestirMarket";
+import {notifyTradeCompleted} from "../hooks/tradeEvents";
 
 const ranges=[
   {id:"5m",label:"5 min"},
@@ -67,6 +68,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
     try{
       await submitSimulatedTrade(auth.token,submittedSide,submittedAsset,numericAmount);
       market.reload();
+      notifyTradeCompleted();
       setTradeState("success");
       setTradeMessage(`${submittedSide==="buy"?"Achat":"Vente"} simulé(e) de ${submittedAsset} enregistré(e). Consultez votre portefeuille ou vos activités pour voir le résultat.`);
     }catch(error){
