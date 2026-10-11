@@ -43,10 +43,14 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   const price=Number(detail.data?.price||market.data?.find(item=>item.symbol===selected)?.price||0);
   const numericAmount=Number(amount.replace(",","."));
   const estimated=Number.isFinite(numericAmount)&&numericAmount>0&&price>0?numericAmount/price:0;
-  const chartData=useMemo(()=>detail.data?.history?.points?.map(point=>({
-    timestamp:point.timestamp,
-    price:Number(point.price)
-  })).filter(point=>Number.isFinite(point.price))??[],[detail.data]);
+  const chartData=useMemo(()=>{
+    const points=detail.data?.history?.points;
+    if(!Array.isArray(points))return [];
+    const valid=points.map(point=>({timestamp:Number(point.timestamp),price:Number(point.price)}))
+      .filter(point=>Number.isFinite(point.timestamp)&&point.timestamp>0&&Number.isFinite(point.price)&&point.price>0)
+      .sort((a,b)=>a.timestamp-b.timestamp);
+    return valid.filter((point,index)=>index===0||point.timestamp!==valid[index-1].timestamp);
+  },[detail.data]);
 
   async function submitTrade(){
     if(!auth.token){onAuth();return}

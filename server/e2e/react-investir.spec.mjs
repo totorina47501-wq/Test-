@@ -100,3 +100,25 @@ test("React Investir stays responsive on mobile without horizontal overflow", as
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   expect(overflow).toBe(false);
 });
+
+
+test("React Investir safely handles invalid historical chart points", async ({ page }) => {
+  await page.route("**/api/market", route => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ markets: [{ symbol: "BTC", price: 68000, change24h: 1.2 }] })
+  }));
+  await page.route("**/api/market/details/*", route => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({
+      symbol: "BTC", name: "Bitcoin", price: 68000, change24h: 1.2,
+      history: { range: "24h", label: "24 h", min: 0, max: 68000, points: [
+        { timestamp: null, price: 67000 },
+        { timestamp: 1791622800000, price: -50 },
+        { timestamp: 1791626400000, price: null }
+      ] }
+    })
+  }));
+  await page.goto(preview);
+  await expect(page.getByText("Historique insuffisant pour cette période.")).toBeVisible();
+  await expect(page.getByRole("img", { name: /Courbe BTC/ })).toHaveCount(0);
+});
