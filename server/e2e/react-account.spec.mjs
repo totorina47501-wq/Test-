@@ -81,3 +81,29 @@ test("React account space has no mobile horizontal overflow", async ({ page, isM
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   expect(overflow).toBe(false);
 });
+
+
+test("React account reconciles portfolio and activity after a simulated trade", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("bitgold-token", "reconciliation-e2e-token"));
+  let traded = false;
+  await page.route("**/api/portfolio", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({
+    cash: traded ? 9500 : 10000, invested: traded ? 500 : 0, total: 10000,
+    positions: traded ? [{ asset: "BTC", quantity: 0.01, price: 50000, value: 500, allocation: 5 }] : [],
+    trades: [], integrity: { ok: true }
+  }) }));
+  await page.route("**/api/activity", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({
+    trades: traded ? [{ side: "buy", asset: "BTC", amount_eur: 500, price_eur: 50000, quantity: 0.01, created_at: "2026-10-11T13:00:00Z" }] : [],
+    botLogs: []
+  }) }));
+  await page.route("**/api/bots", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({ plan: { plan: "free" }, items: [], activity: [], catalog: [] }) }));
+  await page.goto(preview);
+  await expect(page.getByRole("heading", { name: "Portefeuille" })).toBeVisible();
+  await expect(page.getByText("Aucune position ouverte.")).toBeVisible();
+  traded = true;
+  await page.evaluate(() => window.dispatchEvent(new Event("bitgold:simulated-trade-completed")));
+  await expect(page.getByText("9\u202f500,00\u00a0€")).toBeVisible();
+  await expect(page.getByText("0,01 unités")).toBeVisible();
+  await page.getByRole("button", { name: "Activités" }).click();
+  await expect(page.getByText("Achat BTC")).toBeVisible();
+  await expect(page.getByText("500,00\u00a0€")).toBeVisible();
+});
