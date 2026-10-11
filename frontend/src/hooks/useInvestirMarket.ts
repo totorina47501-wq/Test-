@@ -17,8 +17,10 @@ export type MarketDetail=MarketRow&{
 
 type AsyncState<T>={status:"loading"|"ready"|"error";data?:T;error?:string};
 
+export class TradeSessionExpiredError extends Error { constructor(){super("Session expirée. Reconnectez-vous.");this.name="TradeSessionExpiredError"} }
 async function readJson<T>(response:Response):Promise<T>{
   const data=await response.json().catch(()=>({}));
+  if(response.status===401)throw new TradeSessionExpiredError();
   if(!response.ok)throw new Error(typeof data.error==="string"?data.error:`Erreur API (${response.status})`);
   return data as T;
 }

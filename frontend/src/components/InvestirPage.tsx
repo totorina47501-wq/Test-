@@ -3,7 +3,7 @@ import {ArrowLeft,ArrowRight,RefreshCw,TrendingDown,TrendingUp} from "lucide-rea
 import {Area,AreaChart,ResponsiveContainer,Tooltip,XAxis,YAxis} from "recharts";
 import {Badge,Button,Card} from "./ui";
 import {useAuth} from "../auth/AuthContext";
-import {submitSimulatedTrade,useInvestirMarket,useMarketDetail} from "../hooks/useInvestirMarket";
+import {TradeSessionExpiredError,submitSimulatedTrade,useInvestirMarket,useMarketDetail} from "../hooks/useInvestirMarket";
 
 const ranges=[
   {id:"5m",label:"5 min"},
@@ -67,6 +67,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
       setTradeState("success");
       setTradeMessage(side==="buy"?"Ordre simulé enregistré":"Vente simulée enregistrée");
     }catch(error){
+      if(error instanceof TradeSessionExpiredError)auth.expireSession();
       setTradeState("error");
       setTradeMessage(error instanceof Error?error.message:"Impossible d’enregistrer l’ordre simulé.");
     }
