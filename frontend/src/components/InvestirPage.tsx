@@ -1,3 +1,4 @@
+import {CryptoAssetMark} from "./CryptoAssetMark";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {ArrowLeft,ArrowRight,RefreshCw,TrendingDown,TrendingUp} from "lucide-react";
@@ -104,7 +105,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
           const positive=Number(item.change24h)>=0;
           const active=item.symbol===selected;
           return <button key={item.symbol} type="button" onClick={()=>{setSelected(item.symbol);setRange("24h");setTradeState("idle");setTradeMessage("")}} aria-pressed={active} className={`min-w-0 rounded-2xl border p-4 text-left transition-colors ${active?"border-emerald-400/40 bg-emerald-400/10":"border-white/10 bg-[#15171b]/95 hover:bg-white/5"}`}>
-            <div className="flex items-center justify-between gap-2"><strong>{names[item.symbol]||item.symbol}</strong><span className="text-xs text-slate-500">{item.symbol}</span></div>
+            <div className="flex items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><CryptoAssetMark symbol={item.symbol} size={30}/><strong className="truncate">{names[item.symbol]||item.symbol}</strong></div><span className="text-xs text-slate-500">{item.symbol}</span></div>
             <span className="mt-3 block text-lg font-bold">{eur(Number(item.price||0))}</span>
             <span className={`mt-1 flex items-center gap-1 text-xs ${positive?"text-emerald-300":"text-rose-300"}`}>{positive?<TrendingUp size={13}/>:<TrendingDown size={13}/>} {positive?"+":""}{Number(item.change24h||0).toFixed(2)} %</span>
           </button>;
