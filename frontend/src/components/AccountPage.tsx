@@ -9,7 +9,7 @@ const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",curren
 const date=(value:string)=>new Date(value).toLocaleString("fr-FR");
 
 function Loading({label}:{label:string}){return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
-function ErrorBox({message}:{message?:string}){return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p></Card>}
+function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p><Button className="mt-4" onClick={onRetry}>Réessayer</Button></Card>}
 
 function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio"]["data"]}){
   if(!data)return null;
@@ -115,9 +115,9 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
       <button type="button" onClick={()=>setTab("activity")} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm ${tab==="activity"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Activity size={16}/> Activités</button>
       <button type="button" onClick={()=>setTab("bots")} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm ${tab==="bots"?"bg-emerald-400/15 text-emerald-300":"text-slate-400"}`}><Bot size={16}/> Bots IA</button>
     </nav>
-    {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error}/>:<PortfolioView data={portfolio.data}/>)}
-    {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error}/>:<ActivityView data={activity.data}/>)}
-    {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error}/>:<BotsView data={bots.data} token={auth.token} reload={reload}/>)}
+    {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
+    {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
+    {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload}/>)}
     <p className="text-center text-xs text-slate-500">Simulation uniquement · aucun ordre ou investissement réel.</p>
   </main>;
 }
