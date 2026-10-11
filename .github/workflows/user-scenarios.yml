@@ -93,7 +93,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Browser E2E (desktop and mobile)
-        run: npx playwright test --config=playwright.config.mjs --grep-invert='production authenticated' --grep-invert='guest homepage and login modal|guest Investir page loads|expired JWT is rejected on live production'
+        run: npx playwright test --config=playwright.config.mjs --grep-invert='production authenticated|guest homepage and login modal|guest Investir page loads|expired JWT is rejected on live production'
       - name: Upload scenario reports
         if: always()
         uses: actions/upload-artifact@v4
