@@ -11,8 +11,12 @@ export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
   const closeRef=useRef<HTMLButtonElement>(null);
   const previousFocusRef=useRef<HTMLElement|null>(null);
   const [mode,setMode]=useState<Mode>("login");
+  const googleRef=useRef<HTMLDivElement>(null);
+  const [googleClientId,setGoogleClientId]=useState("");
   const [form,setForm]=useState({email:"",password:"",first_name:"",last_name:"",country:"France",city:"",postal_code:"",code:""});
   useEffect(()=>{if(open)auth.clearError()},[open]);
+  useEffect(()=>{if(!open)return;let active=true;fetch("/api/auth/google/config").then(r=>r.ok?r.json():null).then(data=>{if(active&&data?.enabled&&typeof data.clientId==="string")setGoogleClientId(data.clientId)}).catch(()=>{});return()=>{active=false}},[open]);
+  useEffect(()=>{if(!open||!googleClientId||auth.status==="twoFactor")return;let cancelled=false;let script:HTMLScriptElement|null=null;const render=()=>{if(cancelled||!googleRef.current)return;const google=(window as Window & {google?:{accounts?:{id?:{initialize:(options:{client_id:string;callback:(data:{credential:string})=>void})=>void;renderButton:(element:HTMLElement,options:Record<string,unknown>)=>void}}}}).google;if(!google?.accounts?.id)return;googleRef.current.replaceChildren();google.accounts.id.initialize({client_id:googleClientId,callback:({credential})=>{if(credential)void auth.loginGoogle(credential).catch(()=>{})}});google.accounts.id.renderButton(googleRef.current,{theme:"outline",size:"large",width:300,locale:"fr"})};if((window as Window & {google?:unknown}).google)render();else{script=document.createElement("script");script.src="https://accounts.google.com/gsi/client";script.async=true;script.defer=true;script.onload=render;document.head.appendChild(script)}return()=>{cancelled=true;if(script)script.remove()}},[open,googleClientId,auth.status]);
   useEffect(()=>{if(auth.status==="authenticated"&&open)onClose()},[auth.status,open,onClose]);
   useEffect(()=>{
     if(!open)return;
@@ -37,6 +41,7 @@ export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
     <div ref={dialogRef} onKeyDown={onDialogKeyDown} role="dialog" aria-modal="true" aria-label="Authentification BitGold" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111419] p-5 shadow-2xl">
       <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-emerald-300">Espace sécurisé</p><h2 className="mt-1 text-2xl font-bold">{auth.status==="twoFactor"?"Vérification en deux étapes":"Bienvenue sur BitGold"}</h2></div><button ref={closeRef} type="button" aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={onClose}><X size={20}/></button></div>
       {auth.status!=="twoFactor"&&<div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1"><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="login"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("login");auth.clearError()}}>Connexion</button><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="signup"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("signup");auth.clearError()}}>Créer un compte</button></div>}
+      {googleClientId&&auth.status!=="twoFactor"&&<div className="mt-5"><div ref={googleRef} className="flex justify-center" aria-label="Connexion avec Google"/></div>}
       <form className="mt-5 space-y-4" onSubmit={submit}>
         {auth.status==="twoFactor"?<>
           <p className="text-sm leading-6 text-slate-400">Saisissez le code Google Authenticator ou un code de récupération. Le jeton de challenge ne donne pas accès au cockpit.</p>
