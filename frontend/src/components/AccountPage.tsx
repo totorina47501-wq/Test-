@@ -1,3 +1,4 @@
+import {BotBacktestPanel} from "./BotBacktestPanel";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
@@ -124,6 +125,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
     {selected&&<BotScenarioPreview bot={selected}/>}
     {selected&&<BotConfig bot={selected} subscription={subscriptions.get(selected.id)} token={token} onExpired={onExpired} onDone={done} onCancel={()=>setSelected(null)}/>}
     <StrategyCompare bots={data.catalog||[]}/>
+    <BotBacktestPanel botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
   </section>;
 }
 
