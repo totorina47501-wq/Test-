@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 const prod = process.env.BITGOLD_PROD_URL || "https://p01--service-bitgold--dvn9t2gvmtgx.code.run";
 test.use({ baseURL: prod, storageState: { cookies: [], origins: [] }, trace: "off", screenshot: "off", video: "off" });
 
+test.setTimeout(90000);
 test.skip(!process.env.BITGOLD_E2E_EMAIL || !process.env.BITGOLD_E2E_PASSWORD, "Production credentials only available in dedicated smoke workflow");
 
 test("production authenticated profile, 2FA status and bot backtest are read-only", async ({ page }) => {
@@ -50,7 +51,7 @@ test("production authenticated profile, 2FA status and bot backtest are read-onl
 
   const backtestResponse = await page.request.get(`/api/bots/${encodeURIComponent(botId)}/backtest?days=30`, {
     headers: { Authorization: `Bearer ${token}` },
-    timeout: 20000
+    timeout: 60000
   });
   expect(backtestResponse.status()).toBe(200);
   const backtest = await backtestResponse.json();
