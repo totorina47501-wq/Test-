@@ -39,3 +39,9 @@
 .bg-landing .feature .landing-dashboard{margin-bottom:20px;grid-template-columns:85px 1fr}
 .bg-landing .feature .landing-dashboard-main{padding:12px}
 @media(max-width:580px){.bg-landing .landing-dashboard{grid-template-columns:70px 1fr;min-height:230px}.bg-landing .landing-dashboard aside{padding:9px 4px}.bg-landing .landing-dashboard aside b{font-size:.58rem}.bg-landing .landing-dashboard aside span{font-size:.48rem;padding:5px}.bg-landing .landing-dashboard-main{padding:8px}.bg-landing .landing-dashboard-metrics>div{padding:5px}.bg-landing .landing-dashboard-charts>div{padding:5px}.bg-landing .landing-dashboard-charts svg{height:65px}.bg-landing .landing-donut{width:48px;height:48px}.bg-landing .landing-donut:after{inset:12px}.bg-landing .landing-dashboard-bottom{display:none}.bg-landing .showcase .phone{width:36%}.bg-landing .feature .landing-dashboard{grid-template-columns:65px 1fr}}
+
+/* Restrained crypto identity marks; no remote assets or extra dependencies. */
+.bg-landing .crypto-strip{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:22px 0 15px}
+.bg-landing .crypto-asset{display:inline-flex;align-items:center;gap:8px;padding:6px 11px 6px 6px;border-radius:999px;font-size:.75rem;font-weight:700;color:#e5e7eb}
+.bg-landing .crypto-mark{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;color:white;font-size:16px;font-weight:800;line-height:1}
+@media(max-width:580px){.bg-landing .crypto-strip{gap:6px}.bg-landing .crypto-asset{padding:4px 8px 4px 4px;font-size:.68rem}.bg-landing .crypto-mark{width:22px;height:22px;font-size:13px}}
