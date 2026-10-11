@@ -87,7 +87,7 @@ function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDe
 }
 
 
-function BotScenarioPreview({bot}:{bot:BotDefinition}){
+export function BotScenarioPreview({bot}:{bot:Pick<BotDefinition,"id"|"name">}){
   const [cashPct,setCashPct]=useState(40);
   const budget=bot.id==="shield"?25:bot.id==="silver"?45:bot.id==="gold"?65:null;
   if(budget===null)return null;

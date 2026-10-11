@@ -41,6 +41,21 @@ test("production authenticated account is readable without mutations", async ({ 
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
   }
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
+  // Validate the real authenticated bot configuration preview without activating a bot.
+  for (const botName of ["Shield", "Silver", "Gold"]) {
+    const card = page.getByRole("heading", { name: botName, exact: true }).first();
+    await expect(card).toBeVisible();
+  }
+  // Scenario lab is only shown after selecting a strategy; do not mutate subscriptions.
+  await page.getByRole("button", { name: "Configurer Shield" }).click();
+  await expect(page.getByText("Strategy DNA · Laboratoire")).toBeVisible();
+  const cashSlider = page.getByRole("slider", { name: "Liquidités du laboratoire" });
+  await expect(cashSlider).toBeVisible();
+  await cashSlider.fill("80");
+  await expect(page.getByText("Réserve de liquidités : 80 %")).toBeVisible();
+  await expect(page.getByText("Hausse rapide (+15 %)")).toBeVisible();
+  await expect(page.getByText("Chute brutale (-25 %)")).toBeVisible();
+
   await page.getByRole("button", { name: "Se déconnecter" }).click();
   // Bots become public after logout; private portfolio access must still be denied.
   await expect(page.getByRole("heading", { name: "Comparer les bots BitGold" })).toBeVisible();
