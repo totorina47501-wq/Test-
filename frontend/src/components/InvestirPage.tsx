@@ -60,13 +60,15 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
 
   async function submitTrade(){
     if(!auth.token){onAuth();return}
-    if(!Number.isFinite(numericAmount)||numericAmount<=0||!selected)return;
+    if(tradeState==="submitting"||!Number.isFinite(numericAmount)||numericAmount<=0||!selected||price<=0)return;
+    const submittedSide=side;
+    const submittedAsset=selected;
     setTradeState("submitting");setTradeMessage("");
     try{
-      await submitSimulatedTrade(auth.token,side,selected,numericAmount);
+      await submitSimulatedTrade(auth.token,submittedSide,submittedAsset,numericAmount);
       market.reload();
       setTradeState("success");
-      setTradeMessage(side==="buy"?"Ordre simulé enregistré":"Vente simulée enregistrée");
+      setTradeMessage(`${submittedSide==="buy"?"Achat":"Vente"} simulé(e) de ${submittedAsset} enregistré(e). Consultez votre portefeuille ou vos activités pour voir le résultat.`);
     }catch(error){
       if(error instanceof TradeSessionExpiredError)auth.expireSession();
       setTradeState("error");
@@ -155,6 +157,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
           </div>
           <Button className="mt-5 w-full" disabled={tradeState==="submitting"||!estimated} onClick={submitTrade}>{tradeState==="submitting"?"Enregistrement…":auth.token?(side==="buy"?"Acheter en simulation":"Vendre en simulation"):"Se connecter pour simuler"} <ArrowRight size={16}/></Button>
           {tradeMessage&&<p role={tradeState==="error"?"alert":"status"} className={`mt-3 text-sm ${tradeState==="error"?"text-rose-300":"text-emerald-300"}`}>{tradeMessage}</p>}
+          {tradeState==="success"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille" className="text-emerald-300 underline underline-offset-4">Voir mon portefeuille</a><a href="/activite" className="text-emerald-300 underline underline-offset-4">Voir mes activités</a></div>}
           <p className="mt-4 text-xs leading-5 text-slate-500">Aucun actif réel n’est acheté. Cette action modifie uniquement votre portefeuille de simulation.</p>
         </Card>
       </div>
