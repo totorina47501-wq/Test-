@@ -9,7 +9,7 @@ Status: **NOT APPROVED** until each gate has evidence and an accountable owner. 
 ## Required evidence before a paid simulation launch
 | Gate | Acceptance evidence | Current status |
 |---|---|---|
-| Real authenticated desktop/mobile journey | Green production Playwright run: sign-in, cockpit, portfolio, activity, bot configuration, sign-out and access denial | BLOCKED: production-smoke #26 authenticated step failed |
+| Real authenticated desktop/mobile journey | Green production Playwright run: sign-in, cockpit, portfolio, activity, bot configuration, sign-out and access denial | PASS (2026-10-11): production authenticated desktop + mobile read-only journey, run 38162635129; further profile/2FA/backtest checks remain |
 | Auth security | 2FA tested, expired JWT rejected, brute-force/rate-limit, account recovery, access isolation | VERIFY |
 | Bot simulation | Deterministic scenarios, exposure limits, simulated order idempotency, no real execution | VERIFY |
 | Commercial checkout | Sandbox payment webhooks, replay/duplicate protection, failed payment, cancellation, refund and entitlement synchronization | VERIFY |
@@ -20,7 +20,7 @@ Status: **NOT APPROVED** until each gate has evidence and an accountable owner. 
 | Legal/regulatory | Qualified counsel review of French/EU crypto-services, financial promotion, payments, AML/KYC applicability and customer classification | NOT APPROVED |
 | Release operations | staging green, main green, Northflank SHA verification, live smoke green, rollback documented | VERIFY |
 
-## Production E2E known failure (2026-10-11)
+## Historical production E2E failure (2026-10-11; subsequently resolved in latest run)
 Workflow: `production-smoke.yml`, run 38149880204, job 114500924958.
 - Guest Playwright: passed.
 - Authenticated Playwright: failed on desktop when `Shield` heading was absent; mobile retried and failed on logout control.
@@ -29,3 +29,9 @@ Workflow: `production-smoke.yml`, run 38149880204, job 114500924958.
 
 ## Go/no-go
 A paid launch requires explicit sign-off for product, security, legal/privacy, payments, operations, and customer support. CI green is necessary but not sufficient. All test orders must remain simulated and isolated from customer balances.
+
+## Latest production browser evidence (2026-10-11)
+- GitHub Actions run [38162635129](https://github.com/totorina47501-wq/Test-/actions/runs/38162635129), associated with main commit `77076734363f40d85d15bd18a495593e83cc0b51`: production guest smoke **6/6 passed** (desktop + mobile); authenticated read-only journey **2/2 passed** (desktop + mobile).
+- Authenticated checks include login, cockpit, portfolio, activity, bots catalog, strategy scenario laboratory, logout and private-route access denial.
+- The browser suite tests the live production URL, but does **not** independently attest the deployed Northflank image SHA matches the GitHub commit; deployment provenance remains VERIFY.
+- Profile settings, live 2FA management, authenticated historical backtest, deeper mobile accessibility and incident rollback remain VERIFY. Never substitute a passing read-only smoke for regulatory or payment sign-off.
