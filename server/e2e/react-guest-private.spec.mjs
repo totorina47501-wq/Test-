@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 test("guest private routes require authentication on desktop and mobile", async ({ page }) => {
-  for (const path of ["/portefeuille", "/activite"]) {
-    const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+  for (const view of ["portfolio", "activity"]) {
+    const response = await page.goto("/react-preview/?view=" + view, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: "Connexion requise" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Se déconnecter" })).toHaveCount(0);
@@ -10,7 +10,7 @@ test("guest private routes require authentication on desktop and mobile", async 
 });
 
 test("guest bots comparison stays public without exposing account actions", async ({ page }) => {
-  const response = await page.goto("/bots", { waitUntil: "domcontentloaded" });
+  const response = await page.goto("/react-preview/?view=bots", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Comparer les bots BitGold" })).toBeVisible();
   for (const name of ["Shield", "Silver", "Gold"]) {
