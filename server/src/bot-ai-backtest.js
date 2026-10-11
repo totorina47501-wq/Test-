@@ -80,11 +80,14 @@ export function simulateBacktest({
   const decisionHistory=[];
   for(let i=14;i<timeline.length;i++){
     const t=timeline[i];
-    const points=Object.fromEntries(symbols.map(symbol=>[symbol,series[symbol].filter(p=>p.timestamp<=t)]));
+    // Advance each sorted history once instead of filtering its entire prefix on every tick.
     const current=Object.fromEntries(symbols.map(symbol=>[symbol,latestAt(series[symbol],t,pointers[symbol])]).filter(([,row])=>row));
+    const points=Object.fromEntries(symbols.map(symbol=>[symbol,series[symbol].slice(0,current[symbol]?pointers[symbol].i+1:0)]));
     const market=symbols.map(symbol=>{
       const row=current[symbol];
-      const previous=series[symbol].filter(p=>p.timestamp<t).at(-1);
+      let previousIndex=pointers[symbol].i;
+      while(previousIndex>=0&&series[symbol][previousIndex].timestamp>=t)previousIndex--;
+      const previous=series[symbol][previousIndex];
       return{symbol,price:row?.price||0,change24h:previous?.price?((row.price/previous.price)-1)*100:0};
     }).filter(row=>row.price>0&&isFreshBacktestQuote(current[row.symbol],t));
     const features=Object.fromEntries(market.map(row=>[row.symbol,buildAssetFeatures(row,points[row.symbol])])); 
