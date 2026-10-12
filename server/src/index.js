@@ -285,13 +285,18 @@ if(frontendMode==="react"){
 }
 
 const prices = { BTC: 67420.10, ETH: 3248.70, SOL: 154.20, USDC: 0.92, LINK: 17.84, AVAX: 28.16 };
+const botLegacyMarketSymbols=Object.freeze(["BTC","ETH","SOL","USDC","LINK","AVAX"]);
 const marketIds = {
   BTC: "bitcoin",
   ETH: "ethereum",
   SOL: "solana",
   USDC: "usd-coin",
   LINK: "chainlink",
-  AVAX: "avalanche-2"
+  AVAX: "avalanche-2",
+  ADA: "cardano",
+  XRP: "ripple",
+  LTC: "litecoin",
+  DOT: "polkadot"
 };
 let marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
 let marketUpdatedAt = 0;
@@ -939,7 +944,7 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
     const values=pricesHistory.map(point=>Number(point.price)).filter(Number.isFinite);
     res.json({
       ...item,
-      name:{BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"}[symbol],
+      name:{BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche",ADA:"Cardano",XRP:"XRP",LTC:"Litecoin",DOT:"Polkadot"}[symbol],
       history:{range,label:rangeConfig.label,min:values.length?Math.min(...values):item.price,max:values.length?Math.max(...values):item.price,points:pricesHistory},
       source:"CoinGecko"
     });
@@ -1025,7 +1030,7 @@ async function fetchHistoryRange(symbol,range){
 app.get("/api/market/history",async(req,res)=>{
   const days=Math.min(Math.max(Number(req.query.days||7),1),90);
   try {
-    const results=await Promise.allSettled(Object.keys(marketIds).map(async symbol=>[symbol,await fetchHistory(symbol,days)]));
+    const results=await Promise.allSettled(botLegacyMarketSymbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)]));
     const markets=Object.fromEntries(results.filter(result=>result.status==="fulfilled").map(result=>result.value));
     if(!Object.keys(markets).length) throw Error("Aucune donnée historique disponible.");
     res.json({days,source:Object.keys(markets).length?"CoinGecko":"BitGold fallback",markets});
