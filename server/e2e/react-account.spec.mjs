@@ -48,8 +48,8 @@ test("React account space covers portfolio, activity and bot strategy management
 
   await page.goto(preview);
 
-  await expect(page.getByRole("heading", { name: "Portefeuille" })).toBeVisible();
-  await expect(page.getByText("10\u202f000,00\u00a0€")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Portefeuille", exact: true })).toBeVisible();
+  await expect(page.getByText("10\u202f000,00\u00a0€").first()).toBeVisible();
   await expect(page.getByText("BTC")).toBeVisible();
 
   await page.getByRole("button", { name: "Activités" }).click();
@@ -97,13 +97,13 @@ test("React account reconciles portfolio and activity after a simulated trade", 
   }) }));
   await page.route("**/api/bots", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({ plan: { plan: "free" }, items: [], activity: [], catalog: [] }) }));
   await page.goto(preview);
-  await expect(page.getByRole("heading", { name: "Portefeuille" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Portefeuille", exact: true })).toBeVisible();
   await expect(page.getByText("Aucune position ouverte.")).toBeVisible();
   traded = true;
   await page.evaluate(() => window.dispatchEvent(new Event("bitgold:simulated-trade-completed")));
-  await expect(page.getByText("9\u202f500,00\u00a0€")).toBeVisible();
+  await expect(page.getByText("9\u202f500,00\u00a0€").first()).toBeVisible();
   await expect(page.getByText("0,01 unités")).toBeVisible();
   await page.getByRole("button", { name: "Activités" }).click();
   await expect(page.getByText("Achat BTC")).toBeVisible();
-  await expect(page.getByText("500,00\u00a0€")).toBeVisible();
+  await expect(page.getByText("500,00\u00a0€").first()).toBeVisible();
 });
