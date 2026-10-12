@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS react-build
+FROM node:22-bookworm-slim AS react-build
 WORKDIR /frontend
 COPY frontend/package*.json ./
 RUN npm ci --no-audit --no-fund
@@ -8,7 +8,7 @@ ENV BITGOLD_BUILD_SHA=${BITGOLD_BUILD_SHA}
 ENV VITE_BASE_PATH=/
 RUN npm run build
 
-FROM public.ecr.aws/docker/library/node:22-bookworm-slim
+FROM node:22-bookworm-slim
 WORKDIR /app
 COPY server/package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
