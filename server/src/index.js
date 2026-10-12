@@ -1216,6 +1216,20 @@ app.get("/api/bots/ai/sentiment",auth,async(req,res)=>{
     res.json({ok:true,updatedAt:newsCache.updatedAt||Date.now(),source:newsCache.source,engine:decision.engine,sentiment:decision.sentiment});
   }catch(e){console.error("[BOT-AI] sentiment endpoint error",e.message);res.status(502).json({error:"Sentiment IA temporairement indisponible."})}
 });
+function parseBacktestSimulationOptions(query={}){
+  const fields={initialCash:[10000,100,1000000],minOrderEur:[0,0,100000],maxOrderEur:[null,0.01,1000000],spreadRate:[0,0,0.1],feeRate:[0.0015,0,0.1],slippageRate:[0.0005,0,0.1],minCashPct:[0,0,100],maxDrawdownStopPct:[100,0.01,100]};
+  const options={};
+  for(const [name,[fallback,min,max]] of Object.entries(fields)){
+    const raw=query[name];
+    if(raw===undefined){if(fallback!==null)options[name]=fallback;continue;}
+    if(typeof raw!=="string"||!raw.trim())throw Error("Paramètre "+name+" invalide.");
+    const value=Number(raw);
+    if(!Number.isFinite(value)||value<min||value>max)throw Error("Paramètre "+name+" invalide.");
+    options[name]=value;
+  }
+  if(options.maxOrderEur!==undefined&&options.maxOrderEur<(options.minOrderEur||0))throw Error("Montant maximal inférieur au minimum.");
+  return options;
+}
 app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
   try{
     const botType=String(req.params.botType||"").toLowerCase();
@@ -1223,7 +1237,7 @@ app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
     const days=Math.min(Math.max(Number(req.query.days||30),14),180);
     const symbols=Object.keys(marketIds).filter(symbol=>symbol!=="USDC");
     const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)])));
-    const backtest=simulateBacktest({botType,histories,initialCash:10000});
+    const backtest=simulateBacktest({botType,histories,...simulationOptions});
     res.json({ok:true,source:"CoinGecko",days,backtest});
   }catch(e){console.error("[BOT-AI] backtest error",e.message);res.status(502).json({error:"Backtest IA temporairement indisponible."})}
 });
@@ -1235,7 +1249,7 @@ app.get("/api/bots/comparator",auth,async(req,res)=>{
     if(botTypes.length<2)return res.status(400).json({error:"Sélectionnez au moins deux bots valides."});
     const symbols=Object.keys(marketIds).filter(symbol=>symbol!=="USDC");
     const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)])));
-    const results=compareBacktests({botTypes,histories,initialCash:10000});
+    const results=compareBacktests({botTypes,histories,...simulationOptions});
     const robustness=results.map(result=>({botType:result.botType,robustness:analyzeBacktestRobustness({curve:result.curve,paths:250,seed:42})}));
     const byBot=new Map(robustness.map(item=>[item.botType,item.robustness]));
     res.json({ok:true,mode:"simulation",source:"CoinGecko",days,bots:results.map(({curve,...result})=>({...result,robustness:byBot.get(result.botType)||null}))});
