@@ -65,3 +65,10 @@ Le workflow GitHub exécute également les parcours connectés avec les secrets 
 | Date | SHA main | SHA déployé | Run Playwright production | Images live | Décision |
 |---|---|---|---|---|---|
 | 2026-10-12 | `d998817` | Non vérifié | À exécuter avec assertion visuelle ciblée | Non vérifié | En attente |
+
+## Régression Achat / Vente (PR #518)
+
+- Tests Playwright `server/e2e/react-investir.spec.mjs` : achat LINK rejeté (liquidités insuffisantes), vente LINK rejetée (quantité insuffisante), liens de récupération et messages d'erreur.
+- Desktop et Pixel 7 via `server/playwright.config.mjs` ; scénarios avec API simulée pour reproductibilité.
+- Exécution : `cd server && npx playwright test e2e/react-investir.spec.mjs --project=desktop --project=mobile` dans l'environnement CI disposant du navigateur et du serveur de prévisualisation.
+- **Limite** : API interceptée ; ceci ne valide pas une transaction sur Northflank ni le compte de l'utilisateur. Ne pas confondre succès CI et production authentifiée.
