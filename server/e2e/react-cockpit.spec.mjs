@@ -1,6 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
+test.beforeEach(async ({page}) => {
+ await page.route(/api\/bots\/executions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({executions:[]})}));
+ await page.route(/api\/bots\/decisions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({decisions:[]})}));
+});
 const preview = "/react-preview/";
 
 test("authenticated React cockpit exposes OHLC ranges and recent simulated transactions", async ({ page }) => {

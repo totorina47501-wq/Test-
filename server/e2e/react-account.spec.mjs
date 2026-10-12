@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
 
+test.beforeEach(async ({page}) => {
+ await page.route(/api\/bots\/executions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({executions:[]})}));
+ await page.route(/api\/bots\/decisions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({decisions:[]})}));
+});
 const preview = "/react-preview/?view=portfolio";
 
 test("React account space covers portfolio, activity and bot strategy management", async ({ page }) => {

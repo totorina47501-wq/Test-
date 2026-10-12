@@ -51,6 +51,8 @@ try {
       { id: "gold", name: "Gold Bot", tier: "GOLD", plan: "pro", risk: "Élevé", allocation: 65, summary: "Détection bull run", strategy: "Momentum offensif", compatible_assets: ["BTC","ETH"] }
     ]
   })));
+  await page.route(/api\/bots\/executions\/history/, route => route.fulfill(mock({executions:[]})));
+  await page.route(/api\/bots\/decisions\/history/, route => route.fulfill(mock({decisions:[]})));
   await page.goto(baseURL + "/react-preview/?view=portfolio", { waitUntil: "domcontentloaded" });
   const heading = name => page.getByRole("heading", { name, exact: true });
   await heading("Portefeuille").waitFor({ state: "visible", timeout: 15000 });
