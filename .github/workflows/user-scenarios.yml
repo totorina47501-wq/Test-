@@ -10,7 +10,7 @@ on:
     branches: [staging, main]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   # Replace superseded PR checks; keep each push, scheduled and manual run independent.
@@ -94,6 +94,19 @@ jobs:
           retention-days: 14
       - name: Browser E2E (desktop and mobile)
         run: npx playwright test --config=playwright.config.mjs --grep-invert='production authenticated|guest homepage and login modal|guest Investir page loads|expired JWT is rejected on live production'
+      # Publish the same screenshots already captured above, not a second capture pipeline.
+      # [skip ci] avoids recursively triggering the workflow on its own image commit.
+      - name: Publish synthetic showcase images to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server/public/showcase/*.png
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(showcase): refresh synthetic UI screenshots [skip ci]"
+            git push origin HEAD:main
+          fi
       - name: Upload scenario reports
         if: always()
         uses: actions/upload-artifact@v4
