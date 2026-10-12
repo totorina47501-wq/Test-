@@ -5,7 +5,7 @@ on:
     - cron: '17 4 * * *'
   workflow_dispatch:
   pull_request:
-    branches: [staging]
+    branches: [staging, main]
   push:
     branches: [staging, main]
 
@@ -98,11 +98,10 @@ jobs:
       # [skip ci] avoids recursively triggering the workflow on its own image commit.
       - name: Publish synthetic showcase images to main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add server/public/showcase/*.png
+          git add public/showcase/*.png
           if ! git diff --cached --quiet; then
             git commit -m "chore(showcase): refresh synthetic UI screenshots [skip ci]"
             git push origin HEAD:main
