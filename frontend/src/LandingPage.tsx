@@ -1,4 +1,6 @@
 import {useEffect,useState} from "react";
+import {LanguageSelector} from "./components/LanguageSelector";
+import {useLanguage} from "./i18n";
 import {Activity, ArrowRight, Bot, ChartCandlestick, LockKeyhole, ShieldCheck, Wallet} from "lucide-react";
 import "./landing.css";
 
