@@ -8,8 +8,8 @@ test("guest homepage and login modal", async ({ page }) => {
   page.on("pageerror", error => errors.push(error.message));
   const response = await page.goto("/", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { name: /Votre cockpit crypto/i })).toBeVisible();
-  await expect(page.getByText("Simulation uniquement · aucun ordre réel")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Explorez la crypto/i })).toBeVisible();
+  await expect(page.getByText("Environnement de simulation. Aucun ordre réel, aucun dépôt et aucune promesse de rendement.")).toBeVisible();
   await page.getByRole("button", { name: /Se connecter/i }).first().click();
   const dialog = page.getByRole("dialog", { name: "Authentification BitGold" });
   await expect(dialog).toBeVisible();
@@ -32,6 +32,6 @@ test("expired JWT is rejected on live production", async ({ page }) => {
   const response = await page.goto("/", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("bitgold-token"))).toBeNull();
-  await expect(page.getByRole("heading", { name: /Votre cockpit crypto/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Explorez la crypto/i })).toBeVisible();
   await expect(page.getByRole("button", { name: "Se connecter" }).first()).toBeVisible();
 });
