@@ -73,3 +73,8 @@
 - Transaction SQL, verrou de portefeuille, clé d'idempotence, limite 1–100 000 € et historique par utilisateur.
 - CTA cockpit, accueil, navigation Investir et portefeuille, renvoyant vers `/portefeuille?action=crediter`.
 - Tests CI/Playwright et validation production à effectuer avant annonce de livraison.
+
+## Achat / Vente Investir — PR #518
+- Gestion des rejets d'ordres : messages d'erreur explicites, accès direct au crédit fictif et au portefeuille.
+- Régression Playwright achat/vente LINK en desktop et mobile avec réponses API contrôlées ; fichier `server/e2e/react-investir.spec.mjs`.
+- Statut : en attente de validation CI et de vérification production authentifiée ; référence `docs/PRODUCTION_PLAYWRIGHT_REFERENCE.md`.
