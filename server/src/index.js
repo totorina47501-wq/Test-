@@ -257,7 +257,7 @@ app.get(/^\/react-preview\/?$/,(req,res)=>res.sendFile(path.join(reactPreviewRoo
 const legacyPublicRoot=path.join(__dirname,"../public");
 // Serve the existing public showcase screenshots in both React and legacy modes.
 // React assets live in /react-app, whereas screenshots are copied to /public/showcase.
-app.use("/showcase",express.static(path.join(legacyPublicRoot,"showcase"),{index:false,fallthrough:false,setHeaders:(res)=>res.setHeader("Cache-Control","public, max-age=3600")}));
+app.use("/showcase",express.static(path.join(legacyPublicRoot,"showcase"),{index:false,setHeaders:(res)=>res.setHeader("Cache-Control","public, max-age=3600")}));
 const reactAppRoot=path.join(__dirname,"../react-app");
 const requestedFrontendMode=String(process.env.FRONTEND_MODE||(isProduction?"react":"legacy")).trim().toLowerCase();
 const frontendMode=requestedFrontendMode==="legacy"?"legacy":"react";
