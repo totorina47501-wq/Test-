@@ -50,7 +50,7 @@ test("React account space covers portfolio, activity and bot strategy management
 
   await expect(page.getByRole("heading", { name: "Portefeuille", exact: true })).toBeVisible();
   await expect(page.getByText("10\u202f000,00\u00a0€").first()).toBeVisible();
-  await expect(page.getByText("BTC")).toBeVisible();
+  await expect(page.getByText("BTC", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("button", { name: "Activités" }).click();
   await expect(page.getByRole("heading", { name: "Activités" })).toBeVisible();
