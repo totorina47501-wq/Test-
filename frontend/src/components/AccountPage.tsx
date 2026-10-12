@@ -37,7 +37,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
         </div>
         <div className="space-y-2">{[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0).map(p=><div key={p.name} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2 text-sm">
           <span className="flex min-w-0 items-center gap-2">{p.name==="Liquidités"?<span className="grid h-7 w-7 place-items-center rounded-full bg-slate-600 text-xs">€</span>:<CryptoAssetMark symbol={p.name} size={28}/>}
-          {p.name==="Liquidités"?<span>Liquidités</span>:<a href={"/investir?asset="+encodeURIComponent(p.name)} className="font-semibold text-emerald-200 hover:underline" aria-label={"Voir le marché "+p.name}>{p.name} ↗</a>}</span>
+          {p.name==="Liquidités"?<span>Liquidités</span>:<a href={"/investir?asset="+encodeURIComponent(p.name)} className="font-semibold text-emerald-200 hover:underline" aria-label={"Voir le marché "+p.name}><span>{p.name}</span> <span aria-hidden="true">↗</span></a>}</span>
           <strong className="whitespace-nowrap">{eur(p.value)}</strong>
         </div>)}</div>
       </div>
