@@ -1,4 +1,6 @@
 import {CryptoAssetMark} from "./CryptoAssetMark";
+import {CryptoDiscoveryPanel} from "./CryptoDiscoveryPanel";
+import {useLanguage} from "../i18n";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {ArrowLeft,ArrowRight,RefreshCw,TrendingDown,TrendingUp} from "lucide-react";
@@ -34,6 +36,7 @@ const formatChartTick=(timestamp:number,range:string)=>{
 
 export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   const auth=useAuth();
+  const {t}=useLanguage();
   const market=useInvestirMarket();
   const [selected,setSelected]=useState(()=>{const requested=new URLSearchParams(window.location.search).get("asset")?.toUpperCase()||"BTC";return /^[A-Z0-9]{2,12}$/.test(requested)?requested:"BTC"});
   const [range,setRange]=useState("24h");
@@ -91,7 +94,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
         <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Retour au cockpit</button>
         <div className="flex flex-wrap items-center gap-3"><Badge>Marchés · EUR</Badge><span className="text-xs text-slate-500">Simulation uniquement · aucun ordre réel</span></div>
         <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Investir</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Explorez les principaux marchés crypto, comparez les variations et simulez un achat avec les API BitGold existantes.</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{t("market")} · {t("explore")}. Explorez les cours des actifs compatibles avec la simulation, puis découvrez les autres cryptomonnaies sans transaction.</p>
       </div>
       <Button variant="secondary" onClick={market.reload}><RefreshCw size={16}/> Actualiser</Button>
     </div>
@@ -172,5 +175,5 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
         </Card>
       </div>
     </>}
-  </main>;
+  <CryptoDiscoveryPanel/></main>;
 }
