@@ -1234,6 +1234,7 @@ app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
   try{
     const botType=String(req.params.botType||"").toLowerCase();
     if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});
+    const simulationOptions=parseBacktestSimulationOptions(req.query);
     const days=Math.min(Math.max(Number(req.query.days||30),14),180);
     const symbols=Object.keys(marketIds).filter(symbol=>symbol!=="USDC");
     const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)])));
@@ -1243,6 +1244,7 @@ app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
 });
 app.get("/api/bots/comparator",auth,async(req,res)=>{
   try{
+    const simulationOptions=parseBacktestSimulationOptions(req.query);
     const days=Math.min(Math.max(Number(req.query.days||90),14),180);
     const requested=String(req.query.bots||"adaptive-ai,quant-pulse,shield").split(",").map(value=>value.trim().toLowerCase()).filter(Boolean);
     const botTypes=[...new Set(requested)].filter(botType=>botDefinition(botType)).slice(0,6);
