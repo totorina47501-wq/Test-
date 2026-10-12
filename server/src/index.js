@@ -24,6 +24,7 @@ import { evaluateBot, getBotAIConfig } from "./bot-ai-engine.js";
 import { presentDecision, decisionFilters } from "./bot-decision-history.js";
 import { simulateBacktest, compareBacktests, analyzeBacktestRobustness } from "./bot-ai-backtest.js";
 import { compareQuantumFund } from "./quantum-fund-lab.js";
+import { cryptoDiscovery } from "./crypto-discovery.js";
 
 const { Pool } = pg;
 const app = express();
@@ -912,6 +913,8 @@ async function getBotNewsForAI(){
   }
 }
 
+// Read-only discovery catalogue: intentionally excluded from prices, orders and bots.
+app.get("/api/market/discovery",(_req,res)=>res.json({mode:"discovery",source:"BitGold curated catalog",assets:cryptoDiscovery}));
 app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
 const HISTORY_RANGES={
   "5m":{label:"5 min",days:1,maxAgeMs:5*60*1000},

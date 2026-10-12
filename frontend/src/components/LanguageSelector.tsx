@@ -1,0 +1,2 @@
+import {labels,languages,useLanguage,type Language} from "../i18n";
+export function LanguageSelector(){const {language,setLanguage,t}=useLanguage();return <label className="inline-flex items-center gap-2 text-xs text-slate-300"><span>{t("language")}</span><select aria-label={t("language")} value={language} onChange={event=>setLanguage(event.target.value as Language)} className="max-w-[140px] rounded-lg border border-white/20 bg-[#15171b] px-2 py-2 text-white">{languages.map(code=><option value={code} key={code}>{labels[code]}</option>)}</select></label>}
