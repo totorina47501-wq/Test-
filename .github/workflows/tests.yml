@@ -53,7 +53,7 @@ jobs:
           grep -q 'NODE_ENV=production' Dockerfile
           grep -q 'JWT_SECRET must be configured' src/index.js
           grep -q 'TWO_FACTOR_ENCRYPTION_KEY must be configured' src/index.js
-          grep -q 'FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS react-build' Dockerfile
+          grep -q 'FROM node:22-bookworm-slim AS react-build' Dockerfile
           grep -q 'COPY frontend/' Dockerfile
           grep -q 'COPY --from=react-build' Dockerfile
       - name: Build production container
