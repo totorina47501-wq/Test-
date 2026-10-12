@@ -54,11 +54,25 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
 }
 
 function ActivityView({data}:{data:ReturnType<typeof useAccountData>["activity"]["data"]}){
+  const [side,setSide]=useState<"all"|"buy"|"sell">("all");
+  const [asset,setAsset]=useState("all");
+  const [expanded,setExpanded]=useState(false);
+  const trades=data?.trades||[];
+  const assets=useMemo(()=>Array.from(new Set(trades.map(trade=>trade.asset.toUpperCase()))).sort(),[trades]);
+  const filtered=trades.filter(trade=>(side==="all"||trade.side===side)&&(asset==="all"||trade.asset.toUpperCase()===asset));
   if(!data)return null;
   return <section className="space-y-4">
     <div><Badge>Journal</Badge><h1 className="mt-3 text-3xl font-bold">Activités</h1><p className="mt-2 text-sm text-slate-400">Transactions et décisions des bots de votre environnement de simulation.</p></div>
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card><h2 className="text-lg font-semibold">Transactions</h2>{data.trades?.length?<div className="mt-4 space-y-3">{data.trades.map((trade,index)=><div key={`${trade.created_at}-${index}`} className="border-b border-white/10 pb-3"><div className="flex items-center justify-between gap-3"><p className="font-medium">{trade.side==="buy"?"Achat":"Vente"} {trade.asset}</p><p className={trade.side==="buy"?"text-emerald-300":"text-rose-300"}>{eur(Number(trade.amount_eur||0))}</p></div><p className="mt-1 text-xs text-slate-500">{date(trade.created_at)} · {eur(Number(trade.price_eur||0))} / unité</p></div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucune transaction.</p>}</Card>
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Transactions</h2><span className="text-xs text-slate-400">{filtered.length} / {trades.length}</span></div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <label className="text-xs text-slate-400">Type d'opération<select aria-label="Filtrer par opération" value={side} onChange={event=>setSide(event.target.value as "all"|"buy"|"sell")} className="mt-1 w-full min-w-0 rounded-xl border border-white/15 bg-[#202329] px-3 py-2.5 text-sm text-white"><option value="all">Achats et ventes</option><option value="buy">Achats</option><option value="sell">Ventes</option></select></label>
+          <label className="text-xs text-slate-400">Crypto<select aria-label="Filtrer par crypto" value={asset} onChange={event=>setAsset(event.target.value)} className="mt-1 w-full min-w-0 rounded-xl border border-white/15 bg-[#202329] px-3 py-2.5 text-sm text-white"><option value="all">Toutes les cryptos</option>{assets.map(symbol=><option key={symbol} value={symbol}>{symbol}</option>)}</select></label>
+        </div>
+        {filtered.length?<div className="mt-4 space-y-3">{filtered.slice(0,expanded?undefined:8).map((trade,index)=><div key={`${trade.created_at}-${index}`} className="border-b border-white/10 pb-3"><div className="flex items-center justify-between gap-3"><p className="flex min-w-0 items-center gap-2 font-medium"><CryptoAssetMark symbol={trade.asset} size={24}/>{trade.side==="buy"?"Achat":"Vente"} {trade.asset}</p><p className={`shrink-0 ${trade.side==="buy"?"text-emerald-300":"text-rose-300"}`}>{eur(Number(trade.amount_eur||0))}</p></div><p className="mt-1 text-xs text-slate-500">{date(trade.created_at)} · {eur(Number(trade.price_eur||0))} / unité</p></div>)}</div>:<p className="mt-5 text-sm text-slate-400">{trades.length?"Aucune transaction pour ces filtres.":"Aucune transaction."}</p>}
+        {filtered.length>8&&<button type="button" aria-expanded={expanded} onClick={()=>setExpanded(value=>!value)} className="mt-3 w-full rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm font-medium text-emerald-200 hover:bg-emerald-400/15">{expanded?"Réduire la liste":`Afficher les ${filtered.length-8} autres transactions`} <span aria-hidden="true">{expanded?"⌃":"⌄"}</span></button>}
+      </Card>
       <Card><h2 className="text-lg font-semibold">Logs bots</h2>{data.botLogs?.length?<div className="mt-4 space-y-3">{data.botLogs.map((log,index)=><div key={`${log.created_at}-${index}`} className="border-b border-white/10 pb-3"><div className="flex items-center justify-between gap-3"><p className="font-medium">{log.bot_type}</p><Badge>{log.action}</Badge></div><p className="mt-2 text-sm text-slate-300">{log.message}</p><p className="mt-1 text-xs text-slate-500">{date(log.created_at)}</p></div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucun log bot.</p>}</Card>
     </div>
   </section>;
