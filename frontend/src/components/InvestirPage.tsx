@@ -21,7 +21,7 @@ const ranges=[
 ];
 
 const names:Record<string,string>={
-  BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche"
+  BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche",ADA:"Cardano",XRP:"XRP",LTC:"Litecoin",DOT:"Polkadot"
 };
 
 const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
