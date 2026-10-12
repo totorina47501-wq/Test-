@@ -59,3 +59,10 @@
 - **Captures et preuve UX** :
 - **Régression / risque / rollback** :
 - **Statut final** : IMPLÉMENTÉ / CI VALIDÉE / PROD VALIDÉE / À VÉRIFIER / BLOQUÉ.
+
+## Lot activité mobile — 2026-10-12
+
+- Demande : transactions trop longues sur mobile ; filtres achat/vente et crypto.
+- Implémentation proposée : `frontend/src/components/AccountPage.tsx` ; filtres combinables sur les transactions existantes, sélecteurs accessibles, 8 transactions initiales et bouton développer/réduire ; les logs bots restent indépendants.
+- Preuves requises : build React, parcours CI, production desktop/mobile après merge ; filtres achat, vente, BTC/ETH/USDC selon données présentes ; état vide ; ouverture/fermeture de la liste.
+- État : IMPLÉMENTÉ SUR BRANCHE, CI ET PRODUCTION À VÉRIFIER.
