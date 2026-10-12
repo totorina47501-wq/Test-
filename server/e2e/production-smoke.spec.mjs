@@ -43,7 +43,7 @@ test("live landing displays decoded bots, portfolio and activity screenshots", a
     const asset = await page.request.get("/showcase/" + file);
     expect(asset.status(), file + " must be deployed").toBe(200);
     expect(asset.headers()["content-type"], file + " must be PNG").toMatch(/image\/png/i);
-    const image = page.locator('img.landing-real-capture[src="/showcase/' + file + '"]');
+    const image = page.locator('img.landing-real-capture[src="/showcase/' + file + '"]').first();
     await image.scrollIntoViewIfNeeded();
     await expect(image).toBeVisible();
     await expect.poll(() => image.evaluate(el => el.complete && el.naturalWidth > 0 && el.naturalHeight > 0)).toBe(true);
