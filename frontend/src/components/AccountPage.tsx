@@ -37,7 +37,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
         </div>
         <div className="space-y-2">{[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0).map(p=><div key={p.name} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2 text-sm">
           <span className="flex min-w-0 items-center gap-2">{p.name==="Liquidités"?<span className="grid h-7 w-7 place-items-center rounded-full bg-slate-600 text-xs">€</span>:<CryptoAssetMark symbol={p.name} size={28}/>}
-          {p.name==="Liquidités"?<span>Liquidités</span>:<a href={"/investir?asset="+encodeURIComponent(p.name)} className="font-semibold text-emerald-200 hover:underline" aria-label={"Voir le marché "+p.name}>{p.name} ↗</a>}</span>
+          {p.name==="Liquidités"?<span>Liquidités</span>:<a href={"/investir?asset="+encodeURIComponent(p.name)} className="font-semibold text-emerald-200 hover:underline" aria-label={"Voir le marché "+p.name}>{p.name}<span aria-hidden="true"> ↗</span></a>}</span>
           <strong className="whitespace-nowrap">{eur(p.value)}</strong>
         </div>)}</div>
       </div>
@@ -45,7 +45,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
     <Card>
       <h2 className="text-lg font-semibold">Positions</h2>
       {data.positions?.length?<div className="mt-4 space-y-3">{data.positions.map(position=><div key={position.asset} className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 pb-3">
-        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><a href={"/investir?asset="+encodeURIComponent(position.asset)} className="font-semibold text-emerald-200 hover:underline">{position.asset} ↗</a><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
+        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><a href={"/investir?asset="+encodeURIComponent(position.asset)} className="font-semibold text-emerald-200 hover:underline">{position.asset}<span aria-hidden="true"> ↗</span></a><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
         <div className="text-right"><p className="font-semibold">{eur(Number(position.value||0))}</p><p className="text-xs text-slate-500">{eur(Number(position.price||0))} / unité</p></div>
       </div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucune position ouverte.</p>}
     </Card>
