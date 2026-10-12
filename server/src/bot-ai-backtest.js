@@ -141,7 +141,9 @@ export function simulateBacktest({
         if(quantity>0)decisionHistory.push({timestamp:t,action:"sell",asset,price:Number(executionPrice.toFixed(4)),quantity:Number(quantity.toFixed(8)),fee:Number(fee.toFixed(4)),reason:"Signal de réduction simulée de l'exposition selon la stratégie et les limites de risque."});
       }
     }
-    const equity=cash+Object.entries(holdings).reduce((sum,[symbol,quantity])=>sum+quantity*finite(current[symbol]?.price),0);\n    peakEquity=Math.max(peakEquity,equity);\n    if((peakEquity-equity)/peakEquity*100>=maxDrawdownStopPct)riskStopped=true;
+    const equity=cash+Object.entries(holdings).reduce((sum,[symbol,quantity])=>sum+quantity*finite(current[symbol]?.price),0);
+    peakEquity=Math.max(peakEquity,equity);
+    if((peakEquity-equity)/peakEquity*100>=maxDrawdownStopPct)riskStopped=true;
     curve.push({timestamp:t,equity:Number(equity.toFixed(2))});
   }
   const returns=[];
