@@ -35,7 +35,7 @@ const formatChartTick=(timestamp:number,range:string)=>{
 export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   const auth=useAuth();
   const market=useInvestirMarket();
-  const [selected,setSelected]=useState("BTC");
+  const [selected,setSelected]=useState(()=>{const requested=new URLSearchParams(window.location.search).get("asset")?.toUpperCase()||"BTC";return /^[A-Z0-9]{2,12}$/.test(requested)?requested:"BTC"});
   const [range,setRange]=useState("24h");
   const [amount,setAmount]=useState("500");
   const [side,setSide]=useState<"buy"|"sell">("buy");
