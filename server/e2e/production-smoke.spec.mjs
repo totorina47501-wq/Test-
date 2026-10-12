@@ -36,11 +36,11 @@ test("expired JWT is rejected on live production", async ({ page }) => {
 });
 
 test("live landing displays decoded bots, portfolio and activity screenshots", async ({ page }) => {
-  const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+  const response = await page.goto(prod + "/", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.locator(".bg-landing")).toBeVisible();
   for (const file of ["bots-auth-demo.png", "portfolio-auth-demo.png", "activity-auth-demo.png"]) {
-    const asset = await page.request.get("/showcase/" + file);
+    const asset = await page.request.get(prod + "/showcase/" + file);
     expect(asset.status(), file + " must be deployed").toBe(200);
     expect(asset.headers()["content-type"], file + " must be PNG").toMatch(/image\/png/i);
     const image = page.locator('img.landing-real-capture[src="/showcase/' + file + '"]').first();
