@@ -171,8 +171,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
 export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onBack:()=>void}){
   const auth=useAuth();
   const [tab,setTab]=useState<Tab>(initialTab);
-  const {portfolio,activity,bots,reload}=useAccountData(auth.token,auth.expireSession);\n  const fundingRequested=typeof window!=="undefined"&&new URLSearchParams(window.location.search).get("action")==="crediter";
-  useEffect(()=>setTab(initialTab),[initialTab]);
+  const {portfolio,activity,bots,reload}=useAccountData(auth.token,auth.expireSession);\n  useEffect(()=>setTab(initialTab),[initialTab]);
   if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous depuis l’accueil pour accéder à votre espace privé.</p><Button className="mt-4" onClick={onBack}>Retour à l’accueil</Button></Card></main>;
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
     <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-400"><ArrowLeft size={16}/> Retour au cockpit</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> Actualiser</Button></div>
