@@ -183,3 +183,33 @@ test("React Investir reports rejected trades without claiming success", async ({
   await expect(page.getByRole("alert")).toContainText("Solde insuffisant");
   await expect(page.getByRole("link",{name:"Voir mon portefeuille"})).toHaveCount(0);
 });
+
+
+test("Investir shows actionable funding link when simulated buy is rejected for insufficient cash",async({page})=>{
+  await page.route("**/api/market",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({markets:[{symbol:"LINK",price:11.6,change24h:-2.5}]})}));
+  await page.route("**/api/market/details/*",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({symbol:"LINK",name:"Chainlink",price:11.6,history:{range:"24h",points:[]}})}));
+  let requests=0;
+  await page.route("**/api/trades",route=>{requests++;return route.fulfill({status:400,contentType:"application/json",body:JSON.stringify({error:"Solde insuffisant."})})});
+  await page.addInitScript(()=>localStorage.setItem("bitgold-token","investir-e2e-token"));
+  await page.goto("/react-preview/?view=investir&asset=LINK");
+  await page.getByLabel("Montant en euros").fill("500");
+  await page.getByRole("button",{name:"Acheter en simulation"}).click();
+  await expect(page.getByRole("alert")).toContainText("Solde insuffisant");
+  await expect(page.getByRole("link",{name:"Créditer mes liquidités"})).toHaveAttribute("href","/portefeuille?action=crediter");
+  expect(requests).toBe(1);
+  await page.getByRole("button",{name:"Vendre",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Vendre en simulation"})).toBeVisible();
+});
+
+test("Investir reports insufficient crypto holdings on simulated sell",async({page})=>{
+  await page.route("**/api/market",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({markets:[{symbol:"LINK",price:11.6,change24h:0}]})}));
+  await page.route("**/api/market/details/*",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({symbol:"LINK",name:"Chainlink",price:11.6,history:{range:"24h",points:[]}})}));
+  await page.route("**/api/trades",route=>route.fulfill({status:400,contentType:"application/json",body:JSON.stringify({error:"Quantité insuffisante."})}));
+  await page.addInitScript(()=>localStorage.setItem("bitgold-token","investir-e2e-token"));
+  await page.goto("/react-preview/?view=investir&asset=LINK");
+  await page.getByRole("button",{name:"Vendre",exact:true}).click();
+  await page.getByRole("button",{name:"Vendre en simulation"}).click();
+  await expect(page.getByRole("alert")).toContainText("Quantité insuffisante");
+  await expect(page.getByRole("link",{name:"Consulter mes actifs"})).toHaveAttribute("href","/portefeuille");
+  await expect(page.getByRole("link",{name:"Voir mon portefeuille"})).toHaveCount(0);
+});

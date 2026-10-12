@@ -64,7 +64,8 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
 
   async function submitTrade(){
     if(!auth.token){onAuth();return}
-    if(tradePending.current||!Number.isFinite(numericAmount)||numericAmount<=0||!selected||price<=0)return;
+    if(tradePending.current)return;
+    if(!Number.isFinite(numericAmount)||numericAmount<=0||!selected||price<=0){setTradeState("error");setTradeMessage("Vérifiez le montant et attendez une cotation disponible.");return;}
     tradePending.current=true;
     const submittedSide=side;
     const submittedAsset=selected;
@@ -164,6 +165,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
             <p className="mt-1 text-xs text-slate-500">{price>0?eur(price)+" / "+selected:"Cours indisponible"}</p>
           </div>
           <Button className="mt-5 w-full" disabled={tradeState==="submitting"||!estimated} onClick={submitTrade}>{tradeState==="submitting"?"Enregistrement…":auth.token?(side==="buy"?"Acheter en simulation":"Vendre en simulation"):"Se connecter pour simuler"} <ArrowRight size={16}/></Button>
+          {tradeState==="error"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille?action=crediter" className="font-semibold text-lime-300 underline underline-offset-4">Créditer mes liquidités</a><a href="/portefeuille" className="text-slate-300 underline underline-offset-4">Consulter mes actifs</a></div>}
           {tradeMessage&&<p role={tradeState==="error"?"alert":"status"} className={`mt-3 text-sm ${tradeState==="error"?"text-rose-300":"text-lime-300"}`}>{tradeMessage}</p>}
           {tradeState==="success"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille" className="text-lime-300 underline underline-offset-4">Voir mon portefeuille</a><a href="/activite" className="text-lime-300 underline underline-offset-4">Voir mes activités</a></div>}
           <p className="mt-4 text-xs leading-5 text-slate-500">Aucun actif réel n’est acheté. Cette action modifie uniquement votre portefeuille de simulation.</p>
