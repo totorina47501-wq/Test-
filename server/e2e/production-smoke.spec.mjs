@@ -34,3 +34,20 @@ test("expired JWT is rejected on live production", async ({ page }) => {
   await expect(page.locator("main h1").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Se connecter" }).first()).toBeVisible();
 });
+
+test("live landing displays decoded bots, portfolio and activity screenshots", async ({ page }) => {
+  const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.locator(".bg-landing")).toBeVisible();
+  for (const file of ["bots-auth-demo.png", "portfolio-auth-demo.png", "activity-auth-demo.png"]) {
+    const asset = await page.request.get("/showcase/" + file);
+    expect(asset.status(), file + " must be deployed").toBe(200);
+    expect(asset.headers()["content-type"], file + " must be PNG").toMatch(/image\/png/i);
+    const image = page.locator('img.landing-real-capture[src="/showcase/' + file + '"]');
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toBeVisible();
+    await expect.poll(() => image.evaluate(el => el.complete && el.naturalWidth > 0 && el.naturalHeight > 0)).toBe(true);
+  }
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
+  expect(overflow, "landing must not overflow horizontally").toBe(false);
+});
