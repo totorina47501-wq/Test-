@@ -25,23 +25,27 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
       <Card><p className="text-sm text-slate-400">Investi</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.invested||0))}</p></Card>
     </div>
     {data.positions?.length? <Card>
-      <h2 className="text-lg font-semibold">Répartition du portefeuille virtuel</h2>
-      <p className="mt-1 text-xs text-slate-400">Répartition calculée à partir de vos positions simulées et de vos liquidités.</p>
+      <h2 className="text-lg font-semibold">Répartition de vos actifs détenus</h2>
+      <p className="mt-1 text-xs text-slate-400">Valeurs réelles de votre portefeuille virtuel, issues de vos positions simulées. Cliquez sur un actif pour voir son marché.</p>
       <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr] md:items-center">
-        <div className="h-52 min-w-0" role="img" aria-label="Graphique de répartition du portefeuille simulé">
+        <div className="h-52 min-w-0" role="img" aria-label="Graphique de répartition de vos positions simulées et liquidités">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart><Pie data={[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0)} dataKey="value" nameKey="name" innerRadius={54} outerRadius={84} paddingAngle={2} stroke="none">
-              {[...data.positions,{asset:"Liquidités"}].map((p,i)=><Cell key={p.asset} fill={["#34d399","#60a5fa","#a78bfa","#fbbf24","#fb7185","#2dd4bf"][i%6]}/>)}
+              {[...data.positions.filter(p=>Number(p.value)>0),...(Number(data.cash)>0?[{asset:"Liquidités"}]:[])].map(p=><Cell key={p.asset} fill={p.asset==="Liquidités"?"#64748b":({BTC:"#f7931a",ETH:"#8b93b6",SOL:"#9d73ff",USDC:"#2775ca"} as Record<string,string>)[p.asset.toUpperCase()]||"#34d399"}/>)}
             </Pie><Tooltip formatter={(value:number)=>eur(Number(value))}/></PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="space-y-2">{[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0).map((p,i)=><div key={p.name} className="flex items-center justify-between gap-3 text-sm"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{background:["#34d399","#60a5fa","#a78bfa","#fbbf24","#fb7185","#2dd4bf"][i%6]}}/>{p.name}</span><strong>{eur(p.value)}</strong></div>)}</div>
+        <div className="space-y-2">{[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0).map(p=><div key={p.name} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2 text-sm">
+          <span className="flex min-w-0 items-center gap-2">{p.name==="Liquidités"?<span className="grid h-7 w-7 place-items-center rounded-full bg-slate-600 text-xs">€</span>:<CryptoAssetMark symbol={p.name} size={28}/>}
+          {p.name==="Liquidités"?<span>Liquidités</span>:<a href={"/investir?asset="+encodeURIComponent(p.name)} className="font-semibold text-emerald-200 hover:underline" aria-label={"Voir le marché "+p.name}>{p.name} ↗</a>}</span>
+          <strong className="whitespace-nowrap">{eur(p.value)}</strong>
+        </div>)}</div>
       </div>
     </Card>:null}
     <Card>
       <h2 className="text-lg font-semibold">Positions</h2>
       {data.positions?.length?<div className="mt-4 space-y-3">{data.positions.map(position=><div key={position.asset} className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 pb-3">
-        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><p className="font-semibold">{position.asset}</p><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
+        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><a href={"/investir?asset="+encodeURIComponent(position.asset)} className="font-semibold text-emerald-200 hover:underline">{position.asset} ↗</a><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
         <div className="text-right"><p className="font-semibold">{eur(Number(position.value||0))}</p><p className="text-xs text-slate-500">{eur(Number(position.price||0))} / unité</p></div>
       </div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucune position ouverte.</p>}
     </Card>
