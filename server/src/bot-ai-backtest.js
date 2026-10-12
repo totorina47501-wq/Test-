@@ -55,8 +55,8 @@ export function analyzeBacktestRobustness({curve=[],paths=250,seed=42}={}){
   return{paths:count,confidence:{p05:Number((percentile(finals,.05)*100).toFixed(2)),p50:Number((percentile(finals,.5)*100).toFixed(2)),p95:Number((percentile(finals,.95)*100).toFixed(2))},drawdown:{p95:Number((percentile(drawdowns,.95)*100).toFixed(2))},sampleSize:returns.length,seed:Number(seed)||42};
 }
 
-export function compareBacktests({histories={},botTypes=[],initialCash=10000,feeRate=.0015,slippageRate=.0005,minOrderEur=0,maxOrderEur=Infinity,spreadRate=0}={}){
-  return botTypes.filter(Boolean).map(botType=>simulateBacktest({botType,histories,initialCash,feeRate,slippageRate,minOrderEur,maxOrderEur,spreadRate})).sort((a,b)=>b.totalReturn-a.totalReturn);
+export function compareBacktests({histories={},botTypes=[],initialCash=10000,feeRate=.0015,slippageRate=.0005,minOrderEur=0,maxOrderEur=Infinity,spreadRate=0,minCashPct=0,maxDrawdownStopPct=100}={}){
+  return botTypes.filter(Boolean).map(botType=>simulateBacktest({botType,histories,initialCash,feeRate,slippageRate,minOrderEur,maxOrderEur,spreadRate,minCashPct,maxDrawdownStopPct})).sort((a,b)=>b.totalReturn-a.totalReturn);
 }
 
 export function simulateBacktest({
@@ -67,12 +67,15 @@ export function simulateBacktest({
   slippageRate=.0005,
   minOrderEur=0,
   maxOrderEur=Infinity,
-  spreadRate=0
+  spreadRate=0,
+  minCashPct=0,
+  maxDrawdownStopPct=100
 }={}){
   if(!Number.isFinite(initialCash)||initialCash<=0)throw Error("Capital initial invalide.");
   if(!Number.isFinite(feeRate)||feeRate<0||feeRate>=1||!Number.isFinite(slippageRate)||slippageRate<0||slippageRate>=1)throw Error("Frais ou slippage invalides.");
   if(!Number.isFinite(minOrderEur)||minOrderEur<0||!(maxOrderEur===Infinity||Number.isFinite(maxOrderEur))||maxOrderEur<=0||maxOrderEur<minOrderEur)throw Error("Limites de montant d’ordre invalides.");
   if(!Number.isFinite(spreadRate)||spreadRate<0||spreadRate>=1)throw Error("Spread invalide.");
+  if(!Number.isFinite(minCashPct)||minCashPct<0||minCashPct>100||!Number.isFinite(maxDrawdownStopPct)||maxDrawdownStopPct<=0||maxDrawdownStopPct>100)throw Error("Limites de risque invalides.");
   const symbols=Object.keys(histories).filter(symbol=>symbol!=="USDC");
   const series=Object.fromEntries(symbols.map(symbol=>[symbol,normalize(histories[symbol])]));
   const timeline=normalize(series.BTC||[]).map(p=>p.timestamp);
@@ -83,6 +86,8 @@ export function simulateBacktest({
   let fees=0,turnover=0,trades=0,buyTrades=0,sellTrades=0;
   const curve=[];
   const decisionHistory=[];
+  let peakEquity=initialCash;
+  let riskStopped=false;
   for(let i=14;i<timeline.length;i++){
     const t=timeline[i];
     // Advance each sorted history once instead of filtering its entire prefix on every tick.
@@ -104,6 +109,8 @@ export function simulateBacktest({
     }).filter(row=>row.quantity>0&&row.price>0);
     const totalBefore=cash+positions.reduce((sum,row)=>sum+row.value,0);
     const weighted=positions.map(row=>({...row,allocation:totalBefore?row.value/totalBefore*100:0}));
+    peakEquity=Math.max(peakEquity,totalBefore);
+    if((peakEquity-totalBefore)/peakEquity*100>=maxDrawdownStopPct)riskStopped=true;
     const risk=portfolioRisk({cash,total:totalBefore,positions:weighted},features);
     const selected=pickAsset(botType,forecasts,features,regime,weighted);
     const base=selected?baseDecision(botType,selected.symbol,features,forecasts[selected.symbol],regime,risk,weighted):{action:"hold",asset:null,fraction:0};
@@ -111,8 +118,8 @@ export function simulateBacktest({
     const price=finite(current[asset]?.price);
     if(asset&&price>0&&isFreshBacktestQuote(current[asset],t)&&base.action!=="hold"){
       const holding=Math.max(0,finite(holdings[asset]));
-      if(base.action==="buy"&&cash>0){
-        const requested=Math.min(maxOrderEur,cash/(1+feeRate),cash*Math.max(0,finite(base.fraction)));
+      if(base.action==="buy"&&cash>0&&!riskStopped){
+        const requested=Math.min(maxOrderEur,Math.max(0,cash-Math.max(0,totalBefore*minCashPct/100))/(1+feeRate),cash*Math.max(0,finite(base.fraction)));
         const executionPrice=price*(1+slippageRate+spreadRate/2);
         const quantity=requested/executionPrice;
         const fee=requested*feeRate;
@@ -166,6 +173,7 @@ export function simulateBacktest({
     sellTrades,
     fees:Number(fees.toFixed(2)),
     executionCosts:{feeRate,slippageRate,spreadRate},
+    riskControls:{minCashPct,maxDrawdownStopPct,stopped:riskStopped},
     turnover:Number(turnover.toFixed(2)),
     periodPoints:curve.length,
     periodStart:curve[0]?.timestamp||null,
