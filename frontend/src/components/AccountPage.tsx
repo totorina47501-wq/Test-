@@ -2,6 +2,7 @@ import {CryptoAssetMark} from "./CryptoAssetMark";
 import {PieChart,Pie,Cell,ResponsiveContainer,Tooltip} from "recharts";
 import {BotBacktestPanel} from "./BotBacktestPanel";
 import {QuantumFundPanel} from "./QuantumFundPanel";
+import {BotObservabilityPanel} from "./BotObservabilityPanel";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
@@ -164,6 +165,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
     </Card>})}</div>
     {selected&&<BotScenarioPreview bot={selected}/>}
     {selected&&<BotConfig bot={selected} subscription={subscriptions.get(selected.id)} token={token} onExpired={onExpired} onDone={done} onCancel={()=>setSelected(null)}/>}
+    <BotObservabilityPanel token={token} botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
     <StrategyCompare bots={data.catalog||[]}/>
     <BotBacktestPanel botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
     <QuantumFundPanel botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
@@ -184,8 +186,10 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
       <button type="button" onClick={()=>setTab("activity")} aria-current={tab==="activity"?"page":undefined} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="activity"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Activity size={16}/> Activités</button>
       <button type="button" onClick={()=>setTab("bots")} aria-current={tab==="bots"?"page":undefined} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="bots"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Bot size={16}/> Bots IA</button>
     </nav>
+    {tab==="portfolio"&&bots.data&&<BotObservabilityPanel compact token={auth.token} botIds={(bots.data.catalog||[]).map(bot=>bot.id)} onExpired={auth.expireSession}/>}
     {tab==="portfolio"&&<SimulatedFunding token={auth.token} onExpired={auth.expireSession} onSuccess={reload}/>}
     {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
+    {tab==="activity"&&bots.data&&<BotObservabilityPanel compact token={auth.token} botIds={(bots.data.catalog||[]).map(bot=>bot.id)} onExpired={auth.expireSession}/>}
     {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
     {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload} onExpired={auth.expireSession}/>)}
     <p className="text-center text-xs text-slate-500">Simulation uniquement · aucun ordre ou investissement réel.</p>
