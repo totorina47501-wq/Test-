@@ -91,12 +91,12 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">{auth.status==="authenticated"&&<ReactOnboarding/>}
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> Retour au cockpit</button>
+        <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> {t("back")}</button>
         <div className="flex flex-wrap items-center gap-3"><Badge>Marchés · EUR</Badge><span className="text-xs text-slate-500">Simulation uniquement · aucun ordre réel</span></div>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Investir</h1>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{t("invest")}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{t("market")} · {t("explore")}. Explorez les cours des actifs compatibles avec la simulation, puis découvrez les autres cryptomonnaies sans transaction.</p>
       </div>
-      <Button variant="secondary" onClick={market.reload}><RefreshCw size={16}/> Actualiser</Button>
+      <Button variant="secondary" onClick={market.reload}><RefreshCw size={16}/> {t("refresh")}</Button>
     </div>
 
     {market.status==="loading"&&<Card aria-busy="true"><p role="status">Chargement des marchés…</p></Card>}
