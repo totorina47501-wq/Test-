@@ -28,3 +28,19 @@ Améliorer l'accès à Quantum Fund et la découverte des actifs, **sans modifie
 - Traduction complète des textes existants avec couverture CI, hreflang et emails localisés.
 - Élargissement des cryptos négociables **par étapes** avec protection explicite des entrées de bots.
 - Activation produit mesurée, UX mobile, analytics consenties, tests de rétention.
+
+## Lot suivant — langues + extension des transactions simulées
+
+- Quatre cryptos supplémentaires : **ADA, XRP, LTC, DOT**, avec identifiants CoinGecko, cotations et historique via les mêmes API que les actifs existants.
+- Les ordres manuels restent **strictement refusés si la cotation n'est pas fraîche** (moins de 120 secondes), indisponible ou non positive. Aucune cotation inventée pour les nouveaux actifs.
+- Les 20 autres actifs demeurent en découverte seule, non négociables et non éligibles aux bots.
+- Le flux historique global utilisé par les bots est explicitement limité aux six symboles précédents via `botLegacyMarketSymbols`. Les fichiers de stratégies, Quantum Fund et les règles de décision n'ont pas été modifiés.
+- Traductions étendues à la navigation, à l'accueil et aux actions principales de la page Investir. Les vues privées historiques et certains libellés restent en français : **l'internationalisation intégrale reste à terminer**.
+- Tests : mise à jour du catalogue, Playwright découverte, assertion des quatre actifs et de l'isolement des bots.
+
+### Vérifications additionnelles à réaliser
+1. Sur `/investir`, vérifier les 10 actifs négociables et le refus d'achat/vente sans cours frais.
+2. Vérifier les historiques ADA/XRP/LTC/DOT, les conversions et la valorisation après transaction en environnement authentifié.
+3. Vérifier les 5 langues et l'absence de chaînes françaises résiduelles sur les parcours privés.
+4. Vérifier que le comparateur Quantum Fund et les bots produisent les mêmes résultats pour les mêmes entrées qu'avant le lot.
+5. Vérifier les workflows PR et post-fusion sur `main`.
