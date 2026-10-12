@@ -55,8 +55,8 @@ export function analyzeBacktestRobustness({curve=[],paths=250,seed=42}={}){
   return{paths:count,confidence:{p05:Number((percentile(finals,.05)*100).toFixed(2)),p50:Number((percentile(finals,.5)*100).toFixed(2)),p95:Number((percentile(finals,.95)*100).toFixed(2))},drawdown:{p95:Number((percentile(drawdowns,.95)*100).toFixed(2))},sampleSize:returns.length,seed:Number(seed)||42};
 }
 
-export function compareBacktests({histories={},botTypes=[],initialCash=10000,feeRate=.0015,slippageRate=.0005,minOrderEur=0,maxOrderEur=Infinity}={}){
-  return botTypes.filter(Boolean).map(botType=>simulateBacktest({botType,histories,initialCash,feeRate,slippageRate,minOrderEur,maxOrderEur})).sort((a,b)=>b.totalReturn-a.totalReturn);
+export function compareBacktests({histories={},botTypes=[],initialCash=10000,feeRate=.0015,slippageRate=.0005,minOrderEur=0,maxOrderEur=Infinity,spreadRate=0}={}){
+  return botTypes.filter(Boolean).map(botType=>simulateBacktest({botType,histories,initialCash,feeRate,slippageRate,minOrderEur,maxOrderEur,spreadRate})).sort((a,b)=>b.totalReturn-a.totalReturn);
 }
 
 export function simulateBacktest({
@@ -66,11 +66,13 @@ export function simulateBacktest({
   feeRate=.0015,
   slippageRate=.0005,
   minOrderEur=0,
-  maxOrderEur=Infinity
+  maxOrderEur=Infinity,
+  spreadRate=0
 }={}){
   if(!Number.isFinite(initialCash)||initialCash<=0)throw Error("Capital initial invalide.");
   if(!Number.isFinite(feeRate)||feeRate<0||feeRate>=1||!Number.isFinite(slippageRate)||slippageRate<0||slippageRate>=1)throw Error("Frais ou slippage invalides.");
   if(!Number.isFinite(minOrderEur)||minOrderEur<0||!(maxOrderEur===Infinity||Number.isFinite(maxOrderEur))||maxOrderEur<=0||maxOrderEur<minOrderEur)throw Error("Limites de montant d’ordre invalides.");
+  if(!Number.isFinite(spreadRate)||spreadRate<0||spreadRate>=1)throw Error("Spread invalide.");
   const symbols=Object.keys(histories).filter(symbol=>symbol!=="USDC");
   const series=Object.fromEntries(symbols.map(symbol=>[symbol,normalize(histories[symbol])]));
   const timeline=normalize(series.BTC||[]).map(p=>p.timestamp);
@@ -111,7 +113,7 @@ export function simulateBacktest({
       const holding=Math.max(0,finite(holdings[asset]));
       if(base.action==="buy"&&cash>0){
         const requested=Math.min(maxOrderEur,cash/(1+feeRate),cash*Math.max(0,finite(base.fraction)));
-        const executionPrice=price*(1+Math.max(0,feeRate*0+slippageRate));
+        const executionPrice=price*(1+slippageRate+spreadRate/2);
         const quantity=requested/executionPrice;
         const fee=requested*feeRate;
         if(quantity>0&&requested>=minOrderEur&&requested+fee<=cash){
@@ -123,7 +125,7 @@ export function simulateBacktest({
       }
       if(base.action==="sell"&&holding>0){
         const quantity=Math.min(holding,holding*Math.max(0,finite(base.fraction)));
-        const executionPrice=price*(1-Math.min(.1,Math.max(0,slippageRate)));
+        const executionPrice=price*(1-Math.min(.1,Math.max(0,slippageRate+spreadRate/2)));
         const proceeds=quantity*executionPrice;
         const fee=proceeds*feeRate;
         cash+=Math.max(0,proceeds-fee);
@@ -163,6 +165,7 @@ export function simulateBacktest({
     buyTrades,
     sellTrades,
     fees:Number(fees.toFixed(2)),
+    executionCosts:{feeRate,slippageRate,spreadRate},
     turnover:Number(turnover.toFixed(2)),
     periodPoints:curve.length,
     periodStart:curve[0]?.timestamp||null,
