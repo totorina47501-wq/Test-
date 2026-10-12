@@ -21,6 +21,10 @@ try {
     const response = await page.goto(baseURL + screen.path, { waitUntil: "domcontentloaded" });
     if (!response?.ok()) throw new Error("Screenshot page unavailable: " + screen.path);
     await page.locator(screen.selector).first().waitFor({ state: "visible" });
+    // A successful HTTP response is not enough: protected routes may silently render the public landing.
+    if (screen.filename !== "landing-desktop.png" && await page.locator(".bg-landing").count()) {
+      throw new Error("Refusing misleading screenshot: " + screen.path + " rendered the public landing rather than the requested module");
+    }
     await page.waitForTimeout(350);
     await page.evaluate(() => { window.scrollTo(0, 0); document.querySelectorAll("iframe").forEach(node => node.remove()); });
     const visibleAuthDialog = await page.getByText("Connexion BitGold", { exact: true }).isVisible();
