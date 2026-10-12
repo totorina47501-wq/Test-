@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
       - name: Syntax lint before building Docker image
-        run: npm run lint:syntax
+        run: npm run lint:all
       - name: Validate Dockerfile and production configuration contract
         run: |
           test -f Dockerfile
