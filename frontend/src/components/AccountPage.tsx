@@ -6,7 +6,7 @@ import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
 import {Badge,Button,Card} from "./ui";
 import {useAuth} from "../auth/AuthContext";
-import {SessionExpiredError,activateBot,deactivateBot,useAccountData,type BotDefinition,type BotSubscription} from "../hooks/useAccountData";
+import {SessionExpiredError,simulatedDeposit,activateBot,deactivateBot,useAccountData,type BotDefinition,type BotSubscription} from "../hooks/useAccountData";
 
 type Tab="portfolio"|"activity"|"bots";
 const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
@@ -15,6 +15,11 @@ const date=(value:string)=>new Date(value).toLocaleString("fr-FR");
 function Loading({label}:{label:string}){return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
 function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p><Button className="mt-4" onClick={onRetry}>Réessayer</Button></Card>}
 
+function SimulatedFunding({token,onExpired,onSuccess}:{token:string;onExpired:()=>void;onSuccess:()=>void}){
+  const [method,setMethod]=useState<"card"|"paypal">("card");const [amount,setAmount]=useState("100");const [pending,setPending]=useState(false);const [message,setMessage]=useState("");const [error,setError]=useState("");
+  async function submit(event:React.FormEvent){event.preventDefault();const value=Number(amount);if(!Number.isFinite(value)||value<1||value>100000||Math.round(value*100)!==value*100){setError("Choisissez un montant entre 1 et 100 000 €.");return}setPending(true);setError("");setMessage("");try{const requestKey=crypto.randomUUID().replace(/-/g,"");const result=await simulatedDeposit(token,{method,amount:value,requestKey});setMessage("Votre portefeuille virtuel a été crédité de "+eur(value)+". Liquidités disponibles : "+eur(result.cash));onSuccess();}catch(e){if(e instanceof SessionExpiredError)onExpired();setError(e instanceof Error?e.message:"Crédit indisponible.")}finally{setPending(false)}}
+  return <Card><h2 className="text-xl font-bold">Créditer mes liquidités</h2><p className="mt-2 text-sm text-slate-400">Paiement fictif : carte bancaire ou PayPal simulés. Aucun débit réel, aucune donnée de carte demandée, aucune connexion PayPal.</p><form className="mt-4 space-y-4" onSubmit={submit}><fieldset><legend className="mb-2 text-sm font-semibold">Mode de paiement fictif</legend><div className="flex flex-wrap gap-3">{([["card","Carte bancaire"],["paypal","PayPal"]] as const).map(([value,label])=><label key={value} className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm"><input type="radio" name="simulated-method" checked={method===value} onChange={()=>setMethod(value)}/>{label}</label>)}</div></fieldset><label className="block text-sm">Montant en euros<input className="mt-2 block w-full max-w-xs rounded-xl border border-white/20 bg-[#101418] px-4 py-3 text-white" type="number" min="1" max="100000" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label><div className="flex flex-wrap gap-2">{[50,100,500,1000].map(value=><button type="button" key={value} onClick={()=>setAmount(String(value))} className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:border-lime-400">{eur(value)}</button>)}</div><Button disabled={pending} type="submit">{pending?"Crédit en cours…":"Confirmer le crédit fictif"}</Button></form>{message&&<p role="status" className="mt-3 text-lime-300">{message}</p>}{error&&<p role="alert" className="mt-3 text-rose-300">{error}</p>}</Card>
+}
 function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio"]["data"]}){
   if(!data)return null;
   return <section className="space-y-4">
@@ -177,6 +182,7 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
       <button type="button" onClick={()=>setTab("activity")} aria-current={tab==="activity"?"page":undefined} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="activity"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Activity size={16}/> Activités</button>
       <button type="button" onClick={()=>setTab("bots")} aria-current={tab==="bots"?"page":undefined} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="bots"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Bot size={16}/> Bots IA</button>
     </nav>
+    {tab==="portfolio"&&<SimulatedFunding token={auth.token} onExpired={auth.expireSession} onSuccess={reload}/>}
     {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
     {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
     {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload} onExpired={auth.expireSession}/>)}
