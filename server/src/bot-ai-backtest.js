@@ -142,6 +142,8 @@ export function simulateBacktest({
       }
     }
     const equity=cash+Object.entries(holdings).reduce((sum,[symbol,quantity])=>sum+quantity*finite(current[symbol]?.price),0);
+    peakEquity=Math.max(peakEquity,equity);
+    if((peakEquity-equity)/peakEquity*100>=maxDrawdownStopPct)riskStopped=true;
     curve.push({timestamp:t,equity:Number(equity.toFixed(2))});
   }
   const returns=[];
