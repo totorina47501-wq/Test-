@@ -70,7 +70,7 @@ function CandlestickChart({points}:{points:MarketPoint[]}){
         </g>;
       })}
     </svg>
-  </div></div>;
+  </div>;
 }
 
 export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>void}){
@@ -116,5 +116,5 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
         </div>)}
       </div>}
     </Card>
-  </div>;
+  </div></div>;
 }
