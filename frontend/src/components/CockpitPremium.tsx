@@ -62,7 +62,7 @@ function CandlestickChart({points}:{points:MarketPoint[]}){
         const bodyTop=y(Math.max(candle.open,candle.close));
         const bodyBottom=y(Math.min(candle.open,candle.close));
         const bodyHeight=Math.max(2,bodyBottom-bodyTop);
-        const tone=rising?"#34d399":"#fb7185";
+        const tone=rising?"#c8ff2e":"#fb7185";
         return <g key={candle.timestamp}>
           <line x1={x} x2={x} y1={y(candle.high)} y2={y(candle.low)} stroke={tone} strokeWidth="1.5"/>
           <rect x={x-bodyWidth/2} y={bodyTop} width={bodyWidth} height={bodyHeight} rx="1.5" fill={tone}/>
@@ -81,12 +81,12 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.18em] text-emerald-300">Marché authentifié</p>
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">Marché authentifié</p>
           <h3 className="mt-2 text-lg font-semibold">Marché BTC</h3>
           <p className="mt-1 text-xs text-slate-400">OHLC calculé à partir des points de prix renvoyés par l’API BitGold.</p>
         </div>
         <div className="flex flex-wrap gap-2" aria-label="Période du marché">
-          {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${range===item.id?"border-emerald-400/40 bg-emerald-400/15 text-emerald-300":"border-white/10 text-slate-400 hover:bg-white/5 hover:text-white"}`}>{item.label}</button>)}
+          {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${range===item.id?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400 hover:bg-white/5 hover:text-white"}`}>{item.label}</button>)}
         </div>
       </div>
       <div className="mt-5">
@@ -109,7 +109,7 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
             <p className="text-xs text-slate-500">{new Date(trade.created_at).toLocaleString("fr-FR")}</p>
           </div>
           <div className="text-right">
-            <p className={`font-semibold ${trade.side==="buy"?"text-emerald-300":"text-rose-300"}`}>{eur(Number(trade.amount_eur||0))}</p>
+            <p className={`font-semibold ${trade.side==="buy"?"text-lime-300":"text-rose-300"}`}>{eur(Number(trade.amount_eur||0))}</p>
             <p className="text-xs text-slate-500">@ {eur(Number(trade.price_eur||0))}</p>
           </div>
         </div>)}

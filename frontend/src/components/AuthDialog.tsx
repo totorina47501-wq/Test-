@@ -4,7 +4,7 @@ import {Button} from "./ui";
 import {useAuth} from "../auth/AuthContext";
 
 type Mode="login"|"signup";
-const inputClass="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/20";
+const inputClass="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-lime-400/60 focus:ring-2 focus:ring-lime-400/20";
 export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
   const auth=useAuth();
   const dialogRef=useRef<HTMLDivElement>(null);
@@ -39,7 +39,7 @@ export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
   const busy=auth.status==="authenticating";
   return <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" onMouseDown={e=>{if(e.currentTarget===e.target)onClose()}}>
     <div ref={dialogRef} onKeyDown={onDialogKeyDown} role="dialog" aria-modal="true" aria-label="Authentification BitGold" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111419] p-5 shadow-2xl">
-      <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-emerald-300">Espace sécurisé</p><h2 className="mt-1 text-2xl font-bold">{auth.status==="twoFactor"?"Vérification en deux étapes":"Bienvenue sur BitGold"}</h2></div><button ref={closeRef} type="button" aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={onClose}><X size={20}/></button></div>
+      <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">Espace sécurisé</p><h2 className="mt-1 text-2xl font-bold">{auth.status==="twoFactor"?"Vérification en deux étapes":"Bienvenue sur BitGold"}</h2></div><button ref={closeRef} type="button" aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={onClose}><X size={20}/></button></div>
       {auth.status!=="twoFactor"&&<div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1"><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="login"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("login");auth.clearError()}}>Connexion</button><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="signup"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("signup");auth.clearError()}}>Créer un compte</button></div>}
       {googleClientId&&auth.status!=="twoFactor"&&<div className="mt-5"><div ref={googleRef} className="flex justify-center" aria-label="Connexion avec Google"/></div>}
       <form className="mt-5 space-y-4" onSubmit={submit}>
