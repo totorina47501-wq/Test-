@@ -66,3 +66,10 @@
 - Implémentation proposée : `frontend/src/components/AccountPage.tsx` ; filtres combinables sur les transactions existantes, sélecteurs accessibles, 8 transactions initiales et bouton développer/réduire ; les logs bots restent indépendants.
 - Preuves requises : build React, parcours CI, production desktop/mobile après merge ; filtres achat, vente, BTC/ETH/USDC selon données présentes ; état vide ; ouverture/fermeture de la liste.
 - État : IMPLÉMENTÉ SUR BRANCHE, CI ET PRODUCTION À VÉRIFIER.
+
+## Crédit fictif carte / PayPal — 2026-10-12
+- API authentifiée `POST /api/wallet/simulated-deposits` et historique `GET /api/wallet/simulated-deposits`.
+- Choix carte bancaire ou PayPal **entièrement simulé** : aucun numéro de carte, aucun SDK ou paiement réel.
+- Transaction SQL, verrou de portefeuille, clé d'idempotence, limite 1–100 000 € et historique par utilisateur.
+- CTA cockpit, accueil, navigation Investir et portefeuille, renvoyant vers `/portefeuille?action=crediter`.
+- Tests CI/Playwright et validation production à effectuer avant annonce de livraison.

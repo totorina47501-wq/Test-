@@ -49,3 +49,5 @@ export async function activateBot(token:string,payload:{botType:string;maxTradeE
 export async function deactivateBot(token:string,botType:string){
   return api<{ok:boolean}>(`/api/bots/subscriptions/${encodeURIComponent(botType)}`,token,{method:"DELETE"});
 }
+
+export async function simulatedDeposit(token:string,payload:{method:"card"|"paypal";amount:number;requestKey:string}){return api<{ok:boolean;cash:number;duplicate:boolean;simulation:true}>("/api/wallet/simulated-deposits",token,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});}
