@@ -53,7 +53,10 @@ test("production authenticated profile, 2FA status and bot backtest are read-onl
     headers: { Authorization: `Bearer ${token}` },
     timeout: 60000
   });
-  expect(backtestResponse.status()).toBe(200);
+  if (backtestResponse.status() !== 200) {
+    const responseBody = await backtestResponse.text();
+    throw new Error(`Production backtest returned HTTP ${backtestResponse.status()}: ${responseBody.slice(0, 500)}. Check Northflank rollout and [BOT-AI] logs.`);
+  }
   const backtest = await backtestResponse.json();
   expect(backtest.ok).toBe(true);
   expect(backtest.backtest).toBeTruthy();
