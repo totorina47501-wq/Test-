@@ -104,10 +104,10 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
         {market.data!.map(item=>{
           const positive=Number(item.change24h)>=0;
           const active=item.symbol===selected;
-          return <button key={item.symbol} type="button" onClick={()=>{setSelected(item.symbol);setRange("24h");setTradeState("idle");setTradeMessage("")}} aria-pressed={active} className={`min-w-0 rounded-2xl border p-4 text-left transition-colors ${active?"border-emerald-400/40 bg-emerald-400/10":"border-white/10 bg-[#15171b]/95 hover:bg-white/5"}`}>
+          return <button key={item.symbol} type="button" onClick={()=>{setSelected(item.symbol);setRange("24h");setTradeState("idle");setTradeMessage("")}} aria-pressed={active} className={`min-w-0 rounded-2xl border p-4 text-left transition-colors ${active?"border-lime-400/40 bg-lime-400/10":"border-white/10 bg-[#15171b]/95 hover:bg-white/5"}`}>
             <div className="flex items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><CryptoAssetMark symbol={item.symbol} size={30}/><strong className="truncate">{names[item.symbol]||item.symbol}</strong></div><span className="text-xs text-slate-500">{item.symbol}</span></div>
             <span className="mt-3 block text-lg font-bold">{eur(Number(item.price||0))}</span>
-            <span className={`mt-1 flex items-center gap-1 text-xs ${positive?"text-emerald-300":"text-rose-300"}`}>{positive?<TrendingUp size={13}/>:<TrendingDown size={13}/>} {positive?"+":""}{Number(item.change24h||0).toFixed(2)} %</span>
+            <span className={`mt-1 flex items-center gap-1 text-xs ${positive?"text-lime-300":"text-rose-300"}`}>{positive?<TrendingUp size={13}/>:<TrendingDown size={13}/>} {positive?"+":""}{Number(item.change24h||0).toFixed(2)} %</span>
           </button>;
         })}
       </section>
@@ -116,12 +116,12 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.18em] text-emerald-300">{selected} · détail marché</p>
+              <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">{selected} · détail marché</p>
               <h2 className="mt-2 text-2xl font-bold">{detail.data?.name||names[selected]||selected}</h2>
               <p className="mt-1 text-sm text-slate-400">Cours actuel {eur(price)}</p>
             </div>
             <div className="flex max-w-full flex-wrap gap-2" aria-label="Période du graphique">
-              {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium ${range===item.id?"border-emerald-400/40 bg-emerald-400/15 text-emerald-300":"border-white/10 text-slate-400 hover:bg-white/5"}`}>{item.label}</button>)}
+              {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium ${range===item.id?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400 hover:bg-white/5"}`}>{item.label}</button>)}
             </div>
           </div>
 
@@ -133,13 +133,13 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
                 <XAxis dataKey="timestamp" type="number" domain={["dataMin","dataMax"]} tickFormatter={(value)=>formatChartTick(Number(value),range)} tick={{fill:"#94a3b8",fontSize:11}}/>
                 <YAxis domain={["auto","auto"]} tickFormatter={(value)=>eur(Number(value))} width={82} tick={{fill:"#94a3b8",fontSize:10}}/>
                 <Tooltip labelFormatter={(value)=>new Date(Number(value)).toLocaleString("fr-FR")} formatter={(value:number)=>[eur(Number(value)),"Cours"]}/>
-                <Area type="monotone" dataKey="price" stroke="#34d399" fill="#34d399" fillOpacity={.08}/>
+                <Area type="monotone" dataKey="price" stroke="#c8ff2e" fill="#c8ff2e" fillOpacity={.08}/>
               </AreaChart>
             </ResponsiveContainer>
           </div>:detail.status==="ready"?<p className="py-20 text-center text-sm text-slate-400">Historique insuffisant pour cette période.</p>:null}
 
           {detail.status==="ready"&&<div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">Variation 24 h</p><p className={`mt-1 font-semibold ${Number(detail.data?.change24h||0)>=0?"text-emerald-300":"text-rose-300"}`}>{Number(detail.data?.change24h||0).toFixed(2)} %</p></div>
+            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">Variation 24 h</p><p className={`mt-1 font-semibold ${Number(detail.data?.change24h||0)>=0?"text-lime-300":"text-rose-300"}`}>{Number(detail.data?.change24h||0).toFixed(2)} %</p></div>
             <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">Capitalisation</p><p className="mt-1 font-semibold">{detail.data?.marketCap?compact(Number(detail.data.marketCap))+" €":"—"}</p></div>
             <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">Volume 24 h</p><p className="mt-1 font-semibold">{detail.data?.volume24h?compact(Number(detail.data.volume24h))+" €":"—"}</p></div>
           </div>}
@@ -150,7 +150,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
           <h2 className="mt-2 text-xl font-bold">Simuler une opération</h2>
           <p className="mt-2 text-sm leading-6 text-slate-400">L’ordre reste virtuel et utilise le moteur de trading simulé BitGold.</p>
           <div className="mt-4 grid grid-cols-2 gap-2" aria-label="Type d’opération">
-            <button type="button" aria-pressed={side==="buy"} onClick={()=>{setSide("buy");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="buy"?"border-emerald-400/40 bg-emerald-400/15 text-emerald-300":"border-white/10 text-slate-400"}`}>Acheter</button>
+            <button type="button" aria-pressed={side==="buy"} onClick={()=>{setSide("buy");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="buy"?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400"}`}>Acheter</button>
             <button type="button" aria-pressed={side==="sell"} onClick={()=>{setSide("sell");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="sell"?"border-rose-400/40 bg-rose-400/15 text-rose-300":"border-white/10 text-slate-400"}`}>Vendre</button>
           </div>
           <label className="mt-5 block text-sm font-medium" htmlFor="invest-amount">Montant en euros</label>
@@ -164,8 +164,8 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
             <p className="mt-1 text-xs text-slate-500">{price>0?eur(price)+" / "+selected:"Cours indisponible"}</p>
           </div>
           <Button className="mt-5 w-full" disabled={tradeState==="submitting"||!estimated} onClick={submitTrade}>{tradeState==="submitting"?"Enregistrement…":auth.token?(side==="buy"?"Acheter en simulation":"Vendre en simulation"):"Se connecter pour simuler"} <ArrowRight size={16}/></Button>
-          {tradeMessage&&<p role={tradeState==="error"?"alert":"status"} className={`mt-3 text-sm ${tradeState==="error"?"text-rose-300":"text-emerald-300"}`}>{tradeMessage}</p>}
-          {tradeState==="success"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille" className="text-emerald-300 underline underline-offset-4">Voir mon portefeuille</a><a href="/activite" className="text-emerald-300 underline underline-offset-4">Voir mes activités</a></div>}
+          {tradeMessage&&<p role={tradeState==="error"?"alert":"status"} className={`mt-3 text-sm ${tradeState==="error"?"text-rose-300":"text-lime-300"}`}>{tradeMessage}</p>}
+          {tradeState==="success"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille" className="text-lime-300 underline underline-offset-4">Voir mon portefeuille</a><a href="/activite" className="text-lime-300 underline underline-offset-4">Voir mes activités</a></div>}
           <p className="mt-4 text-xs leading-5 text-slate-500">Aucun actif réel n’est acheté. Cette action modifie uniquement votre portefeuille de simulation.</p>
         </Card>
       </div>

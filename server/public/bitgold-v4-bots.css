@@ -1,20 +1,20 @@
 /* BitGold V4 — AI bots premium product discovery, no changes to trading engine */
-.bg3-bots{--v4-mint:#b3ffca;--v4-red:#f87171;--v4-border:rgba(179,255,202,.16)}
+.bg3-bots{--v4-mint:#c8ff2e;--v4-red:#f87171;--v4-border:rgba(200,255,46,.16)}
 .bg3-bots .v4-bots-intro{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(245px,.75fr);gap:15px;margin:24px 0 22px}
-.bg3-bots .v4-bots-intro-main,.bg3-bots .v4-bots-intro-side{min-width:0;border:1px solid var(--v4-border);border-radius:23px;padding:clamp(21px,3.1vw,38px);background:linear-gradient(125deg,rgba(179,255,202,.11),rgba(18,33,25,.91) 48%,rgba(13,27,19,.96));box-shadow:0 19px 50px rgba(0,0,0,.16);backdrop-filter:blur(14px)}
+.bg3-bots .v4-bots-intro-main,.bg3-bots .v4-bots-intro-side{min-width:0;border:1px solid var(--v4-border);border-radius:23px;padding:clamp(21px,3.1vw,38px);background:linear-gradient(125deg,rgba(200,255,46,.11),rgba(18,33,25,.91) 48%,rgba(13,27,19,.96));box-shadow:0 19px 50px rgba(0,0,0,.16);backdrop-filter:blur(14px)}
 .bg3-bots .v4-bots-intro-main h3{font-size:clamp(1.65rem,3.2vw,2.85rem);line-height:1.12;letter-spacing:-.045em;margin:12px 0 13px;max-width:620px}
 .bg3-bots .v4-bots-intro-main p{color:#c5d5c9;max-width:620px;line-height:1.7;margin:0}
 .bg3-bots .v4-bots-trust{display:flex;flex-wrap:wrap;gap:9px;margin-top:22px}
-.bg3-bots .v4-bots-trust span{font-size:.77rem;color:#c8e7d1;border:1px solid rgba(179,255,202,.2);background:rgba(179,255,202,.05);border-radius:999px;padding:9px 12px}
+.bg3-bots .v4-bots-trust span{font-size:.77rem;color:#c8e7d1;border:1px solid rgba(200,255,46,.2);background:rgba(200,255,46,.05);border-radius:999px;padding:9px 12px}
 .bg3-bots .v4-bots-intro-side{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:17px;background:linear-gradient(135deg,rgba(20,40,28,.94),rgba(12,24,18,.94))}
 .bg3-bots .v4-bots-intro-side>span{color:#a6b7ae;font-size:.73rem;font-weight:750;letter-spacing:.14em}
 .bg3-bots .v4-bots-intro-side>strong{font-size:clamp(1.15rem,1.9vw,1.55rem);line-height:1.4;letter-spacing:-.025em}
-.bg3-bots .v4-bots-intro-side>a{color:#b3ffca;font-size:.87rem;font-weight:700;text-decoration:none}
+.bg3-bots .v4-bots-intro-side>a{color:#c8ff2e;font-size:.87rem;font-weight:700;text-decoration:none}
 .bg3-bots .v4-bots-intro-side>a:hover{text-decoration:underline}
 .bg3-bots .bot-grid.v4-bots-bento{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important;align-items:stretch!important}
 .bg3-bots .v4-bots-bento>*{min-width:0!important;margin:0!important;border-radius:21px!important;border:1px solid var(--v4-border)!important;background:rgba(19,36,27,.91)!important;box-shadow:0 17px 44px rgba(0,0,0,.16);backdrop-filter:blur(13px);transition:transform .26s cubic-bezier(.22,1,.36,1),border-color .26s}
-@media(hover:hover){.bg3-bots .v4-bots-bento>*:hover{transform:translateY(-4px);border-color:rgba(179,255,202,.42)!important}}
-.bg3-bots .v4-bots-bento>*:focus-within{outline:2px solid #b3ffca;outline-offset:3px}
+@media(hover:hover){.bg3-bots .v4-bots-bento>*:hover{transform:translateY(-4px);border-color:rgba(200,255,46,.42)!important}}
+.bg3-bots .v4-bots-bento>*:focus-within{outline:2px solid #c8ff2e;outline-offset:3px}
 .bg3-bots .v4-bots-bento> :is([data-risk="high"],[data-risk="critical"],.high-risk,.risk-high){border-color:rgba(248,113,113,.44)!important}
 .bg3-bots .v4-bots-bento .risk-high,.bg3-bots .v4-bots-bento .risk-critical,.bg3-bots .v4-bots-bento [data-risk-level="high"]{color:#f87171!important}
 .bg3-bots .bot-engine-legend{margin:0 0 18px!important}
@@ -26,6 +26,6 @@
 @media(prefers-reduced-transparency:reduce){.bg3-bots .v4-bots-intro-main,.bg3-bots .v4-bots-intro-side,.bg3-bots .v4-bots-bento>*{background:#14251b!important;backdrop-filter:none!important}}
 
 /* V4.7: transparent, accessible risk guidance ahead of bot selection. */
-.bg3-bots .v47-bot-guardrail-note{margin:18px 0 20px;padding:15px 18px;border:1px solid rgba(179,255,202,.26);border-left:3px solid #b3ffca;border-radius:12px;background:rgba(179,255,202,.055);color:#d7e9db;font-size:.88rem;line-height:1.65}
-.bg3-bots .v47-bot-guardrail-note strong{color:#b3ffca}
+.bg3-bots .v47-bot-guardrail-note{margin:18px 0 20px;padding:15px 18px;border:1px solid rgba(200,255,46,.26);border-left:3px solid #c8ff2e;border-radius:12px;background:rgba(200,255,46,.055);color:#d7e9db;font-size:.88rem;line-height:1.65}
+.bg3-bots .v47-bot-guardrail-note strong{color:#c8ff2e}
 @media(max-width:760px){.bg3-bots .v47-bot-guardrail-note{padding:13px 14px;font-size:.84rem}}
