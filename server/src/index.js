@@ -1486,7 +1486,7 @@ app.post("/api/trades",auth,compliance.requireTransactionClearance,async(req,res
     if(side==="buy"&&amount>cash+1e-9) throw Error("Solde insuffisant.");
     if(side==="sell"&&qty>currentQty+1e-12) throw Error("Quantité insuffisante.");
     const updatedWallet=await client.query("UPDATE wallets SET cash=cash+$1 WHERE user_id=$2 RETURNING cash",[side==="buy"?-amount:amount,req.user.sub]);
-    const updatedHolding=await client.query("UPDATE holdings SET quantity=quantity+$1 WHERE user_id=$2 AND asset=$3 RETURNING quantity",[side==="buy"?qty:-qty,req.user.sub,asset]);
+    const updatedHolding=side==="buy" ? await client.query("INSERT INTO holdings(user_id,asset,quantity) VALUES($1,$2,$3) ON CONFLICT(user_id,asset) DO UPDATE SET quantity=holdings.quantity+EXCLUDED.quantity RETURNING quantity",[req.user.sub,asset,qty]) : await client.query("UPDATE holdings SET quantity=quantity-$1 WHERE user_id=$2 AND asset=$3 RETURNING quantity",[qty,req.user.sub,asset]);
     if(!updatedHolding.rows.length||Number(updatedWallet.rows[0].cash)<-1e-7||Number(updatedHolding.rows[0].quantity)<-1e-9) throw Error("Incohérence de solde.");
     const trade=await client.query("INSERT INTO trades(user_id,side,asset,amount_eur,price_eur,quantity) VALUES($1,$2,$3,$4,$5,$6) RETURNING id",[req.user.sub,side,asset,amount,price,qty]);
     if(key) await client.query("INSERT INTO trade_idempotency(user_id,request_key,request_hash,trade_id) VALUES($1,$2,$3,$4)",[req.user.sub,key,requestHash,trade.rows[0].id]);
