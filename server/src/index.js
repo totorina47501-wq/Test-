@@ -23,6 +23,7 @@ import { createOpenFacilitator } from "./openfacilitator.js";
 import { evaluateBot, getBotAIConfig } from "./bot-ai-engine.js";
 import { presentDecision, decisionFilters } from "./bot-decision-history.js";
 import { simulateBacktest, compareBacktests, analyzeBacktestRobustness } from "./bot-ai-backtest.js";
+import { compareQuantumFund } from "./quantum-fund-lab.js";
 
 const { Pool } = pg;
 const app = express();
@@ -1245,6 +1246,24 @@ app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
     const backtest=simulateBacktest({botType,histories,...simulationOptions});
     res.json({ok:true,source:"CoinGecko",days,backtest});
   }catch(e){console.error("[BOT-AI] backtest error",e.message);res.status(502).json({error:"Backtest IA temporairement indisponible."})}
+});
+// Research-only fund comparison; requires an authenticated simulation account.
+app.get("/api/bots/quantum-fund",auth,async(req,res)=>{
+  try{
+    const days=Math.min(Math.max(Number(req.query.days||90),30),180);
+    const requested=String(req.query.bots||"shield,silver,gold").split(",").map(value=>value.trim().toLowerCase()).filter(Boolean);
+    const botTypes=[...new Set(requested)].filter(botType=>botDefinition(botType)).slice(0,6);
+    if(botTypes.length<2)return res.status(400).json({error:"Sélectionnez au moins deux bots valides."});
+    const symbols=Object.keys(marketIds).filter(symbol=>symbol!=="USDC");
+    const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)])));
+    const results=compareBacktests({botTypes,histories});
+    const agents=Object.fromEntries(results.map(result=>[result.botType,result.curve]));
+    const comparison=compareQuantumFund({agents,feeRate:.0015,rebalanceEvery:7,trainFraction:.6,maxWeight:.6});
+    res.json({ok:true,mode:"simulation",source:"CoinGecko",days,comparison,assumptions:{initialCash:10000,feeRate:.0015,slippageRate:.0005,rebalanceEvery:7}});
+  }catch(e){
+    console.error("[QUANTUM-FUND] comparison error",e.message);
+    res.status(502).json({error:"Comparaison Quantum Fund indisponible : historique ou calcul insuffisant."});
+  }
 });
 app.get("/api/bots/comparator",auth,async(req,res)=>{
   try{

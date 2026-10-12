@@ -1,6 +1,7 @@
 import {CryptoAssetMark} from "./CryptoAssetMark";
 import {PieChart,Pie,Cell,ResponsiveContainer,Tooltip} from "recharts";
 import {BotBacktestPanel} from "./BotBacktestPanel";
+import {QuantumFundPanel} from "./QuantumFundPanel";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
@@ -165,6 +166,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
     {selected&&<BotConfig bot={selected} subscription={subscriptions.get(selected.id)} token={token} onExpired={onExpired} onDone={done} onCancel={()=>setSelected(null)}/>}
     <StrategyCompare bots={data.catalog||[]}/>
     <BotBacktestPanel botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
+    <QuantumFundPanel botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
   </section>;
 }
 
