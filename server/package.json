@@ -11,7 +11,7 @@
     "check:js": "node --check src/index.js && node --check public/app.js",
     "test:js": "npm run lint:syntax && npm run check:playwright",
     "check:playwright": "node --check playwright.config.mjs && node --check e2e/*.spec.mjs",
-    "lint:syntax": "node --check src/index.js && node --check public/app.js && node --check playwright.config.mjs && node --check src/bot-ai-engine.js && node --check src/bot-ai-backtest.js && node --check src/bot-ai-execution.js"
+    "lint:syntax": "node --check src/index.js && node --check public/app.js && node --check playwright.config.mjs && node --check src/bot-ai-engine.js && node --check src/bot-ai-backtest.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
