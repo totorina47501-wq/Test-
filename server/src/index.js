@@ -270,6 +270,18 @@ const reactAppRoot=path.join(__dirname,"../react-app");
 const requestedFrontendMode=String(process.env.FRONTEND_MODE||(isProduction?"react":"legacy")).trim().toLowerCase();
 const frontendMode=requestedFrontendMode==="legacy"?"legacy":"react";
 const noStoreStatic={index:false,setHeaders:(res,filePath)=>{if(filePath.endsWith(".html")||filePath.endsWith(".js")||filePath.endsWith(".css"))res.setHeader("Cache-Control","no-store, max-age=0")}};
+// Explicit, static, crawlable educational pages; never expose authenticated content.
+const seoGuideRoot=path.join(legacyPublicRoot,"seo-guides");
+const seoPublicPaths=new Set(["index","simulateur-crypto","bots-ia-crypto","portefeuille-virtuel","risques-crypto"]);
+app.get("/robots.txt",(_req,res)=>res.type("text/plain").send("User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /portefeuille\nDisallow: /activite\nDisallow: /profil\nDisallow: /react-preview/\nDisallow: /legacy/\nSitemap: https://p01--service-bitgold--dvn9t2gvmtgx.code.run/sitemap.xml\n"));
+app.get("/sitemap.xml",(_req,res)=>res.type("application/xml").send("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <url><loc>https://p01--service-bitgold--dvn9t2gvmtgx.code.run/</loc></url>\n  <url><loc>https://p01--service-bitgold--dvn9t2gvmtgx.code.run/guides/</loc></url>\n  <url><loc>https://p01--service-bitgold--dvn9t2gvmtgx.code.run/guides/simulateur-crypto</loc></url>\n  <url><loc>https://p01--service-bitgold--dvn9t2gvmtgx.code.run/guides/bots-ia-crypto</loc></url>\n  <url><loc>https://p01--service-bitgold--dvn9t2gvmtgx.code.run/guides/portefeuille-virtuel</loc></url>\n  <url><loc>https://p01--service-bitgold--dvn9t2gvmtgx.code.run/guides/risques-crypto</loc></url>\n</urlset>\n"));
+app.get(/^\/guides\/?$/,(_req,res)=>res.sendFile(path.join(seoGuideRoot,"index.html")));
+app.get(/^\/guides\/([a-z0-9-]+)\/?$/,(req,res)=>{
+  const slug=req.params[0];
+  if(!seoPublicPaths.has(slug)||slug==="index")return res.status(404).send("Guide inconnu");
+  res.sendFile(path.join(seoGuideRoot,slug+".html"));
+});
+
 
 if(frontendMode==="react"){
   app.use(express.static(reactAppRoot,noStoreStatic));

@@ -22,3 +22,14 @@ Le frontend dispose de balises title, description, canonical, Open Graph et JSON
 
 ## Validation
 Exécuter frontend lint/build, tests backend et Playwright mobile/desktop. Vérifier les métadonnées dans le HTML réellement servi, puis consigner la CI PR/main et la preuve de production dans FUNCTIONALITY_TRACKER.md. Ne pas confondre CI verte et indexation Google.
+
+## Lot de contenu public crawlable
+- Quatre pages HTML statiques dans `server/public/seo-guides/` : simulation, bots IA, portefeuille virtuel et risques. Aucun accès aux routes JWT ni ajout de données inventées.
+- Routes publiques `/guides/`, `/guides/:slug` et métadonnées et canonical propres, chargés côté serveur dans les deux modes frontend.
+- `/robots.txt` exclut les routes privées connues ; `/sitemap.xml` n'inclut que les pages publiques HTML réellement générées. Robots n'est pas une barrière de sécurité.
+- Navigation depuis la landing existante et retour vers les fonctionnalités réelles ; aucune duplication de bots.
+- Le domaine Northflank demeure provisoire. Pas de hreflang tant que des URL traduites ne sont pas construites.
+- Mesure analytics client volontairement différée à une implémentation avec consentement RGPD (pas d'ajout de cookie ni tracker).
+
+### Contrôles dédiés
+Exécuter `node --test server/test/seo-pages.test.js` en plus du build et des parcours Playwright. Vérifier code HTTP, content-type, metadata, canonical, liens et refus de pages inconnues en production.
