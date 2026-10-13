@@ -36,3 +36,7 @@ To rollback the UI without changing APIs or the database:
 To return to React, set `FRONTEND_MODE=react` (or remove the override in production, where React is the default) and redeploy.
 
 The rollback changes presentation only. It does not enable real orders, external settlement, KYC/AML providers or payment rails.
+
+
+## Evidence bundle (2026-10-13)
+The production workflow archives desktop/mobile screenshots for guest navigation and authenticated read-only screens together with `production-evidence.json`. Deployment identity is VERIFIED only when the full expected GitHub SHA is found in an explicit revision header or in a JavaScript bundle referenced by the served application. Browser success alone is not commit identity proof. Live authenticated checks remain read-only; virtual funding and simulated trade mutations run only against the isolated CI database.

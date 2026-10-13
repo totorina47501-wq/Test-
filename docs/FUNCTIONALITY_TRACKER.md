@@ -72,7 +72,7 @@
 - Choix carte bancaire ou PayPal **entièrement simulé** : aucun numéro de carte, aucun SDK ou paiement réel.
 - Transaction SQL, verrou de portefeuille, clé d'idempotence, limite 1–100 000 € et historique par utilisateur.
 - CTA cockpit, accueil, navigation Investir et portefeuille, renvoyant vers `/portefeuille?action=crediter`.
-- Tests CI/Playwright et validation production à effectuer avant annonce de livraison.
+- Couverture CI ajoutée au parcours isolé : crédit fictif, historique, rejet, idempotence et absence de double crédit. La production reste en lecture seule : aucune mutation du compte E2E live.
 
 ## Achat / Vente Investir — PR #518
 - Gestion des rejets d'ordres : messages d'erreur explicites, accès direct au crédit fictif et au portefeuille.
@@ -84,6 +84,17 @@
 - Les 100 derniers événements par source peuvent rendre les agrégats incomplets ; rendement et drawdown non disponibles faute de valorisation historique.
 - Déploiement exact Northflank : NON VÉRIFIÉ (SHA exposé non confirmé).
 
-## Régression navigation / retours arrière (lot suivant)
+## PR #532 — Régression navigation / retours arrière (fusionnée)
 - Test `server/e2e/react-navigation-history.spec.mjs` : retour/avance navigateur entre accueil, Investir et Bots ; identité de chaque écran et absence de contenu de l'écran précédent ; retour intégré Investir ; routes privées Portefeuille et Activités pour visiteur ; retour accueil ; absence de débordement et erreurs JS.
 - Les projets Playwright desktop et mobile exécutent la même suite en CI isolée. Production authentifiée et identité du SHA déployé restent à vérifier séparément.
+
+
+## Lot preuve production + parcours commercial — 2026-10-13
+- Anti-doublon : réutilise les suites production, user-scenarios et les composants existants ; aucun nouveau moteur de bot ni chemin de paiement réel.
+- Parcours isolé : crédit virtuel carte, rejeu idempotent, conflit de clé, rejet d'un montant invalide, historique, puis achat/vente simulés et réconciliation portefeuille/activité.
+- UI isolée desktop/mobile : formulaire de crédit fictif PayPal, payload limité à `method`, `amount`, `requestKey`, rechargement du portefeuille et contrôle du débordement horizontal.
+- Production invitée : accueil → Investir → Bots → retour/avance navigateur → Portefeuille/Activités verrouillés ; identité de l'écran et absence de contenu obsolète.
+- Production authentifiée **lecture seule** : Portefeuille → Activités → Investir → Bots, retours arrière/avant, comparateur bots et captures desktop/mobile. Aucune activation de bot, aucun crédit, aucun trade live.
+- Provenance : `production-evidence.mjs` peut désormais valider le SHA attendu s'il est exposé par un en-tête de révision **ou présent exactement dans le bundle frontend servi**. Sinon état `UNVERIFIED`.
+- Preuves visuelles : captures live invitées et connectées conservées dans l'artefact du workflow production.
+- Algorithmes Shield/Silver/Gold et Quantum Fund : inchangés.

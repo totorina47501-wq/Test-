@@ -60,11 +60,14 @@ jobs:
           BITGOLD_EXPECTED_SHA: ${{ github.sha }}
         run: node scripts/production-evidence.mjs
       - name: Run production guest smoke tests
+        env:
+          BITGOLD_CAPTURE_UI: 'true'
         run: npx playwright test e2e/production-smoke.spec.mjs --config=playwright.config.mjs --project=desktop --project=mobile
       - name: Run read-only authenticated production journey
         env:
           BITGOLD_E2E_EMAIL: ${{ secrets.BITGOLD_E2E_EMAIL }}
           BITGOLD_E2E_PASSWORD: ${{ secrets.BITGOLD_E2E_PASSWORD }}
+          BITGOLD_CAPTURE_AUTH: 'true'
         run: |
           if [[ -z "$BITGOLD_E2E_EMAIL" || -z "$BITGOLD_E2E_PASSWORD" ]]; then
             echo "::error::Missing dedicated BitGold production E2E account secrets"

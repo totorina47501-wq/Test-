@@ -86,3 +86,12 @@ Grille de qualification des partenaires : `docs/PARTNER_PROVIDER_SCORECARD.md`. 
 - Après chaque action : vérifier le titre propre à l'écran, l'absence du titre de l'écran précédent, les erreurs JS et le débordement horizontal.
 - Le test isolé n'est **pas** une preuve de navigation sur la révision Northflank. Pour une validation production, consigner l'identité de révision, les runs et les captures desktop/mobile.
 - Observatoire bots PR #531, merge `5748fd6` : fenêtres communes 7/30/90 jours ; 4/4 workflows main verts, SHA Northflank non vérifié.
+
+
+## Preuve production renforcée — 2026-10-13
+- Le smoke invité vérifie désormais l'identité des écrans au fil de l'historique navigateur : accueil, Investir, Bots, puis verrouillage Portefeuille et Activités sans session.
+- Le parcours connecté reste strictement en lecture seule et contrôle Portefeuille → Activités → Investir → Bots, puis `back/forward`. Il ne crédite pas le compte E2E et n'envoie aucun ordre.
+- `BITGOLD_CAPTURE_UI=true` et `BITGOLD_CAPTURE_AUTH=true` dans le workflow live produisent des captures desktop/mobile dans `server/test-results/`, incluses dans l'artefact `production-guest-smoke-report`.
+- La provenance accepte deux preuves exactes : un en-tête de révision égal au SHA GitHub attendu, ou le SHA complet trouvé dans un bundle JavaScript effectivement référencé par la page servie. Un HTTP 200, une capture ou un SHA partiel ne suffisent jamais.
+- Si aucune de ces preuves n'existe, `production-evidence.json` conserve `identity: "UNVERIFIED"` même si les parcours navigateur sont verts.
+- Le crédit fictif est muté uniquement dans l'environnement CI isolé : tests API d'idempotence/rejet/historique et test UI PayPal. La production authentifiée reste non destructive.

@@ -30,10 +30,31 @@ async function main(){
   const malformed=await request("/api/dashboard",{token:"invalid.jwt.token"});assert.equal(malformed.status,401,"invalid token rejected");
   const initial=await request("/api/portfolio",{token});assert.equal(initial.status,200,"initial portfolio");
   assert.ok(Number(initial.data.cash)>=20,"demo cash available");
+  // Virtual funding is part of the isolated commercial journey. It must never call a payment provider.
+  const depositAmount=123.45;
+  const depositKey=`scenario_deposit_${crypto.randomUUID().replaceAll("-","")}`;
+  const deposit=await request("/api/wallet/simulated-deposits",{method:"POST",token,body:{method:"card",amount:depositAmount,requestKey:depositKey}});
+  assert.equal(deposit.status,201,`simulated deposit: ${JSON.stringify(deposit.data)}`);
+  assert.equal(deposit.data.simulation,true,"deposit explicitly marked as simulation");
+  assert.equal(deposit.data.duplicate,false,"first deposit is not a replay");
+  const afterDeposit=await request("/api/portfolio",{token});assert.equal(afterDeposit.status,200,"portfolio after simulated deposit");
+  assert.ok(Math.abs((Number(afterDeposit.data.cash)-Number(initial.data.cash))-depositAmount)<0.00001,"simulated deposit credits cash once");
+  const depositReplay=await request("/api/wallet/simulated-deposits",{method:"POST",token,body:{method:"card",amount:depositAmount,requestKey:depositKey}});
+  assert.equal(depositReplay.status,200,"identical simulated deposit retry is replayed");
+  assert.equal(depositReplay.data.duplicate,true,"deposit replay is identified");
+  const depositConflict=await request("/api/wallet/simulated-deposits",{method:"POST",token,body:{method:"paypal",amount:depositAmount,requestKey:depositKey}});
+  assert.equal(depositConflict.status,409,"deposit key cannot be reused with another payload");
+  const invalidDeposit=await request("/api/wallet/simulated-deposits",{method:"POST",token,body:{method:"card",amount:0,requestKey:"invalid_deposit_key"}});
+  assert.equal(invalidDeposit.status,400,"invalid simulated deposit is rejected");
+  const depositHistory=await request("/api/wallet/simulated-deposits",{token});
+  assert.equal(depositHistory.status,200,"simulated deposit history");
+  assert.ok(depositHistory.data.items?.some(item=>item.method==="card"&&Math.abs(Number(item.amount)-depositAmount)<0.00001),"simulated deposit appears in history");
+  const afterDepositRetries=await request("/api/portfolio",{token});assert.equal(afterDepositRetries.status,200,"portfolio after deposit retry checks");
+  assert.ok(Math.abs(Number(afterDepositRetries.data.cash)-Number(afterDeposit.data.cash))<0.00001,"deposit retries and rejects preserve cash");
   const buy=await request("/api/trades",{method:"POST",token,body:{side:"buy",asset:"BTC",amount:10}});
   assert.equal(buy.status,201,`demo buy: ${JSON.stringify(buy.data)}`);
   const afterBuy=await request("/api/portfolio",{token});assert.equal(afterBuy.status,200,"portfolio after buy");
-  assert.ok(Number(afterBuy.data.cash)<Number(initial.data.cash),"buy debits cash");
+  assert.ok(Number(afterBuy.data.cash)<Number(afterDeposit.data.cash),"buy debits cash after virtual funding");
   const sell=await request("/api/trades",{method:"POST",token,body:{side:"sell",asset:"BTC",amount:5}});
   assert.equal(sell.status,201,`demo sell: ${JSON.stringify(sell.data)}`);
   const afterSell=await request("/api/portfolio",{token});assert.equal(afterSell.status,200,"portfolio after sell");
@@ -74,6 +95,6 @@ async function main(){
   const activity=await request("/api/activity",{token});assert.equal(activity.status,200,"activity");
   assert.ok(activity.data.trades?.some(t=>t.side==="buy"&&t.asset==="BTC"),"buy recorded");
   assert.ok(activity.data.trades?.some(t=>t.side==="sell"&&t.asset==="BTC"),"sell recorded");
-  console.log("PASS: health, signup, wrong-password rejection, login/JWT, protected dashboard/analytics, invalid-token rejection, demo buy/sell, portfolio, activity");
+  console.log("PASS: health, signup, login/JWT, virtual funding/idempotence, demo buy/sell/idempotence, portfolio/activity reconciliation");
 }
 main().catch(e=>{console.error("USER SCENARIO FAILED:",e);process.exitCode=1});
