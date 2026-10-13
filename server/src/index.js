@@ -1,3 +1,4 @@
+import {applyVerifiedStripeEvent} from "./stripe-webhook-events.js";
 import {resolveMarketQuote} from "./market-freshness.js";
 import {paperSnapshot,applyPersistentPaperSignal,resetPersistentPaper} from "./micro-alpha-store.js";
 import {scenarioValuation,verifiedMarketValuation} from "./micro-alpha-valuation.js";
@@ -87,6 +88,7 @@ const pool = new Pool({
 });
 
 await pool.query(`
+CREATE TABLE IF NOT EXISTS stripe_webhook_events(event_id TEXT PRIMARY KEY,event_type TEXT NOT NULL,received_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS newsletter_subscribers(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,subscribed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,active BOOLEAN NOT NULL DEFAULT TRUE);
 CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,password_hash TEXT,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
@@ -208,26 +210,12 @@ const openFacilitator = createOpenFacilitator({
 app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
 app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,res)=>{
+  try{assertPaidSimulationEnabled()}catch{return res.status(503).json({error:"Abonnements non activés."})}
   if(!stripeConfigured||!stripeWebhookSecret)return res.status(503).json({error:"Stripe webhook non configuré."});
   let event;
-  try{event=stripe.webhooks.constructEvent(req.body,req.headers["stripe-signature"],stripeWebhookSecret)}catch(e){console.error("[STRIPE] webhook signature error",e.message);return res.status(400).json({error:"Signature Stripe invalide."})}
-  try{
-    if(event.type==="checkout.session.completed"){
-      const session=event.data.object;
-      const userId=Number(session.metadata?.userId);
-      const plan=session.metadata?.plan==="elite"?"elite":session.metadata?.plan==="pro"?"pro":null;
-      if(userId&&plan)await pool.query("UPDATE users SET plan=$1,pro_since=COALESCE(pro_since,CURRENT_TIMESTAMP),stripe_customer_id=COALESCE($2,stripe_customer_id),stripe_subscription_id=COALESCE($3,stripe_subscription_id) WHERE id=$4",[plan,session.customer||null,session.subscription||null,userId]);
-    }
-    if(event.type==="customer.subscription.updated"||event.type==="customer.subscription.deleted"){
-      const subscription=event.data.object;
-      const userId=Number(subscription.metadata?.userId);
-      const plan=subscription.metadata?.plan==="elite"?"elite":subscription.metadata?.plan==="pro"?"pro":null;
-      const active=event.type==="customer.subscription.updated"&&["active","trialing","past_due"].includes(subscription.status);
-      if(userId)await pool.query("UPDATE users SET plan=$1,stripe_customer_id=COALESCE($2,stripe_customer_id),stripe_subscription_id=$3 WHERE id=$4",[active&&plan?plan:"free",subscription.customer||null,event.type==="customer.subscription.deleted"?null:subscription.id,userId]);
-      else if(subscription.customer)await pool.query("UPDATE users SET plan=$1,stripe_subscription_id=$2 WHERE stripe_customer_id=$3",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,subscription.customer]);
-    }
-    res.json({received:true});
-  }catch(e){console.error("[STRIPE] webhook handler error",e.message);res.status(500).json({error:"Erreur webhook Stripe."})}
+  try{event=stripe.webhooks.constructEvent(req.body,req.headers["stripe-signature"],stripeWebhookSecret)}catch(e){console.error("[STRIPE] invalid signature",e.message);return res.status(400).json({error:"Signature Stripe invalide."})}
+  try{res.json(await applyVerifiedStripeEvent(pool,event))}
+  catch(e){console.error("[STRIPE] webhook transaction error",e.message);res.status(500).json({error:"Échec du traitement Stripe, réessayez."})}
 });
 
 // Northflank terminates TLS at a reverse proxy. Trust only the configured number

@@ -157,3 +157,9 @@
 - `server/test/commercial-release.test.js`: negative-path tests for absent/partial approvals.
 - Remaining external prerequisites: legal/regulatory and privacy counsel, Stripe merchant account and sandbox validation, email/support provider, partner crypto contract/API sandbox/KYC, security audit, domain and DNS ownership, privacy-approved aggregated analytics.
 - NOT delivered: production billing activation, partner live adapter, external security certification, live KYC, live crypto operations, aggregate analytics dashboard, operational backup/restore evidence.
+
+## 2026-10-13 — dernier lot interne préparatoire
+- Webhooks Stripe : protection par gate, transactions SQL, dédoublonnage persistant, rejet des paiements non confirmés et droits des abonnements non actifs.
+- Test unitaire des événements Stripe ; assertion de désactivation commerciale ajoutée au Playwright authentifié déjà existant.
+- Reste à fournir par humains/prestataires : validation juridique et RGPD, pentest indépendant, sandbox Stripe et tests de litiges, comptes/secrets E2E, fournisseur crypto sandbox/contrat, domaine/DNS, support/email, preuves de restauration et validation finale.
+- La mesure marketing reste locale et consentie : aucune collecte agrégée nouvelle sans revue RGPD. Les exigences d'activation/retention doivent être instrumentées séparément après approbation.
