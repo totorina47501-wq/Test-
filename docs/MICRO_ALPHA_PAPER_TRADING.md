@@ -27,3 +27,9 @@ Run `node --test server/test/micro-alpha-paper.test.js`, the complete server sui
 - `MicroAlphaPersistentPanel.tsx` présente ce compte dans Bots IA à côté du laboratoire V2 local. Prix saisi manuellement **uniquement pour scénarios pédagogiques**, jamais étiqueté cours de marché. Aucun scheduler, aucun ordre réel, aucun paiement et aucun impact sur le portefeuille principal.
 - Les valeurs des positions ne sont PAS évaluées au marché : endpoint retourne `valuation: cash-only-without-fresh-quotes`. Le résultat net officiel et le drawdown multi-actifs exigent une source de prix fraîche vérifiée. La protection de drawdown du moteur n'est pas une garantie de perte maximale dans cette version.
 - Tests `server/test/micro-alpha-store.test.js` : isolation utilisateur, transactions, idempotence, reset et rejet ; `server/e2e/react-account.spec.mjs` : API simulée pour UI desktop/mobile. **Production authentifiée et version Northflank restent à vérifier.**
+
+## Micro Alpha V4 — valorisation de scénario (pas de cotation de marché)
+- Réutilise `paperEquity`, le compte SQL V3 et l'auth JWT. `POST /api/micro-alpha/scenario-valuation` accepte uniquement un prix BTC numérique strictement positif, dans la limite de 10 M€, et valorise les positions de **l'utilisateur authentifié**, sans modifier l'état.
+- Retour : `equityEur`, `exposureEur`, `pnlEur`, `pnlPct`, `marketVerified:false`, `valuation:"manual-scenario-only"`, `priceSource:"user-input"`. Affichage explicitement **hypothétique** dans le panneau V3, sans rendement de marché.
+- Les actifs autres que BTC et les prix malformés sont refusés ; jamais de fallback de prix obsolète. Tests : `server/test/micro-alpha-valuation.test.js` et suites existantes. Aucun changement Shield/Silver/Gold.
+- **Non réalisé :** connexion à une source de cours frais validée, valorisation officielle, historique horodaté, drawdown réel. Ne pas communiquer le P&L fictif comme une performance utilisateur.
