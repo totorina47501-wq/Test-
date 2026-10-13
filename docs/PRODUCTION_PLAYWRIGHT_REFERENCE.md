@@ -79,3 +79,10 @@ Le workflow de production écrit désormais `server/production-evidence.json` da
 La suite Playwright live vérifie en plus les cinq étapes de la démo, les mentions de simulation, la progression et la remise à zéro, sur desktop et mobile. La vérification est conditionnée au déploiement effectif du code et peut échouer pendant le délai de propagation Northflank ; il faut diagnostiquer l'écart avant d'affirmer que la production est à jour.
 
 Grille de qualification des partenaires : `docs/PARTNER_PROVIDER_SCORECARD.md`. Toutes les capacités non confirmées restent inconnues ; le budget cible d'infrastructure est de 200 €/mois au maximum, sans supposer de tarif négocié.
+
+## Navigation, historique et cohérence des écrans
+- Suite isolée : `server/e2e/react-navigation-history.spec.mjs`, projets desktop et mobile. Tester `goBack()` et `goForward()` entre accueil, Investir et Bots, ainsi que le bouton de retour intégré d'Investir.
+- Sur Portefeuille et Activités non authentifiés, confirmer le verrouillage de l'espace privé et le retour à l'accueil sans fuite de données ; sur session connectée, conserver les parcours `react-account.spec.mjs` et les tests de production authentifiés existants.
+- Après chaque action : vérifier le titre propre à l'écran, l'absence du titre de l'écran précédent, les erreurs JS et le débordement horizontal.
+- Le test isolé n'est **pas** une preuve de navigation sur la révision Northflank. Pour une validation production, consigner l'identité de révision, les runs et les captures desktop/mobile.
+- Observatoire bots PR #531, merge `5748fd6` : fenêtres communes 7/30/90 jours ; 4/4 workflows main verts, SHA Northflank non vérifié.

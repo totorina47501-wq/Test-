@@ -78,3 +78,12 @@
 - Gestion des rejets d'ordres : messages d'erreur explicites, accès direct au crédit fictif et au portefeuille.
 - Régression Playwright achat/vente LINK en desktop et mobile avec réponses API contrôlées ; fichier `server/e2e/react-investir.spec.mjs`.
 - Statut : en attente de validation CI et de vérification production authentifiée ; référence `docs/PRODUCTION_PLAYWRIGHT_REFERENCE.md`.
+
+## PR #531 — observatoire bots, période commune (2026-10-13)
+- IMPLÉMENTÉ et CI VALIDÉE sur main `5748fd6` (4/4 workflows) : comparaison des décisions et exécutions simulées sur 7/30/90 jours ou historique disponible ; volume et journal alignés sur la période.
+- Les 100 derniers événements par source peuvent rendre les agrégats incomplets ; rendement et drawdown non disponibles faute de valorisation historique.
+- Déploiement exact Northflank : NON VÉRIFIÉ (SHA exposé non confirmé).
+
+## Régression navigation / retours arrière (lot suivant)
+- Test `server/e2e/react-navigation-history.spec.mjs` : retour/avance navigateur entre accueil, Investir et Bots ; identité de chaque écran et absence de contenu de l'écran précédent ; retour intégré Investir ; routes privées Portefeuille et Activités pour visiteur ; retour accueil ; absence de débordement et erreurs JS.
+- Les projets Playwright desktop et mobile exécutent la même suite en CI isolée. Production authentifiée et identité du SHA déployé restent à vérifier séparément.
