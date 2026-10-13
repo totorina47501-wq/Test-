@@ -104,3 +104,9 @@
 - Nouveauté : `MicroAlphaPaperLab.tsx`, expérience éducative locale BTC, dans Bots IA. Cours manuel, cash fictif, micro-ordres 1–50 €, frais simulés, stop drawdown, résultat fictif, journal réinitialisable ; aucune API/ordre réel ou persistance.
 - Tests Playwright isolés : `server/e2e/react-account.spec.mjs` (desktop/mobile), achat, vente, réinitialisation et validation des bornes. SHA Northflank et production authentifiée restent À VÉRIFIER ; la CI ne vaut pas preuve prod.
 - Suite produit après le présent lot : ledger serveur durable multi-utilisateur, identité, quotes fraîches et comptabilité d'événements avant tout journal officiel de performance Micro Alpha.
+
+## Micro Alpha V3 — compte persistant par utilisateur (2026-10-13)
+- Implémentation : `micro_alpha_accounts` JSONB isolé, API JWT `/api/micro-alpha/*`, transactions avec verrou, moteur existant `executePaperSignal`, composant `MicroAlphaPersistentPanel` intégré à Bots IA. Aucun doublon des portefeuilles ou de l'observatoire ; stratégies Silver/Shield/Gold intactes.
+- Scénarios BTC manuels exclusivement : pas de prix de marché, valorisation fiable, bot automatisé ou ordre réel. Le journal est conservé côté serveur, distinct du labo V2 volatil.
+- Tests : `micro-alpha-store.test.js` (isolation, idempotence, rollback, reset, rejets) et parcours React Playwright desktop/mobile mocké. Les workflows PR/main déterminent le statut CI ; SHA de production Northflank non confirmé.
+- Restant P0 : prix frais validés et marquage-to-market ; limite de croissance des événements ; politique de rétention ; E2E DB réelle et vérification production authentifiée avant annonce de performance utilisateur.

@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({page}) => {
+ await page.route("**/api/micro-alpha/account",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({account:{cash:1000,initialCash:1000,positions:{},trades:[]},simulation:true})}));
+ await page.route("**/api/micro-alpha/signals",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({executed:true,simulation:true})}));
+ await page.route("**/api/micro-alpha/reset",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({reset:true,simulation:true})}));
  await page.route(/api\/bots\/executions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({executions:[]})}));
  await page.route(/api\/bots\/decisions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({decisions:[]})}));
 });
@@ -68,6 +71,11 @@ test("React account space covers portfolio, activity and bot strategy management
   await expect(page.getByRole("heading", { name: "Gold Bot" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Tester des micro-ordres fictifs" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Compte fictif personnel" })).toBeVisible();
+  await page.getByRole("button", { name: "Acheter (simulation sauvegardée)" }).click();
+  await expect(page.getByText("Ordre fictif enregistré.")).toBeVisible();
+  await page.getByRole("button", { name: "Réinitialiser compte sauvegardé" }).click();
+  await expect(page.getByText("Compte fictif réinitialisé.")).toBeVisible();
   await page.getByRole("button", { name: "Acheter virtuellement" }).click();
   await expect(page.getByText("Achat virtuel enregistré.")).toBeVisible();
   await page.getByRole("button", { name: "Vendre virtuellement" }).click();
