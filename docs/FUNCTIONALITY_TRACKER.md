@@ -116,3 +116,8 @@
 - Interface Bots IA : bouton d'évaluation, exposition BTC et P&L **hypothétiques** au cours saisi ; étiquetage explicite de l'absence de données de marché. Ne modifie ni portefeuille principal ni stratégies bots.
 - Tests unitaires positifs et négatifs `micro-alpha-valuation.test.js`. CI PR et main à contrôler ; validation Northflank authentifiée non prouvée.
 - Suite : source de prix fiable avec timestamp, rejet des cours obsolètes, valorisation horodatée, politique d'historique et preuves E2E authentifiées.
+
+## Micro Alpha V4 — valorisation BTC fraîche, même PR
+- Réutilisation du flux CoinGecko et du cache existants : `GET /api/micro-alpha/market-valuation`, JWT, quote BTC fraîche ≤60 s, timestamp, exposition, equity, P&L fictif, échec HTTP 503 si obsolète/manquante.
+- Panneau Bots IA existant enrichi de « Actualiser la valeur au marché » ; aucun doublon de composant ou fournisseur, aucun changement Shield/Silver/Gold.
+- Tests de validation et refus des prix périmés ajoutés. **CI et déploiement authentifié à vérifier**. Les métriques historiques et drawdown temporel restent hors périmètre de cette version et ne doivent pas être présentés comme acquis.
