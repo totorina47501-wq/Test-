@@ -55,3 +55,10 @@ A paid launch requires explicit sign-off for product, security, legal/privacy, p
 - Real crypto remains disabled in `server/integrations/crypto-provider.mjs` regardless of commercial flags.
 - Stripe webhook route remains present to preserve existing compatibility. **Before paid launch**, audit event replay, subscription state transitions, failed payments, refund/chargeback, event ownership and database transactions. Current work does not certify them.
 - Do not enable payments by editing environment variables alone: signed approvals and an independent go/no-go are mandatory.
+
+## Hardening interne (2026-10-13)
+- Webhook Stripe désormais **refusé lorsque le lancement payant n'est pas autorisé**, même si les secrets existent.
+- Après vérification de signature Stripe, les événements de souscription reconnus sont enregistrés avec une clé d'événement unique en base PostgreSQL ; mise à jour de droits et enregistrement sont dans la même transaction, avec rollback en cas d'erreur.
+- Un checkout ne peut accorder un plan que si `mode=subscription` et `payment_status=paid`. `past_due`, suppression et autres états non actifs ne donnent plus de plan payant.
+- Les événements inconnus sont ignorés. Les tests unitaires valident le doublon, l'événement invalide et les états refusés. **Audit Stripe sandbox réel et relecture sécurité restent nécessaires** : désordre chronologique des événements, paiements différés, litiges et rétrofacturations.
+- Playwright authentifié existant étendu pour vérifier que `realCrypto=false` et `paidSimulation=false`. Ce scénario nécessite toujours des identifiants de test dédiés pour être exécuté ; ne pas le présenter comme testé si les secrets CI sont absents.

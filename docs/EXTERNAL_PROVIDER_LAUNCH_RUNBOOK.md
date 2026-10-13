@@ -29,3 +29,9 @@ Status: **PREPARED / DISABLED**. This file is an operator checklist, not a certi
 
 ## Go/no-go
 Product owner + legal + security + payments + support owners sign a dated release record. Real crypto launch requires its own separate legal and technical project.
+
+## Revue sécurité Stripe supplémentaire
+- Table `stripe_webhook_events` : vérifier index unique, rollback, migrations et stratégie de rétention.
+- En sandbox fournisseur : rejouer le même événement 10 fois en parallèle, envoyer événements hors ordre, annulation, remboursement, paiement différé et statut past_due. Vérifier l'absence d'élévation de privilèges et la correspondance du client Stripe au compte.
+- Les traitements asynchrones, la réconciliation avec l'API Stripe et les litiges nécessitent une revue finale avant activation. Aucun paramètre de production ne doit être activé par ce lot.
+- Les événements sont persistés uniquement après vérification de signature et activation commerciale explicite.
