@@ -40,3 +40,10 @@ A paid launch requires explicit sign-off for product, security, legal/privacy, p
 - Repository evidence inventory and outstanding questions: `docs/PARTNER_TECHNICAL_DUE_DILIGENCE.md`.
 - Public `/#architecture` provides a simplified architectural boundary and explicitly disabled real provider layer; this is not a certification or production readiness assessment.
 - Partner-specific capabilities, legal entity onboarding and regulatory responsibilities remain **UNVERIFIED** until each provider answers in writing.
+
+## Lot ABCDE (2026-10-13) — preuves et limitations
+- Adaptateur toujours désactivé pour toute opération réelle ; fixture contractuel local ajouté, sans valeur de preuve d'intégration fournisseur.
+- Landing : parcours de découverte avec CTA et mesure UTM **locale et consentie**, sans collecte serveur ni dashboard de cohortes.
+- Onboarding : quatrième étape « première simulation » informative, **non validée par exécution d'ordre**. Une vraie preuve d'activation nécessitera instrumentation d'événement serveur idempotent et consentement adéquat.
+- Offre premium et checkout : **non commercialisés**, gates paiement, support, RGPD et conseil juridique inchangés (VERIFY / NOT APPROVED).
+- Avant toute mise en vente, obtenir approbation juridique, CGV/TVA, droits consommateurs et résultats des tests de paiements sandbox.

@@ -35,3 +35,6 @@
 - Devis fixe, variable et minimums : **à compléter**
 - Obligations juridiques et opérationnelles : **à compléter**
 - Décision : **EN ATTENTE** tant que les critères bloquants restent non vérifiés.
+
+## Questionnaire d'envoi standard (2026-10-13)
+Envoyer à chaque fournisseur les mêmes questions et demander une réponse écrite avec référence de documentation : (1) éligibilité entreprise française, (2) statut réglementaire et responsabilités MiCA, (3) accès sandbox et schéma d'API, (4) onboarding/KYB/KYC et consentement, (5) custody et ségrégation, (6) quote/order/webhook/idempotence, (7) rails EUR et frais, (8) permission de trading automatisé, (9) DPA et sécurité, (10) devis fixe <= 200 EUR/mois et coûts variables, (11) SLA/support et réversibilité, (12) usage autorisé du nom et du logo du fournisseur. Ne jamais marquer « validé » sans preuve écrite.
