@@ -305,6 +305,8 @@ const marketIds = {
 };
 let marketSnapshot = Object.entries(prices).map(([symbol,price]) => ({symbol,price,change24h:0}));
 let marketUpdatedAt = 0;
+let marketRefreshPromise = null;
+let marketRetryAfter = 0;
 const historyCache = new Map();
 const marketTickHistory = new Map();
 const coingeckoBaseUrl=String(process.env.COINGECKO_API_BASE_URL||"https://api.coingecko.com/api/v3").replace(/\/$/,"");
@@ -341,11 +343,19 @@ async function coingeckoError(response,prefix="CoinGecko"){
 }
 
 async function refreshMarket(force=false) {
+  if(marketRefreshPromise) return marketRefreshPromise;
+  if(Date.now()<marketRetryAfter) return marketSnapshot;
   if(!force && Date.now()-marketUpdatedAt < 12000) return marketSnapshot;
+  marketRefreshPromise=(async()=>{
   try {
     const ids = Object.values(marketIds).join(",");
     const response = await coingeckoFetch(`/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`);
+    if(response.status===429){
+      const retryAfter=Number(response.headers.get("retry-after"));
+      marketRetryAfter=Date.now()+(Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,300000):60000);
+    }
     if(!response.ok) throw await coingeckoError(response);
+    marketRetryAfter=0;
     const data = await response.json();
     marketSnapshot = Object.entries(marketIds).map(([symbol,id]) => {
       const item = data[id] || {};
@@ -381,6 +391,8 @@ async function refreshMarket(force=false) {
     }
   }
   return marketSnapshot;
+  })();
+  try{return await marketRefreshPromise;}finally{marketRefreshPromise=null;}
 }
 refreshMarket(true).catch(()=>{});
 function encrypt2fa(value){
