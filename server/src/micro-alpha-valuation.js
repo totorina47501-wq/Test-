@@ -13,3 +13,10 @@ export function scenarioValuation(account,price){
  if(![equity,pnlEur,pnlPct,exposureEur].every(Number.isFinite))throw Error("Invalid scenario valuation");
  return {simulation:true,valuation:"manual-scenario-only",marketVerified:false,priceSource:"user-input",priceEur:price,cashEur:account.cash,btcQuantity:account.positions.BTC||0,exposureEur,equityEur:equity,pnlEur,pnlPct};
 }
+
+export function verifiedMarketValuation(account,quote,now=Date.now(),maxAgeMs=60000){
+ if(!quote||quote.symbol!=="BTC"||quote.priceFresh!==true||typeof quote.priceUpdatedAt!=="number"||!Number.isFinite(quote.priceUpdatedAt)||!Number.isFinite(now)||quote.priceUpdatedAt>now||now-quote.priceUpdatedAt>maxAgeMs)throw Error("Fresh BTC market quote unavailable");
+ const price=quote.price;
+ const base=scenarioValuation(account,price);
+ return {...base,valuation:"verified-market-snapshot",marketVerified:true,priceSource:"CoinGecko",priceUpdatedAt:quote.priceUpdatedAt,verifiedAt:now};
+}
