@@ -35,3 +35,20 @@ test("partner technical review is responsive and retains simulation boundaries",
  // A public partner review should never require authentication or overflow its viewport.
  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
 });
+
+test("public demo journey tracks five steps without real funding",async({page})=>{
+ await page.goto("/react-preview/?showcase=1");
+ const journey=page.locator("#parcours-demo");
+ await expect(journey.getByRole("heading",{name:"Explorez BitGold étape par étape."})).toBeVisible();
+ await expect(journey.locator(".demo-journey-item")).toHaveCount(5);
+ await expect(journey).toContainText("aucun paiement réel");
+ await expect(journey.locator('a[href="/bots?testmode=1"]')).toHaveCount(1);
+ const progress=journey.getByRole("progressbar",{name:"Progression de la démonstration"});
+ await expect(progress).toHaveAttribute("value","0");
+ await journey.getByRole("checkbox",{name:"Exploré"}).first().check();
+ await expect(progress).toHaveAttribute("value","1");
+ await expect(journey).toContainText("1 / 5 étapes explorées");
+ await journey.getByRole("button",{name:"Réinitialiser le parcours"}).click();
+ await expect(progress).toHaveAttribute("value","0");
+ await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
+});
