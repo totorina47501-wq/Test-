@@ -98,3 +98,9 @@
 - Provenance : `production-evidence.mjs` peut désormais valider le SHA attendu s'il est exposé par un en-tête de révision **ou présent exactement dans le bundle frontend servi**. Sinon état `UNVERIFIED`.
 - Preuves visuelles : captures live invitées et connectées conservées dans l'artefact du workflow production.
 - Algorithmes Shield/Silver/Gold et Quantum Fund : inchangés.
+
+## Micro Alpha V2 — laboratoire virtuel React (2026-10-13)
+- Audit anti-doublon : moteur serveur `micro-alpha-paper.js` (#534) déjà présent, observatoire `BotObservabilityPanel` déjà disponible sur Bots/Portefeuille/Activités, et laboratoire Quantum Fund préexistant. Aucun de ces moteurs n'est recopié ou modifié.
+- Nouveauté : `MicroAlphaPaperLab.tsx`, expérience éducative locale BTC, dans Bots IA. Cours manuel, cash fictif, micro-ordres 1–50 €, frais simulés, stop drawdown, résultat fictif, journal réinitialisable ; aucune API/ordre réel ou persistance.
+- Tests Playwright isolés : `server/e2e/react-account.spec.mjs` (desktop/mobile), achat, vente, réinitialisation et validation des bornes. SHA Northflank et production authentifiée restent À VÉRIFIER ; la CI ne vaut pas preuve prod.
+- Suite produit après le présent lot : ledger serveur durable multi-utilisateur, identité, quotes fraîches et comptabilité d'événements avant tout journal officiel de performance Micro Alpha.

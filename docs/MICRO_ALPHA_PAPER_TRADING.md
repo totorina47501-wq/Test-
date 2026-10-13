@@ -14,3 +14,9 @@ This module is a **pure simulation-only** paper execution primitive, not a live 
 
 ## Release gates
 Run `node --test server/test/micro-alpha-paper.test.js`, the complete server suite, frontend checks, authenticated Playwright journeys, and production smoke. Verify CI green on main before treating the change as released. Do not enable live trading.
+
+## Micro Alpha V2 — laboratoire pédagogique React
+- `frontend/src/components/MicroAlphaPaperLab.tsx` est intégré dans l'onglet Bots IA de `AccountPage.tsx` après l'observatoire existant : aucun second observatoire créé.
+- Simulation **locale, volatile et fictive** avec cours BTC saisi à la main, montant 1–50 €, frais configurables, limite de drawdown, P&L de démonstration et journal de huit derniers micro-ordres. Réinitialisation possible. Aucune API, persistance, source de prix, activation de bot, donnée réelle ni modification des stratégies Shield/Silver/Gold.
+- Le démonstrateur React ne partage **pas** le ledger serveur `micro-alpha-paper.js` : il sert uniquement à illustrer l'expérience. Une activation paper durable nécessitera un chantier distinct (API auth, isolation SQL, prix frais et idempotence).
+- E2E CI isolé `server/e2e/react-account.spec.mjs` : entrée Bots IA, achat/vente fictifs, remise à zéro, garde-fou montant invalide, desktop/mobile. Ne jamais annoncer un P&L de ce laboratoire comme un rendement d'utilisateur ou d'un bot.
