@@ -53,6 +53,7 @@ try {
   })));
   // The isolated showcase token is synthetic; never call the authenticated persistent paper API.
   await page.route("**/api/micro-alpha/account", route => route.fulfill(mock({account:{cash:1000,initialCash:1000,positions:{},trades:[]},simulation:true})));
+  await page.route("**/api/micro-alpha/market-history", route => route.fulfill(mock({points:[],sampleCount:0,maxObservedDrawdownPct:null,simulation:true,marketVerified:true})));
   await page.route(/api\/bots\/executions\/history/, route => route.fulfill(mock({executions:[]})));
   await page.route(/api\/bots\/decisions\/history/, route => route.fulfill(mock({decisions:[]})));
   await page.goto(baseURL + "/react-preview/?view=portfolio", { waitUntil: "domcontentloaded" });
