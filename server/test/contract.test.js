@@ -250,7 +250,7 @@ test("authentication security baseline is enforced",()=>{
   assert.match(server,/JWT_SECRET must be configured with at least 32 characters in production/);
   assert.match(server,/const authRateLimit = rateLimit\(\{/);
   assert.match(server,/windowMs: 10 \* 60 \* 1000/);
-  assert.match(server,/max: process\\.env\\.NODE_ENV === "test" \\? 2000 : 10/);
+  assert.match(server,/max: process\.env\.NODE_ENV === "test" \? 2000 : 10/);
   assert.match(server,/app\.post\("\/api\/auth\/login", authRateLimit/);
   assert.match(server,/app\.post\("\/api\/auth\/google", authRateLimit/);
 });
