@@ -33,3 +33,10 @@ Run `node --test server/test/micro-alpha-paper.test.js`, the complete server sui
 - Retour : `equityEur`, `exposureEur`, `pnlEur`, `pnlPct`, `marketVerified:false`, `valuation:"manual-scenario-only"`, `priceSource:"user-input"`. Affichage explicitement **hypothétique** dans le panneau V3, sans rendement de marché.
 - Les actifs autres que BTC et les prix malformés sont refusés ; jamais de fallback de prix obsolète. Tests : `server/test/micro-alpha-valuation.test.js` et suites existantes. Aucun changement Shield/Silver/Gold.
 - **Non réalisé :** connexion à une source de cours frais validée, valorisation officielle, historique horodaté, drawdown réel. Ne pas communiquer le P&L fictif comme une performance utilisateur.
+
+## Micro Alpha V4 — cours de marché BTC vérifié (même lot)
+- Réutilise `refreshMarket()` et le cache CoinGecko existants ; **aucun deuxième fournisseur, scheduler ou stockage dupliqué**.
+- `GET /api/micro-alpha/market-valuation` (JWT) retourne le snapshot BTC de l'utilisateur, `marketVerified:true`, `priceSource:"CoinGecko"`, `priceUpdatedAt`, equity, exposition, P&L et pourcentage de simulation. Pas d'ordre réel.
+- Fail-closed : BTC manquant, `priceFresh!==true`, timestamp absent, futur ou de plus de **60 secondes** ⇒ HTTP 503, aucune performance affichée ; jamais de fallback sur un prix manuel ou ancien. Le P&L est une **valorisation ponctuelle**, pas un historique de rendement.
+- Tests positifs/négatifs `server/test/micro-alpha-valuation.test.js` ; vérifier le parcours connecté desktop/mobile, CI et version Northflank avant de marquer PROD VALIDÉE.
+- **Limites restantes** : pas de séries historiques durables, benchmark, calcul de drawdown temporel ou stratégie automatisée ; le circuit breaker historique n'est pas une mesure de drawdown vérifiée au marché. Ne pas assimiler un snapshot à une performance historique.
