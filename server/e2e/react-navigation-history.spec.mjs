@@ -38,5 +38,6 @@ test("Investir in-app back returns to the correct landing screen",async({page})=
  await expect(page.getByRole("heading",{name:"Investir",exact:true})).toBeVisible();
  await page.getByRole("button",{name:/BitGold/,exact:false}).first().click();
  await expect(page.getByRole("heading",{name:/Explorez, comprenez et simulez avec BitGold/})).toBeVisible();
- await expect(page.getByRole("heading",{name:"Investir",exact:true})).toHaveCount(0);
+ await expect(page).toHaveURL(/\/react-preview\/?$/);
+ await expect(page.locator('nav[aria-label="Navigation principale"] a[aria-current="page"]')).toHaveCount(0);
 });
