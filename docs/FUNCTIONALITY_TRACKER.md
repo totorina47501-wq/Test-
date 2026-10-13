@@ -110,3 +110,14 @@
 - Scénarios BTC manuels exclusivement : pas de prix de marché, valorisation fiable, bot automatisé ou ordre réel. Le journal est conservé côté serveur, distinct du labo V2 volatil.
 - Tests : `micro-alpha-store.test.js` (isolation, idempotence, rollback, reset, rejets) et parcours React Playwright desktop/mobile mocké. Les workflows PR/main déterminent le statut CI ; SHA de production Northflank non confirmé.
 - Restant P0 : prix frais validés et marquage-to-market ; limite de croissance des événements ; politique de rétention ; E2E DB réelle et vérification production authentifiée avant annonce de performance utilisateur.
+
+## Micro Alpha V4 — calcul hypothétique sans doublon (2026-10-13)
+- Ajout `server/src/micro-alpha-valuation.js` et endpoint JWT `POST /api/micro-alpha/scenario-valuation` ; réutilisation du ledger V3 et du moteur `paperEquity` existants.
+- Interface Bots IA : bouton d'évaluation, exposition BTC et P&L **hypothétiques** au cours saisi ; étiquetage explicite de l'absence de données de marché. Ne modifie ni portefeuille principal ni stratégies bots.
+- Tests unitaires positifs et négatifs `micro-alpha-valuation.test.js`. CI PR et main à contrôler ; validation Northflank authentifiée non prouvée.
+- Suite : source de prix fiable avec timestamp, rejet des cours obsolètes, valorisation horodatée, politique d'historique et preuves E2E authentifiées.
+
+## Micro Alpha V4 — valorisation BTC fraîche, même PR
+- Réutilisation du flux CoinGecko et du cache existants : `GET /api/micro-alpha/market-valuation`, JWT, quote BTC fraîche ≤60 s, timestamp, exposition, equity, P&L fictif, échec HTTP 503 si obsolète/manquante.
+- Panneau Bots IA existant enrichi de « Actualiser la valeur au marché » ; aucun doublon de composant ou fournisseur, aucun changement Shield/Silver/Gold.
+- Tests de validation et refus des prix périmés ajoutés. **CI et déploiement authentifié à vérifier**. Les métriques historiques et drawdown temporel restent hors périmètre de cette version et ne doivent pas être présentés comme acquis.

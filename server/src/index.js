@@ -1,5 +1,6 @@
 import {resolveMarketQuote} from "./market-freshness.js";
 import {paperSnapshot,applyPersistentPaperSignal,resetPersistentPaper} from "./micro-alpha-store.js";
+import {scenarioValuation,verifiedMarketValuation} from "./micro-alpha-valuation.js";
 import {dashboardCopilot} from "./dashboard-copilot.js";
 import {portfolioHealth} from "./portfolio-health.js";
 import "dotenv/config";
@@ -1532,6 +1533,29 @@ app.post("/api/trades",auth,compliance.requireTransactionClearance,async(req,res
 app.get("/api/micro-alpha/account",auth,async(req,res)=>{
  try{const result=await paperSnapshot(pool,req.user.sub);res.set("Cache-Control","no-store").json(result);}
  catch(e){console.error("[MICRO-ALPHA] snapshot",e.message);res.status(500).json({error:"Simulation indisponible."});}
+});
+// Reuse the existing CoinGecko cache; never fall back to stale or manually entered prices.
+app.get("/api/micro-alpha/market-valuation",auth,async(req,res)=>{
+ try{
+  const market=await refreshMarket();
+  const quote=market.find(row=>row.symbol==="BTC");
+  const {account}=await paperSnapshot(pool,req.user.sub);
+  const valuation=verifiedMarketValuation(account,quote);
+  res.set("Cache-Control","no-store").json(valuation);
+ }catch(e){
+  if(e.message==="Fresh BTC market quote unavailable")return res.status(503).set("Cache-Control","no-store").json({error:"Cours BTC frais indisponible : aucune performance de marché calculée.",marketVerified:false});
+  console.error("[MICRO-ALPHA] market valuation",e.message);
+  res.status(500).json({error:"Valorisation de marché indisponible."});
+ }
+});
+// Hypothetical valuation uses a manually supplied BTC scenario price, never a provider quote.
+app.post("/api/micro-alpha/scenario-valuation",auth,async(req,res)=>{
+ const {price}=req.body||{};
+ if(typeof price!=="number"||!Number.isFinite(price)||price<=0||price>10000000)return res.status(400).json({error:"Prix du scénario invalide."});
+ try{
+  const {account}=await paperSnapshot(pool,req.user.sub);
+  res.set("Cache-Control","no-store").json(scenarioValuation(account,price));
+ }catch(e){console.error("[MICRO-ALPHA] valuation",e.message);res.status(500).json({error:"Valorisation fictive indisponible."});}
 });
 app.post("/api/micro-alpha/signals",auth,async(req,res)=>{
  const {id,action,amountEur,price}=req.body||{};
