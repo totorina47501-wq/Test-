@@ -77,3 +77,17 @@
 .bg-landing .landing-activity-example svg{color:#c8ff2e}
 .bg-landing .landing-activity-example p{margin:0;font-size:.85rem}
 @media(max-width:580px){.bg-landing .tile>.landing-real-capture{aspect-ratio:4/3}.bg-landing .landing-market-head{align-items:flex-start;flex-direction:column}.bg-landing .landing-market-head>div{flex-wrap:nowrap}.bg-landing .landing-market button{min-width:46px}}
+
+/* Institutional review: compact, responsive and scoped to the landing. */
+.bg-landing .partner-architecture{display:flex;flex-direction:column;align-items:center;gap:11px;padding:24px;margin:20px 0 28px;text-align:center}
+.bg-landing .partner-architecture>span{color:#c8ff2e;font-size:1.3rem;font-weight:800}
+.bg-landing .partner-architecture-node{width:min(100%,630px);padding:18px;border:1px solid rgba(200,255,46,.27);border-radius:13px;background:rgba(12,28,26,.75)}
+.bg-landing .partner-architecture-node strong,.bg-landing .partner-architecture-node small{display:block}
+.bg-landing .partner-architecture-node strong{color:#f5faf6;font-size:1rem}
+.bg-landing .partner-architecture-node small{color:#b8c7c1;font-size:.84rem;line-height:1.5;margin-top:7px}
+.bg-landing .partner-architecture-node--disabled{border-style:dashed;border-color:rgba(255,255,255,.26);background:rgba(255,255,255,.035)}
+.bg-landing .partner-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.bg-landing .partner-review-card{padding:23px;min-width:0}
+.bg-landing .partner-review-card h3{font-size:1.24rem}
+.bg-landing .partner-review-card p{margin-bottom:14px}
+@media(max-width:700px){.bg-landing .partner-review-grid{grid-template-columns:1fr}.bg-landing .partner-review-card{padding:18px}.bg-landing .partner-architecture{padding:15px}}
