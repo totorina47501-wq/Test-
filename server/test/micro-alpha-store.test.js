@@ -10,6 +10,7 @@ function fakeDb(){
   if(sql.startsWith("INSERT INTO micro_alpha_accounts")){if(!rows.has(params[0]))rows.set(params[0],JSON.parse(params[1]));return {rows:[]};}
   if(sql.startsWith("SELECT state"))return {rows:rows.has(params[0])?[{state:rows.get(params[0])}]:[]};
   if(sql.startsWith("SELECT user_id"))return {rows:[{user_id:params[0]}]};
+  if(sql.startsWith("DELETE FROM micro_alpha_valuations"))return {rows:[]};
   if(sql.startsWith("UPDATE micro_alpha_accounts")){rows.set(params[0],JSON.parse(params[1]));return {rows:[]};}
   throw Error("Unexpected SQL "+sql);
  }};
