@@ -208,6 +208,8 @@ const openFacilitator = createOpenFacilitator({
 app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
 app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,res)=>{
+  // Signed webhooks must never upgrade simulated accounts while commercial launch is OFF.
+  try{assertPaidSimulationEnabled()}catch{return res.status(503).json({error:"Abonnements non disponibles."})}
   if(!stripeConfigured||!stripeWebhookSecret)return res.status(503).json({error:"Stripe webhook non configuré."});
   let event;
   try{event=stripe.webhooks.constructEvent(req.body,req.headers["stripe-signature"],stripeWebhookSecret)}catch(e){console.error("[STRIPE] webhook signature error",e.message);return res.status(400).json({error:"Signature Stripe invalide."})}
