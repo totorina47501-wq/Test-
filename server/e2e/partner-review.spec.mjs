@@ -4,6 +4,11 @@ import {test,expect} from "@playwright/test";
 // the public landing in the isolated CI server.
 test("partner review landing and bot lab work on desktop and mobile",async({page})=>{
  await page.goto("/react-preview/?showcase=1");
+ const tour=page.locator("#visite-guidee");
+ await expect(tour).toBeAttached();
+ await expect(tour.getByRole("heading",{name:"Découvrez BitGold en quatre étapes."})).toBeVisible();
+ await expect(tour.locator('a[href="/bots?testmode=1"]')).toHaveCount(1);
+ await expect(tour.locator('a[href="/investir"]')).toHaveCount(1);
  const partner=page.locator("#partenaires");
  await expect(partner).toBeAttached();
  await expect(partner).toContainText("Aucune conservation de cryptoactifs");

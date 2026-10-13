@@ -26,3 +26,9 @@ Date: 2026-10-13. **Simulation uniquement. Aucun partenariat annoncé.**
 
 ## Gate de sortie
 La CI verte valide les tests du commit, pas la production Northflank. Le vrai trading, la custody, les dépôts et le KYC restent bloqués jusqu'aux contrats, sandbox et autorisations.
+
+## Visite guidée publique (lot suivant)
+- Section `/#visite-guidee` : quatre étapes sans authentification, avec liens Investir, bots publics, laboratoire fictif et aperçu du cockpit.
+- Ne jamais utiliser une capture de compte client ou promettre un rendement; les captures privées restent synthétiques.
+- Le test `partner-review.spec.mjs` valide la section et ses liens sur les projets Playwright desktop/mobile, en plus du laboratoire et de la transparence partenaire.
+- Ce lot ne modifie pas le moteur des bots, les transactions ni l'intégration fournisseur.
