@@ -13,7 +13,7 @@ test("Stripe webhook rejects unapproved launch before signature processing and d
  assert.ok(start>=0&&end>start);
  const gate=handler.indexOf("assertPaidSimulationEnabled()");
  const signature=handler.indexOf("stripe.webhooks.constructEvent");
- const write=handler.indexOf('pool.query("UPDATE users SET plan');
+ const write=handler.indexOf('client.query("UPDATE users SET plan');
  assert.ok(gate>=0&&signature>gate&&write>signature,"gate must precede signature and all writes");
  assert.match(handler,/return res\.status\(503\)/);
 });
