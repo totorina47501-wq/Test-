@@ -40,3 +40,11 @@ Run `node --test server/test/micro-alpha-paper.test.js`, the complete server sui
 - Fail-closed : BTC manquant, `priceFresh!==true`, timestamp absent, futur ou de plus de **60 secondes** ⇒ HTTP 503, aucune performance affichée ; jamais de fallback sur un prix manuel ou ancien. Le P&L est une **valorisation ponctuelle**, pas un historique de rendement.
 - Tests positifs/négatifs `server/test/micro-alpha-valuation.test.js` ; vérifier le parcours connecté desktop/mobile, CI et version Northflank avant de marquer PROD VALIDÉE.
 - **Limites restantes** : pas de séries historiques durables, benchmark, calcul de drawdown temporel ou stratégie automatisée ; le circuit breaker historique n'est pas une mesure de drawdown vérifiée au marché. Ne pas assimiler un snapshot à une performance historique.
+
+## Micro Alpha V5 — historique effectivement observé (à valider en CI)
+- Nouvelle table `micro_alpha_valuations` isolée par utilisateur, une observation maximum par timestamp de cotation BTC CoinGecko ; `GET /api/micro-alpha/market-valuation` enregistre uniquement les valorisations issues d'une quote fraîche (< 60 s). Aucun échantillon créé par scénario manuel.
+- `GET /api/micro-alpha/market-history` retourne jusqu'à 90 points réels horodatés, dans l'ordre chronologique, `sampleCount` et `maxObservedDrawdownPct` (indisponible si moins de deux points). Aucun backfill, aucune interpolation ; drawdown strictement limité aux échantillons.
+- Le reset du compte paper efface son historique dans la même transaction ; aucune addition au portefeuille principal. Le panneau Bots IA affiche la courbe, le portefeuille et le cockpit réutilisent une synthèse en lecture seule.
+- Tests : `server/test/micro-alpha-history.test.js`, `server/test/micro-alpha-store.test.js`, `server/e2e/react-account.spec.mjs` desktop/mobile. Rejet des devis périmées toujours assuré par V4 ; pas de modification des moteurs Silver/Shield/Gold.
+- Limitations : aucune acquisition autonome périodique ; historique alimenté au clic « Actualiser la valeur au marché » uniquement. Les snapshots sont des observations, **pas** une mesure exhaustive de risque ou une performance attribuable aux bots.
+- Statut : implémentation en PR V5 ; CI/main/Northflank à confirmer distinctement.
