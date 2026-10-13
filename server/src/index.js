@@ -271,14 +271,14 @@ app.use(express.json());
 app.use("/api", rateLimit({ windowMs: 60000, max: process.env.NODE_ENV === "test" ? 2000 : 120, standardHeaders: true, legacyHeaders: false }));
 const authRateLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 10,
+  max: process.env.NODE_ENV === "test" ? 2000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Trop de tentatives d’authentification. Réessayez plus tard." }
 });
 const twoFactorRateLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 10,
+  max: process.env.NODE_ENV === "test" ? 2000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Trop de tentatives 2FA. Réessayez plus tard." }
