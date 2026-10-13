@@ -149,3 +149,11 @@
 - Onboarding : étape de première simulation pédagogique (ne prouve pas un ordre).
 - Monétisation : plan premium et gates paiement documentés, aucun abonnement réel activé.
 - À vérifier : CI PR/main, production, parcours mobile, conformité commerciale ; ne pas présenter ces points comme déjà approuvés.
+
+## 2026-10-13 — commercial launch gates, prepared but OFF
+- `server/src/commercial-release.js`: fail-closed paid-simulation approval matrix; real crypto always false.
+- `GET /api/commercial/status`: public non-sensitive release status.
+- Stripe checkout/portal: explicit approval gates added; existing Stripe integration reused, not duplicated.
+- `server/test/commercial-release.test.js`: negative-path tests for absent/partial approvals.
+- Remaining external prerequisites: legal/regulatory and privacy counsel, Stripe merchant account and sandbox validation, email/support provider, partner crypto contract/API sandbox/KYC, security audit, domain and DNS ownership, privacy-approved aggregated analytics.
+- NOT delivered: production billing activation, partner live adapter, external security certification, live KYC, live crypto operations, aggregate analytics dashboard, operational backup/restore evidence.
