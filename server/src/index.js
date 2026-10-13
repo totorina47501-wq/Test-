@@ -1,6 +1,7 @@
 import {resolveMarketQuote} from "./market-freshness.js";
 import {paperSnapshot,applyPersistentPaperSignal,resetPersistentPaper} from "./micro-alpha-store.js";
 import {scenarioValuation,verifiedMarketValuation} from "./micro-alpha-valuation.js";
+import {recordMarketValuation,marketHistory,clearMarketHistory} from "./micro-alpha-history.js";
 import {dashboardCopilot} from "./dashboard-copilot.js";
 import {portfolioHealth} from "./portfolio-health.js";
 import "dotenv/config";
@@ -103,6 +104,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT '
 CREATE TABLE IF NOT EXISTS user_2fa(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,secret_enc TEXT,pending_secret_enc TEXT,enabled BOOLEAN NOT NULL DEFAULT FALSE,recovery_code_hashes TEXT[] NOT NULL DEFAULT '{}',challenge_jti TEXT,challenge_used_at TIMESTAMPTZ,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,enabled_at TIMESTAMPTZ);
 CREATE TABLE IF NOT EXISTS wallets(user_id INTEGER PRIMARY KEY REFERENCES users(id),cash DOUBLE PRECISION NOT NULL DEFAULT 10000);
 CREATE TABLE IF NOT EXISTS micro_alpha_accounts(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,state JSONB NOT NULL,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE IF NOT EXISTS micro_alpha_valuations(user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,price_updated_at TIMESTAMPTZ NOT NULL,observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),price_eur DOUBLE PRECISION NOT NULL,equity_eur DOUBLE PRECISION NOT NULL,pnl_eur DOUBLE PRECISION NOT NULL,exposure_eur DOUBLE PRECISION NOT NULL,PRIMARY KEY(user_id,price_updated_at));
 CREATE TABLE IF NOT EXISTS simulated_deposits(id BIGSERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,request_key TEXT NOT NULL,method TEXT NOT NULL CHECK(method IN ('card','paypal')),amount_cents INTEGER NOT NULL CHECK(amount_cents BETWEEN 100 AND 10000000),created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(user_id,request_key));
 CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id),asset TEXT NOT NULL,quantity DOUBLE PRECISION NOT NULL DEFAULT 0,PRIMARY KEY(user_id,asset));
 CREATE TABLE IF NOT EXISTS trades(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),side TEXT NOT NULL,asset TEXT NOT NULL,amount_eur DOUBLE PRECISION NOT NULL,price_eur DOUBLE PRECISION NOT NULL,quantity DOUBLE PRECISION NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -1541,12 +1543,17 @@ app.get("/api/micro-alpha/market-valuation",auth,async(req,res)=>{
   const quote=market.find(row=>row.symbol==="BTC");
   const {account}=await paperSnapshot(pool,req.user.sub);
   const valuation=verifiedMarketValuation(account,quote);
+  await recordMarketValuation(pool,req.user.sub,valuation);
   res.set("Cache-Control","no-store").json(valuation);
  }catch(e){
   if(e.message==="Fresh BTC market quote unavailable")return res.status(503).set("Cache-Control","no-store").json({error:"Cours BTC frais indisponible : aucune performance de marché calculée.",marketVerified:false});
   console.error("[MICRO-ALPHA] market valuation",e.message);
   res.status(500).json({error:"Valorisation de marché indisponible."});
  }
+});
+app.get("/api/micro-alpha/market-history",auth,async(req,res)=>{
+ try{res.set("Cache-Control","no-store").json(await marketHistory(pool,req.user.sub));}
+ catch(e){console.error("[MICRO-ALPHA] history",e.message);res.status(500).json({error:"Historique indisponible."});}
 });
 // Hypothetical valuation uses a manually supplied BTC scenario price, never a provider quote.
 app.post("/api/micro-alpha/scenario-valuation",auth,async(req,res)=>{

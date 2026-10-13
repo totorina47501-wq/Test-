@@ -5,6 +5,7 @@ import {QuantumFundPanel} from "./QuantumFundPanel";
 import {BotObservabilityPanel} from "./BotObservabilityPanel";
 import {MicroAlphaPaperLab} from "./MicroAlphaPaperLab";
 import {MicroAlphaPersistentPanel} from "./MicroAlphaPersistentPanel";
+import {MicroAlphaSummary} from "./MicroAlphaSummary";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
@@ -191,6 +192,7 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
       <button type="button" onClick={()=>setTab("bots")} aria-current={tab==="bots"?"page":undefined} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="bots"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Bot size={16}/> Bots IA</button>
     </nav>
     {tab==="portfolio"&&bots.data&&<BotObservabilityPanel compact token={auth.token} botIds={(bots.data.catalog||[]).map(bot=>bot.id)} onExpired={auth.expireSession}/>}
+    {tab==="portfolio"&&<MicroAlphaSummary token={auth.token} onExpired={auth.expireSession}/>}
     {tab==="portfolio"&&<SimulatedFunding token={auth.token} onExpired={auth.expireSession} onSuccess={reload}/>}
     {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
     {tab==="activity"&&bots.data&&<BotObservabilityPanel compact token={auth.token} botIds={(bots.data.catalog||[]).map(bot=>bot.id)} onExpired={auth.expireSession}/>}

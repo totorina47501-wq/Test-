@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({page}) => {
+ await page.route("**/api/micro-alpha/market-history",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({simulation:true,marketVerified:true,points:[],sampleCount:0,maxObservedDrawdownPct:null})}));
  await page.route("**/api/micro-alpha/account",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({account:{cash:1000,initialCash:1000,positions:{},trades:[]},simulation:true})}));
  await page.route("**/api/micro-alpha/signals",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({executed:true,simulation:true})}));
  await page.route("**/api/micro-alpha/reset",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({reset:true,simulation:true})}));
@@ -72,6 +73,8 @@ test("React account space covers portfolio, activity and bot strategy management
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Tester des micro-ordres fictifs" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Compte fictif personnel" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Performance Micro Alpha observée" })).toBeVisible();
+  await expect(page.getByText("Aucune valorisation vérifiée enregistrée.")).toBeVisible();
   await page.getByRole("button", { name: "Acheter (simulation sauvegardée)" }).click();
   await expect(page.getByText("Ordre fictif enregistré.")).toBeVisible();
   await page.getByRole("button", { name: "Réinitialiser compte sauvegardé" }).click();
@@ -128,4 +131,23 @@ test("React account reconciles portfolio and activity after a simulated trade", 
   await page.getByRole("button", { name: "Activités" }).click();
   await expect(page.getByText("Achat BTC")).toBeVisible();
   await expect(page.getByText("500,00\u00a0€").first()).toBeVisible();
+});
+
+test("Micro Alpha V5 shows observed history without mixing portfolio totals on desktop and mobile",async({page})=>{
+ await page.addInitScript(()=>localStorage.setItem("bitgold-token","micro-alpha-v5-e2e-token"));
+ await page.route("**/api/portfolio",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({cash:10000,invested:0,total:10000,positions:[],trades:[],integrity:{ok:true}})}));
+ await page.route("**/api/activity",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({trades:[],botLogs:[]})}));
+ await page.route("**/api/bots",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({plan:{plan:"free"},items:[],activity:[],catalog:[]})}));
+ await page.unroute("**/api/micro-alpha/market-history");
+ await page.route("**/api/micro-alpha/market-history",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({points:[{at:"2026-10-13T10:00:00.000Z",equityEur:1000,pnlEur:0},{at:"2026-10-13T11:00:00.000Z",equityEur:900,pnlEur:-100}],sampleCount:2,maxObservedDrawdownPct:10})}));
+ await page.goto(preview);
+ await expect(page.getByRole("heading",{name:"Micro Alpha · performance fictive"})).toBeVisible();
+ await expect(page.getByRole("heading",{name:"Portefeuille",exact:true})).toBeVisible();
+ await expect(page.getByText("10 000,00 €").first()).toBeVisible();
+ await expect(page.getByText("Drawdown observé : 10.00 %")).toBeVisible();
+ await page.getByRole("button",{name:"Bots IA"}).click();
+ await expect(page.getByRole("heading",{name:"Performance Micro Alpha observée"})).toBeVisible();
+ await expect(page.getByRole("img",{name:"Courbe des valorisations Micro Alpha enregistrées"})).toBeVisible();
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2);
+ expect(overflow).toBe(false);
 });

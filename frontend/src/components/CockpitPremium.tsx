@@ -1,6 +1,7 @@
 import {useMemo,useState} from "react";
 import {Card} from "./ui";
 import {BotObservabilityPanel} from "./BotObservabilityPanel";
+import {MicroAlphaSummary} from "./MicroAlphaSummary";
 import {useCockpitExtras,type MarketPoint} from "../hooks/useCockpitExtras";
 
 const ranges=[
@@ -78,7 +79,7 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
   const {activity,market}=useCockpitExtras(token,range,onExpired);
   const points=market.data?.history?.points??[];
 
-  return <div className="space-y-4"><BotObservabilityPanel compact token={token} botIds={[]} onExpired={onExpired}/><div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
+  return <div className="space-y-4"><BotObservabilityPanel compact token={token} botIds={[]} onExpired={onExpired}/><MicroAlphaSummary token={token} onExpired={onExpired}/><div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

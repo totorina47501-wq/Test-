@@ -1,5 +1,6 @@
 import {useCallback,useEffect,useState} from "react";
 import {Badge,Button,Card} from "./ui";
+import {LineChart,Line,XAxis,YAxis,Tooltip,ResponsiveContainer} from "recharts";
 type Account={cash:number;initialCash:number;positions:Record<string,number>;trades:Array<{id:string;action:string;amountEur:number;fee:number;executionPrice:number}>};
 const eur=(n:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(n);
 export function MicroAlphaPersistentPanel({token,onExpired}:{token:string;onExpired:()=>void}){
@@ -9,13 +10,15 @@ export function MicroAlphaPersistentPanel({token,onExpired}:{token:string;onExpi
  const [busy,setBusy]=useState(false);
  const [valuation,setValuation]=useState<{equityEur:number;pnlEur:number;pnlPct:number;exposureEur:number;marketVerified:boolean;priceUpdatedAt?:number;priceSource?:string}|null>(null);
  const [message,setMessage]=useState("");
+ const [history,setHistory]=useState<{points:Array<{at:string;equityEur:number;pnlEur:number}>;sampleCount:number;maxObservedDrawdownPct:number|null}|null>(null);
+ const fetchHistory=useCallback(async()=>{const res=await fetch("/api/micro-alpha/market-history",{headers:{Authorization:"Bearer "+token}});if(res.status===401){onExpired();return;}if(!res.ok)throw Error("Historique indisponible");setHistory(await res.json());},[token,onExpired]);
  const load=useCallback(async()=>{
   setValuation(null);
   const response=await fetch("/api/micro-alpha/account",{headers:{Authorization:"Bearer "+token}});
   if(response.status===401){onExpired();return;}
   if(!response.ok)throw Error("Simulation indisponible");
-  const data=await response.json();setAccount(data.account);
- },[token,onExpired]);
+  const data=await response.json();setAccount(data.account);await fetchHistory();
+ },[token,onExpired,fetchHistory]);
  useEffect(()=>{let active=true;load().catch(()=>{if(active)setMessage("Impossible de charger la simulation persistante.")});return()=>{active=false}},[load]);
  const execute=async(action:"buy"|"sell"|"reset")=>{
   setBusy(true);setMessage("");
@@ -49,6 +52,7 @@ export function MicroAlphaPersistentPanel({token,onExpired}:{token:string;onExpi
    const data=await response.json();
    if(data.marketVerified!==true||data.valuation!=="verified-market-snapshot"||!Number.isFinite(data.priceUpdatedAt))throw Error("Cotations non vérifiées.");
    setValuation(data);
+   await fetchHistory();
   }catch(e){setMessage(e instanceof Error?e.message:"Erreur de cotation");}finally{setBusy(false);}
  };
  const valid=Number.isFinite(Number(price))&&Number(price)>0&&Number(price)<=10000000&&Number.isFinite(Number(amount))&&Number(amount)>=1&&Number(amount)<=50;
@@ -60,8 +64,9 @@ export function MicroAlphaPersistentPanel({token,onExpired}:{token:string;onExpi
   {valuation&&<section aria-label="Valorisation hypothétique" className="rounded-xl border border-white/15 p-3 text-sm"><strong>{valuation.marketVerified?"Valorisation BTC au dernier cours vérifié (simulation)":"Scénario hypothétique uniquement — aucun cours de marché vérifié"}</strong><p>Valeur fictive : {eur(valuation.equityEur)} · Exposition BTC : {eur(valuation.exposureEur)}</p><p>Gain/perte hypothétique : {eur(valuation.pnlEur)} ({valuation.pnlPct.toFixed(2)} %)</p><p className="text-xs text-slate-400">{valuation.marketVerified?`Source ${valuation.priceSource} · cours reçu ${new Date(valuation.priceUpdatedAt||0).toLocaleString("fr-FR")} · photographie instantanée, pas un rendement historique garanti.`:"Résultat au cours saisi par vous, sans historique de marché ni rendement réel."}</p></section>}
   <div className="flex flex-wrap gap-2"><Button disabled={!valid||busy||!account} onClick={()=>execute("buy")}>Acheter (simulation sauvegardée)</Button><Button variant="secondary" disabled={!valid||busy||!account} onClick={()=>execute("sell")}>Vendre (simulation sauvegardée)</Button><Button variant="secondary" disabled={busy||!account} onClick={()=>execute("reset")}>Réinitialiser compte sauvegardé</Button></div>
   {message&&<p role="status" className="text-sm text-lime-300">{message}</p>}
+  <section aria-label="Historique des valorisations Micro Alpha" className="rounded-xl border border-white/10 p-3"><h3 className="font-semibold">Performance Micro Alpha observée</h3><p className="text-xs text-slate-400">Uniquement les cours BTC frais réellement enregistrés. Compte distinct de votre portefeuille principal ; aucun rendement de Shield, Silver ou Gold n’est déduit.</p>{history?.sampleCount?<><p className="mt-2 text-sm">Points : {history.sampleCount} · Drawdown maximal observé : {history.maxObservedDrawdownPct===null?"Indisponible (un seul point)":history.maxObservedDrawdownPct.toFixed(2)+" %"}</p><div className="mt-3 h-44 w-full min-w-0" role="img" aria-label="Courbe des valorisations Micro Alpha enregistrées"><ResponsiveContainer width="100%" height="100%"><LineChart data={history.points}><XAxis dataKey="at" hide/><YAxis domain={["auto","auto"]} width={62}/><Tooltip formatter={(value:number)=>eur(Number(value))} labelFormatter={(label:string)=>new Date(label).toLocaleString("fr-FR")}/><Line type="monotone" dataKey="equityEur" name="Valeur fictive" stroke="#c8ff2e" dot={history.points.length<20} isAnimationActive={false}/></LineChart></ResponsiveContainer></div></>:<p className="mt-2 text-sm text-slate-400">Aucune valorisation vérifiée enregistrée. Actualisez la valeur au marché pour commencer l’historique.</p>}</section>
   <h3 className="font-semibold">Historique personnel fictif ({account?.trades?.length||0})</h3>
   {(account?.trades||[]).length?<ul className="space-y-1 text-sm">{[...(account?.trades||[])].reverse().slice(0,10).map(t=><li key={t.id}>{t.action==="buy"?"Achat":"Vente"} BTC · {eur(t.amountEur)} · frais {eur(t.fee)}</li>)}</ul>:<p className="text-xs text-slate-400">Aucun micro-ordre sauvegardé.</p>}
-  <p className="text-xs text-slate-500">La valorisation de marché est disponible uniquement avec un cours BTC frais vérifié. Aucun historique durable de performance ou drawdown officiel.</p>
+  <p className="text-xs text-slate-500">La valorisation de marché est disponible uniquement avec un cours BTC frais vérifié. Historique de points observés uniquement, sans backfill, benchmark ni garantie sur les pertes entre deux relevés.</p>
  </Card>;
 }

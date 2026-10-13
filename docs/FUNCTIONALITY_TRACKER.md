@@ -121,3 +121,10 @@
 - Réutilisation du flux CoinGecko et du cache existants : `GET /api/micro-alpha/market-valuation`, JWT, quote BTC fraîche ≤60 s, timestamp, exposition, equity, P&L fictif, échec HTTP 503 si obsolète/manquante.
 - Panneau Bots IA existant enrichi de « Actualiser la valeur au marché » ; aucun doublon de composant ou fournisseur, aucun changement Shield/Silver/Gold.
 - Tests de validation et refus des prix périmés ajoutés. **CI et déploiement authentifié à vérifier**. Les métriques historiques et drawdown temporel restent hors périmètre de cette version et ne doivent pas être présentés comme acquis.
+
+## Micro Alpha V5 — suivi de performance observée (PR en cours)
+- Anti-doublon contrôlé : garde `micro_alpha_accounts`, `paperEquity`, `refreshMarket`, `BotObservabilityPanel` et les pages existantes. Ne crée pas de portefeuille, de provider, de scheduler ni de moteur de stratégie parallèle.
+- Table isolée `micro_alpha_valuations`, endpoint JWT de lecture de l'historique et enregistrement lors d'une valorisation vérifiée, reset atomique, échantillons BTC horodatés et dédupliqués.
+- Courbe Bots IA responsive et synthèse réutilisée dans Portefeuille et Cockpit, sans addition aux liquidités du portefeuille ni fausse attribution à Shield/Silver/Gold.
+- Tests unitaires isolation/idempotence/drawdown observé/reset et Playwright isolé desktop/mobile ; CI puis SHA `main` à contrôler. **Production Northflank non confirmée**.
+- Document historique : les formulations V3/V4 désignant le manque de source fraîche sont des limites *à la date de ces versions*, levées en V4 ; absence d'historique durable levée en V5 si la CI réussit. Le calcul du drawdown n'est valable qu'entre relevés enregistrés.
