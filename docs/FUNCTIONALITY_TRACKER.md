@@ -133,3 +133,10 @@
 - GitHub main V5 38f2cb5d: frontend/tests green, production guest smoke and authenticated journeys red. Production read-only bot backtest GET timed out at 60 seconds; mobile home returned HTTP 503. These are real failures, not ignored/flaky-success. Do not claim production SHA verified.
 - Separate CoinGecko 429 errors occurred in local journey runner. Existing `refreshMarket` is now singleflight (concurrent calls share a single provider request) and honors a bounded cooldown after HTTP 429. Quotes still fail closed on staleness: never mark fallback prices verified. No change to Silver/Shield/Gold.
 - Verify the PR tests and rerun all four main workflows. Northflank 503/backtest latency requires independent production investigation and cannot be corrected by increasing Playwright timeouts or skipping tests.
+
+
+## Branding & SEO — PR #540 (2026-10-13)
+- Audit anti-doublon : `frontend/src/LandingPage.tsx` et guides UX existants réutilisés ; pas de création d'une nouvelle application ou modification de bots.
+- SEO : métadonnées HTML, canonical Northflank provisoire, Open Graph, Twitter et JSON-LD SoftwareApplication ; quatre guides publics statiques crawlables, sitemap et robots excluant les chemins privés.
+- Test dédié `server/test/seo-pages.test.js` : cohérence sitemap/guides, métadonnées, garde de routage, HTML strictement public.
+- À VALIDER : CI de la PR et de main, puis présence des pages et balises sur le déploiement exact. Ne pas confondre indexabilité technique, indexation Google et résultats SEO ; domaine de marque non choisi.
