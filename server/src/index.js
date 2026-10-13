@@ -1,4 +1,5 @@
 import {resolveMarketQuote} from "./market-freshness.js";
+import {paperSnapshot,applyPersistentPaperSignal,resetPersistentPaper} from "./micro-alpha-store.js";
 import {dashboardCopilot} from "./dashboard-copilot.js";
 import {portfolioHealth} from "./portfolio-health.js";
 import "dotenv/config";
@@ -100,6 +101,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub TEXT UNIQUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT 'password';
 CREATE TABLE IF NOT EXISTS user_2fa(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,secret_enc TEXT,pending_secret_enc TEXT,enabled BOOLEAN NOT NULL DEFAULT FALSE,recovery_code_hashes TEXT[] NOT NULL DEFAULT '{}',challenge_jti TEXT,challenge_used_at TIMESTAMPTZ,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,enabled_at TIMESTAMPTZ);
 CREATE TABLE IF NOT EXISTS wallets(user_id INTEGER PRIMARY KEY REFERENCES users(id),cash DOUBLE PRECISION NOT NULL DEFAULT 10000);
+CREATE TABLE IF NOT EXISTS micro_alpha_accounts(user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,state JSONB NOT NULL,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 CREATE TABLE IF NOT EXISTS simulated_deposits(id BIGSERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,request_key TEXT NOT NULL,method TEXT NOT NULL CHECK(method IN ('card','paypal')),amount_cents INTEGER NOT NULL CHECK(amount_cents BETWEEN 100 AND 10000000),created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(user_id,request_key));
 CREATE TABLE IF NOT EXISTS holdings(user_id INTEGER NOT NULL REFERENCES users(id),asset TEXT NOT NULL,quantity DOUBLE PRECISION NOT NULL DEFAULT 0,PRIMARY KEY(user_id,asset));
 CREATE TABLE IF NOT EXISTS trades(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),side TEXT NOT NULL,asset TEXT NOT NULL,amount_eur DOUBLE PRECISION NOT NULL,price_eur DOUBLE PRECISION NOT NULL,quantity DOUBLE PRECISION NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -1524,6 +1526,27 @@ app.post("/api/trades",auth,compliance.requireTransactionClearance,async(req,res
     console.error("[TRADES] rejected",e.message);
     res.status(400).json({error:e.message||"Erreur serveur."});
   } finally {client.release();}
+});
+
+// Micro Alpha is a separate user-scoped paper simulation; never touches real or virtual main wallets.
+app.get("/api/micro-alpha/account",auth,async(req,res)=>{
+ try{const result=await paperSnapshot(pool,req.user.sub);res.set("Cache-Control","no-store").json(result);}
+ catch(e){console.error("[MICRO-ALPHA] snapshot",e.message);res.status(500).json({error:"Simulation indisponible."});}
+});
+app.post("/api/micro-alpha/signals",auth,async(req,res)=>{
+ const {id,action,amountEur,price}=req.body||{};
+ if(typeof id!=="string"||!/^[-_a-zA-Z0-9]{12,100}$/.test(id)||!["buy","sell"].includes(action)||typeof amountEur!=="number"||!Number.isFinite(amountEur)||amountEur<1||amountEur>50||typeof price!=="number"||!Number.isFinite(price)||price<=0||price>10000000)
+  return res.status(400).json({error:"Scénario de simulation invalide."});
+ const client=await pool.connect();
+ try{const result=await applyPersistentPaperSignal(client,req.user.sub,{id,action,amountEur,price});res.set("Cache-Control","no-store").json(result);}
+ catch(e){console.error("[MICRO-ALPHA] signal",e.message);res.status(500).json({error:"Simulation indisponible."});}
+ finally{client.release();}
+});
+app.post("/api/micro-alpha/reset",auth,async(req,res)=>{
+ const client=await pool.connect();
+ try{res.set("Cache-Control","no-store").json(await resetPersistentPaper(client,req.user.sub));}
+ catch(e){console.error("[MICRO-ALPHA] reset",e.message);res.status(500).json({error:"Simulation indisponible."});}
+ finally{client.release();}
 });
 
 const port=Number(process.env.PORT||3000);
