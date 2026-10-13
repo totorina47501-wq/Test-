@@ -15,6 +15,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pg from "pg";
 import Stripe from "stripe";
+import {assertPaidSimulationEnabled,publicReleaseStatus} from "./commercial-release.js";
 import { OAuth2Client } from "google-auth-library";
 import crypto from "node:crypto";
 import { generateSecret, generateURI, verify } from "otplib";
@@ -1217,7 +1218,9 @@ app.post("/api/transfers/quote",auth,async(req,res)=>{
     res.json({ok:true,quote,disclaimer:"Simulation uniquement : aucun mouvement d'argent réel n'est exécuté."});
   }catch(e){res.status(500).json({error:"Impossible de calculer les frais."})}
 });
+app.get("/api/commercial/status",(_req,res)=>res.json(publicReleaseStatus()));
 app.post("/api/stripe/checkout",auth,async(req,res)=>{
+  try{assertPaidSimulationEnabled()}catch{return res.status(503).json({error:"Les abonnements payants ne sont pas encore ouverts."})}
   if(!stripeConfigured)return res.status(503).json({error:"Stripe n'est pas encore configuré."});
   const plan=String(req.body.plan||"").toLowerCase();
   if(!["pro","elite"].includes(plan))return res.status(400).json({error:"Plan Stripe invalide."});
@@ -1233,6 +1236,7 @@ app.post("/api/stripe/checkout",auth,async(req,res)=>{
   }catch(e){console.error("[STRIPE] checkout error",e.message);res.status(500).json({error:"Impossible de créer la session Stripe."})}
 });
 app.post("/api/stripe/portal",auth,async(req,res)=>{
+  try{assertPaidSimulationEnabled()}catch{return res.status(503).json({error:"Le portail d’abonnement n’est pas encore ouvert."})}
   if(!stripeConfigured)return res.status(503).json({error:"Stripe n'est pas encore configuré."});
   const user=(await pool.query("SELECT stripe_customer_id FROM users WHERE id=$1",[req.user.sub])).rows[0];
   if(!user?.stripe_customer_id)return res.status(400).json({error:"Aucun abonnement Stripe associé à ce compte."});

@@ -47,3 +47,11 @@ A paid launch requires explicit sign-off for product, security, legal/privacy, p
 - Onboarding : quatrième étape « première simulation » informative, **non validée par exécution d'ordre**. Une vraie preuve d'activation nécessitera instrumentation d'événement serveur idempotent et consentement adéquat.
 - Offre premium et checkout : **non commercialisés**, gates paiement, support, RGPD et conseil juridique inchangés (VERIFY / NOT APPROVED).
 - Avant toute mise en vente, obtenir approbation juridique, CGV/TVA, droits consommateurs et résultats des tests de paiements sandbox.
+
+## Fail-closed launch switches (2026-10-13)
+- `GET /api/commercial/status` exposes only non-sensitive booleans. It is **not** an approval record.
+- Paid subscription checkout and portal routes are disabled by default even if Stripe credentials are populated.
+- To prepare a sandbox validation, a developer must explicitly set `BITGOLD_PAID_SIMULATION_ENABLED` plus all four independent sign-off switches; **do not do so in production** before contractual/legal/operational validation.
+- Real crypto remains disabled in `server/integrations/crypto-provider.mjs` regardless of commercial flags.
+- Stripe webhook route remains present to preserve existing compatibility. **Before paid launch**, audit event replay, subscription state transitions, failed payments, refund/chargeback, event ownership and database transactions. Current work does not certify them.
+- Do not enable payments by editing environment variables alone: signed approvals and an independent go/no-go are mandatory.
