@@ -32,3 +32,10 @@ La CI verte valide les tests du commit, pas la production Northflank. Le vrai tr
 - Ne jamais utiliser une capture de compte client ou promettre un rendement; les captures privées restent synthétiques.
 - Le test `partner-review.spec.mjs` valide la section et ses liens sur les projets Playwright desktop/mobile, en plus du laboratoire et de la transparence partenaire.
 - Ce lot ne modifie pas le moteur des bots, les transactions ni l'intégration fournisseur.
+
+## Lot de préparation institutionnelle
+- `/#architecture` : schéma fonctionnel visiteur → services simulés → connecteur fournisseur désactivé ; la dernière étape ne représente pas un flux réel opérationnel.
+- Quatre cartes publiques : fonctionnalités démontrables, garde-fous, prérequis pour un lancement réel et niveau de preuve de la CI.
+- Aucun logo de prestataire ni affirmation de partenariat ; le texte distingue explicitement projet de conformité et mise en production autorisée.
+- Playwright `partner-review.spec.mjs` : assertions sémantiques et contrôle du débordement horizontal sur projets desktop et Pixel 7. Le test ne remplace pas un audit de sécurité ni une revue juridique.
+- Référence à transmettre en revue : `docs/PARTNER_TECHNICAL_DUE_DILIGENCE.md`.

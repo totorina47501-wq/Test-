@@ -35,3 +35,8 @@ A paid launch requires explicit sign-off for product, security, legal/privacy, p
 - Authenticated checks include login, cockpit, portfolio, activity, bots catalog, strategy scenario laboratory, logout and private-route access denial.
 - The browser suite tests the live production URL, but does **not** independently attest the deployed Northflank image SHA matches the GitHub commit; deployment provenance remains VERIFY.
 - Profile settings, live 2FA management, authenticated historical backtest, deeper mobile accessibility and incident rollback remain VERIFY. Never substitute a passing read-only smoke for regulatory or payment sign-off.
+
+## Partner technical review evidence (2026-10-13)
+- Repository evidence inventory and outstanding questions: `docs/PARTNER_TECHNICAL_DUE_DILIGENCE.md`.
+- Public `/#architecture` provides a simplified architectural boundary and explicitly disabled real provider layer; this is not a certification or production readiness assessment.
+- Partner-specific capabilities, legal entity onboarding and regulatory responsibilities remain **UNVERIFIED** until each provider answers in writing.
