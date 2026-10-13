@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {scenarioValuation} from "../src/micro-alpha-valuation.js";
+import {scenarioValuation,verifiedMarketValuation} from "../src/micro-alpha-valuation.js";
 import {createPaperAccount,executePaperSignal} from "../src/micro-alpha-paper.js";
 test("scenario valuation computes hypothetical BTC exposure, equity and PnL",()=>{
  const start=createPaperAccount({cash:1000});
@@ -28,4 +28,23 @@ test("scenario valuation rejects unsupported assets and malformed account state"
  assert.throws(()=>scenarioValuation({...account,positions:{ETH:1}},50000));
  assert.throws(()=>scenarioValuation({...account,positions:{BTC:-1}},50000));
  assert.throws(()=>scenarioValuation({...account,cash:Infinity},50000));
+});
+
+test("fresh CoinGecko BTC quote values paper positions without modifying account",()=>{
+ const account=executePaperSignal(createPaperAccount({cash:1000}),{id:"fresh-quote-1",action:"buy",asset:"BTC",amountEur:20,price:50000,timestamp:1000}).account;
+ const before=JSON.stringify(account);
+ const result=verifiedMarketValuation(account,{symbol:"BTC",price:60000,priceFresh:true,priceUpdatedAt:100000},105000);
+ assert.equal(result.marketVerified,true);
+ assert.equal(result.valuation,"verified-market-snapshot");
+ assert.equal(result.priceSource,"CoinGecko");
+ assert.equal(result.priceUpdatedAt,100000);
+ assert.ok(result.pnlEur>0);
+ assert.equal(JSON.stringify(account),before);
+});
+test("market valuation fails closed on stale, missing, future, fallback or malformed quotes",()=>{
+ const account=createPaperAccount({cash:1000});
+ const now=1000000;
+ for(const quote of [null,{}, {symbol:"ETH",price:50000,priceFresh:true,priceUpdatedAt:now},{symbol:"BTC",price:50000,priceFresh:false,priceUpdatedAt:now},{symbol:"BTC",price:50000,priceFresh:true,priceUpdatedAt:now-60001},{symbol:"BTC",price:50000,priceFresh:true,priceUpdatedAt:now+1},{symbol:"BTC",price:50000,priceFresh:true,priceUpdatedAt:null},{symbol:"BTC",price:0,priceFresh:true,priceUpdatedAt:now}]){
+  assert.throws(()=>verifiedMarketValuation(account,quote,now));
+ }
 });
