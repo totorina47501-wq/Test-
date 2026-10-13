@@ -91,3 +91,19 @@
 .bg-landing .partner-review-card h3{font-size:1.24rem}
 .bg-landing .partner-review-card p{margin-bottom:14px}
 @media(max-width:700px){.bg-landing .partner-review-grid{grid-template-columns:1fr}.bg-landing .partner-review-card{padding:18px}.bg-landing .partner-architecture{padding:15px}}
+
+/* Partner demo journey: isolated presentation, no trading logic. */
+.bg-landing .demo-journey{padding:24px;max-width:900px;margin:0 auto}
+.bg-landing .demo-journey-head,.bg-landing .demo-journey-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.bg-landing .demo-journey progress{width:100%;height:10px;accent-color:#c8ff2e;margin:16px 0}
+.bg-landing .demo-journey-list{list-style:none;padding:0;margin:0}
+.bg-landing .demo-journey-item{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 0;border-top:1px solid rgba(255,255,255,.12)}
+.bg-landing .demo-journey-item strong{color:#f7fff9}
+.bg-landing .demo-journey-item p{margin:6px 0 0;color:#b9c9c0;font-size:.88rem}
+.bg-landing .demo-journey-index{color:#c8ff2e;margin-right:12px;font-weight:800}
+.bg-landing .demo-journey-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:145px}
+.bg-landing .demo-journey-actions label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.84rem}
+.bg-landing .demo-journey-actions input{accent-color:#c8ff2e;width:17px;height:17px}
+.bg-landing .demo-journey-foot{padding-top:15px;border-top:1px solid rgba(255,255,255,.12);font-size:.8rem;color:#b9c9c0}
+.bg-landing .demo-journey-foot button{background:transparent;border:1px solid rgba(255,255,255,.3);border-radius:9px;color:#fff;padding:8px 12px;cursor:pointer}
+@media(max-width:640px){.bg-landing .demo-journey{padding:15px}.bg-landing .demo-journey-item{align-items:flex-start;flex-direction:column}.bg-landing .demo-journey-actions{align-items:flex-start;min-width:0}}

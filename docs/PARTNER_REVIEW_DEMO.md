@@ -39,3 +39,10 @@ La CI verte valide les tests du commit, pas la production Northflank. Le vrai tr
 - Aucun logo de prestataire ni affirmation de partenariat ; le texte distingue explicitement projet de conformité et mise en production autorisée.
 - Playwright `partner-review.spec.mjs` : assertions sémantiques et contrôle du débordement horizontal sur projets desktop et Pixel 7. Le test ne remplace pas un audit de sécurité ni une revue juridique.
 - Référence à transmettre en revue : `docs/PARTNER_TECHNICAL_DUE_DILIGENCE.md`.
+
+## Parcours interactif de présentation (lot 2026-10-13)
+- `/#parcours-demo` : cinq étapes vérifiables, marché, crédit fictif, comparaison des bots, laboratoire public, portefeuille connecté.
+- Chaque étape propose un lien vers la route existante et une case « Exploré ». La progression est **locale en mémoire**, non persistante et ne simule aucune opération financière.
+- Les parcours privés nécessitent une connexion ; aucune transaction ou carte bancaire réelle n'est sollicitée.
+- Playwright desktop/mobile : cinq étapes, progression, remise à zéro, lien vers le laboratoire, absence de débordement horizontal.
+- Deux PR anciennes (#505/#507) portant sur les mêmes libellés d'actifs sont obsolètes par rapport à `main` (libellés déjà corrigés) ; ne pas fusionner sans rebase et revue.
