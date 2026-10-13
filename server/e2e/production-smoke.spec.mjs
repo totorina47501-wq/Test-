@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 
 const prod = process.env.BITGOLD_PROD_URL || "https://p01--service-bitgold--dvn9t2gvmtgx.code.run";
 test.use({ baseURL: prod, storageState: { cookies: [], origins: [] } });
@@ -68,4 +69,58 @@ test("live partner walkthrough has simulation disclosures and guided journey",as
  await journey.getByRole("button",{name:"Réinitialiser le parcours"}).click();
  await expect(progress).toHaveAttribute("value","0");
  expect(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2)).toBe(false);
+});
+
+
+async function captureProductionScreen(page,testInfo,name){
+  if(process.env.BITGOLD_CAPTURE_UI!=="true")return;
+  const dir="test-results/production-navigation";
+  await mkdir(dir,{recursive:true});
+  await page.screenshot({path:`${dir}/${testInfo.project.name}-${name}.png`,animations:"disabled",fullPage:true});
+}
+
+test("live navigation keeps the correct screen through back and forward",async({page},testInfo)=>{
+  const errors=[];
+  page.on("pageerror",error=>errors.push(error.message));
+  let response=await page.goto("/",{waitUntil:"domcontentloaded"});
+  expect(response?.status()).toBe(200);
+  await expect(page.locator("main h1").first()).toBeVisible();
+  await captureProductionScreen(page,testInfo,"home");
+
+  response=await page.goto("/investir",{waitUntil:"domcontentloaded"});
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading",{name:"Investir",exact:true})).toBeVisible();
+  await expect(page).toHaveURL(/\/investir(?:[?#]|$)/);
+  await captureProductionScreen(page,testInfo,"investir");
+
+  response=await page.goto("/bots",{waitUntil:"domcontentloaded"});
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading",{name:"Comparer les bots BitGold"})).toBeVisible();
+  await expect(page).toHaveURL(/\/bots(?:[?#]|$)/);
+  await captureProductionScreen(page,testInfo,"bots-public");
+
+  await page.goBack({waitUntil:"domcontentloaded"});
+  await expect(page.getByRole("heading",{name:"Investir",exact:true})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Comparer les bots BitGold"})).toHaveCount(0);
+  await expect(page).toHaveURL(/\/investir(?:[?#]|$)/);
+
+  await page.goBack({waitUntil:"domcontentloaded"});
+  await expect(page.locator("main h1").first()).toBeVisible();
+  await expect(page).not.toHaveURL(/\/investir(?:[?#]|$)/);
+
+  await page.goForward({waitUntil:"domcontentloaded"});
+  await expect(page.getByRole("heading",{name:"Investir",exact:true})).toBeVisible();
+
+  for(const route of ["/portefeuille","/activite"]){
+    response=await page.goto(route,{waitUntil:"domcontentloaded"});
+    expect(response?.status(),route).toBe(200);
+    await expect(page.getByRole("heading",{name:"Connexion requise"})).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(route+"(?:[?#]|$)"));
+    await captureProductionScreen(page,testInfo,route.slice(1)+"-guest-lock");
+  }
+  await page.goBack({waitUntil:"domcontentloaded"});
+  await expect(page).toHaveURL(/\/portefeuille(?:[?#]|$)/);
+  await expect(page.getByRole("heading",{name:"Connexion requise"})).toBeVisible();
+  expect(errors).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
 });

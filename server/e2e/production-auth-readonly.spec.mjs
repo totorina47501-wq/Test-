@@ -10,6 +10,8 @@ test.use({
   video: "off"
 });
 
+test.setTimeout(90000);
+
 test("production authenticated account is readable without mutations", async ({ page }) => {
   const email = process.env.BITGOLD_E2E_EMAIL;
   const password = process.env.BITGOLD_E2E_PASSWORD;
@@ -41,15 +43,28 @@ test("production authenticated account is readable without mutations", async ({ 
   for (const [url, heading] of [
     ["/portefeuille", "Portefeuille"],
     ["/activite", "Activités"],
+    ["/investir", "Investir"],
     ["/bots", "Bots IA"]
   ]) {
     const response = await page.goto(url, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
-    if (capture && ["/portefeuille", "/bots"].includes(url)) {
-      await page.screenshot({ path: dest + "/" + url.slice(1) + "-" + test.info().project.name + ".png", animations: "disabled" });
+    await expect(page).toHaveURL(new RegExp(url+"(?:[?#]|$)"));
+    if (capture) {
+      await page.screenshot({ path: dest + "/" + url.slice(1) + "-" + test.info().project.name + ".png", animations: "disabled", fullPage: true });
     }
   }
+  // Browser history must restore the screen matching the URL, not stale content.
+  await page.goBack({ waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Investir", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bots IA", exact: true })).toHaveCount(0);
+  await page.goBack({ waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Activités", exact: true })).toBeVisible();
+  await page.goForward({ waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Investir", exact: true })).toBeVisible();
+  const botsReturn = await page.goto("/bots", { waitUntil: "domcontentloaded" });
+  expect(botsReturn?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Bots IA", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
   // Validate the real authenticated bot configuration preview without activating a bot.
   for (const botName of ["Shield", "Silver", "Gold"]) {
