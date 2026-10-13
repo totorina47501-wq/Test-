@@ -140,3 +140,12 @@
 - SEO : métadonnées HTML, canonical Northflank provisoire, Open Graph, Twitter et JSON-LD SoftwareApplication ; quatre guides publics statiques crawlables, sitemap et robots excluant les chemins privés.
 - Test dédié `server/test/seo-pages.test.js` : cohérence sitemap/guides, métadonnées, garde de routage, HTML strictement public.
 - À VALIDER : CI de la PR et de main, puis présence des pages et balises sur le déploiement exact. Ne pas confondre indexabilité technique, indexation Google et résultats SEO ; domaine de marque non choisi.
+
+
+## Lot ABCDE préparation prestataires & growth — 2026-10-13
+- Préparation Venga/Bitpanda : réutilisation de l'adaptateur désactivé, fixture déterministe local ajouté (aucune API réelle).
+- Démo et diligence : docs de référence réutilisés, questionnaire fournisseur complété.
+- Acquisition : parcours landing et CTA, consentement explicite pour mesure locale UTM sans réseau.
+- Onboarding : étape de première simulation pédagogique (ne prouve pas un ordre).
+- Monétisation : plan premium et gates paiement documentés, aucun abonnement réel activé.
+- À vérifier : CI PR/main, production, parcours mobile, conformité commerciale ; ne pas présenter ces points comme déjà approuvés.
