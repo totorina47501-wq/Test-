@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
 test.beforeEach(async ({page}) => {
+ await page.route("**/api/micro-alpha/market-history",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({points:[],sampleCount:0,maxObservedDrawdownPct:null})}));
  await page.route(/api\/bots\/executions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({executions:[]})}));
  await page.route(/api\/bots\/decisions\/history/,route=>route.fulfill({contentType:"application/json",body:JSON.stringify({decisions:[]})}));
 });
