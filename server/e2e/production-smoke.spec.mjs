@@ -51,3 +51,21 @@ test("live landing displays decoded bots, portfolio and activity screenshots", a
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   expect(overflow, "landing must not overflow horizontally").toBe(false);
 });
+
+
+test("live partner walkthrough has simulation disclosures and guided journey",async({page})=>{
+ const response=await page.goto("/",{waitUntil:"domcontentloaded"});
+ expect(response?.status()).toBe(200);
+ const journey=page.locator("#parcours-demo");
+ await expect(journey).toBeVisible();
+ await expect(journey.locator(".demo-journey-item")).toHaveCount(5);
+ await expect(journey).toContainText("aucun paiement réel");
+ await expect(journey.locator('a[href="/bots?testmode=1"]')).toHaveCount(1);
+ const progress=journey.getByRole("progressbar",{name:"Progression de la démonstration"});
+ await expect(progress).toHaveAttribute("value","0");
+ await journey.getByRole("checkbox",{name:"Exploré"}).first().check();
+ await expect(progress).toHaveAttribute("value","1");
+ await journey.getByRole("button",{name:"Réinitialiser le parcours"}).click();
+ await expect(progress).toHaveAttribute("value","0");
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2)).toBe(false);
+});

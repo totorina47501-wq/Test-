@@ -72,3 +72,10 @@ Le workflow GitHub exécute également les parcours connectés avec les secrets 
 - Desktop et Pixel 7 via `server/playwright.config.mjs` ; scénarios avec API simulée pour reproductibilité.
 - Exécution : `cd server && npx playwright test e2e/react-investir.spec.mjs --project=desktop --project=mobile` dans l'environnement CI disposant du navigateur et du serveur de prévisualisation.
 - **Limite** : API interceptée ; ceci ne valide pas une transaction sur Northflank ni le compte de l'utilisateur. Ne pas confondre succès CI et production authentifiée.
+
+## Contrôle automatisé de provenance (lot partenaire)
+Le workflow de production écrit désormais `server/production-evidence.json` dans l'artefact de CI. Le script `server/scripts/production-evidence.mjs` collecte les statuts HTTP des routes publiques, l'empreinte éventuelle d'un en-tête de révision, le SHA GitHub attendu et la conclusion `VERIFIED` ou `UNVERIFIED`. En l'absence d'un en-tête explicitement exposé et concordant, le déploiement reste **UNVERIFIED**, même si les parcours navigateur passent. Ce script ne tente ni transaction ni authentification et n'expose aucun secret.
+
+La suite Playwright live vérifie en plus les cinq étapes de la démo, les mentions de simulation, la progression et la remise à zéro, sur desktop et mobile. La vérification est conditionnée au déploiement effectif du code et peut échouer pendant le délai de propagation Northflank ; il faut diagnostiquer l'écart avant d'affirmer que la production est à jour.
+
+Grille de qualification des partenaires : `docs/PARTNER_PROVIDER_SCORECARD.md`. Toutes les capacités non confirmées restent inconnues ; le budget cible d'infrastructure est de 200 €/mois au maximum, sans supposer de tarif négocié.

@@ -55,6 +55,10 @@ jobs:
           done
           echo "::error::Northflank failed readiness after 240 seconds"
           exit 1
+      - name: Capture deployment identity evidence (no inferred SHA)
+        env:
+          BITGOLD_EXPECTED_SHA: ${{ github.sha }}
+        run: node scripts/production-evidence.mjs
       - name: Run production guest smoke tests
         run: npx playwright test e2e/production-smoke.spec.mjs --config=playwright.config.mjs --project=desktop --project=mobile
       - name: Run read-only authenticated production journey
@@ -76,5 +80,6 @@ jobs:
           path: |
             server/playwright-report/
             server/test-results/
+            server/production-evidence.json
           if-no-files-found: ignore
           retention-days: 7
