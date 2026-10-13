@@ -127,6 +127,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'free';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_since TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+CREATE TABLE IF NOT EXISTS stripe_webhook_events(event_id TEXT PRIMARY KEY,event_type TEXT NOT NULL,processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 `);
 
 const compliance = createCompliance(pool, {
@@ -208,28 +209,50 @@ const openFacilitator = createOpenFacilitator({
 app.use(helmet({crossOriginOpenerPolicy:{policy:"same-origin-allow-popups"},contentSecurityPolicy:{directives:{"img-src":["'self'","data:","https:"],"script-src":["'self'","https://accounts.google.com"],"frame-src":["'self'","https://accounts.google.com"],"connect-src":["'self'","https://accounts.google.com"]}}}));
 app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",") || true }));
 app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,res)=>{
-  // Signed webhooks must never upgrade simulated accounts while commercial launch is OFF.
   try{assertPaidSimulationEnabled()}catch{return res.status(503).json({error:"Abonnements non disponibles."})}
   if(!stripeConfigured||!stripeWebhookSecret)return res.status(503).json({error:"Stripe webhook non configuré."});
   let event;
-  try{event=stripe.webhooks.constructEvent(req.body,req.headers["stripe-signature"],stripeWebhookSecret)}catch(e){console.error("[STRIPE] webhook signature error",e.message);return res.status(400).json({error:"Signature Stripe invalide."})}
+  try{event=stripe.webhooks.constructEvent(req.body,req.headers["stripe-signature"],stripeWebhookSecret)}
+  catch(e){console.error("[STRIPE] webhook signature error",e.message);return res.status(400).json({error:"Signature Stripe invalide."})}
+  if(typeof event.id!=="string"||!/^evt_[a-zA-Z0-9]+$/.test(event.id))return res.status(400).json({error:"Identifiant Stripe invalide."});
+  const client=await pool.connect().catch(()=>null);
+  if(!client)return res.status(503).json({error:"Base de données indisponible."});
   try{
+    await client.query("BEGIN");
+    const inserted=await client.query("INSERT INTO stripe_webhook_events(event_id,event_type) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING event_id",[event.id,event.type]);
+    if(!inserted.rowCount){await client.query("COMMIT");return res.json({received:true,duplicate:true})}
     if(event.type==="checkout.session.completed"){
+      // Checkout completion alone does not prove an active, paid subscription.
+      // The verified subscription lifecycle event is the sole entitlement authority.
       const session=event.data.object;
-      const userId=Number(session.metadata?.userId);
-      const plan=session.metadata?.plan==="elite"?"elite":session.metadata?.plan==="pro"?"pro":null;
-      if(userId&&plan)await pool.query("UPDATE users SET plan=$1,pro_since=COALESCE(pro_since,CURRENT_TIMESTAMP),stripe_customer_id=COALESCE($2,stripe_customer_id),stripe_subscription_id=COALESCE($3,stripe_subscription_id) WHERE id=$4",[plan,session.customer||null,session.subscription||null,userId]);
+      if(session.mode==="subscription"&&session.customer&&session.subscription){
+        const userId=Number(session.client_reference_id||session.metadata?.userId);
+        if(Number.isSafeInteger(userId)&&userId>0){
+          await client.query("UPDATE users SET stripe_customer_id=COALESCE(stripe_customer_id,$1),stripe_subscription_id=COALESCE(stripe_subscription_id,$2) WHERE id=$3 AND (stripe_customer_id IS NULL OR stripe_customer_id=$1)",[session.customer,session.subscription,userId]);
+        }
+      }
     }
     if(event.type==="customer.subscription.updated"||event.type==="customer.subscription.deleted"){
       const subscription=event.data.object;
       const userId=Number(subscription.metadata?.userId);
       const plan=subscription.metadata?.plan==="elite"?"elite":subscription.metadata?.plan==="pro"?"pro":null;
-      const active=event.type==="customer.subscription.updated"&&["active","trialing","past_due"].includes(subscription.status);
-      if(userId)await pool.query("UPDATE users SET plan=$1,stripe_customer_id=COALESCE($2,stripe_customer_id),stripe_subscription_id=$3 WHERE id=$4",[active&&plan?plan:"free",subscription.customer||null,event.type==="customer.subscription.deleted"?null:subscription.id,userId]);
-      else if(subscription.customer)await pool.query("UPDATE users SET plan=$1,stripe_subscription_id=$2 WHERE stripe_customer_id=$3",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,subscription.customer]);
+      const active=event.type==="customer.subscription.updated"&&["active","trialing"].includes(subscription.status);
+      // Never grant rights from metadata alone: bind subscription to an existing Stripe customer.
+      if(subscription.customer&&subscription.id){
+        if(Number.isSafeInteger(userId)&&userId>0){
+          await client.query("UPDATE users SET plan=$1,stripe_subscription_id=$2,pro_since=CASE WHEN $1 IN ('pro','elite') THEN COALESCE(pro_since,NOW()) ELSE pro_since END WHERE id=$3 AND stripe_customer_id=$4 AND (stripe_subscription_id IS NULL OR stripe_subscription_id=$5)",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,userId,subscription.customer,subscription.id]);
+        }else{
+          await client.query("UPDATE users SET plan=$1,stripe_subscription_id=$2 WHERE stripe_customer_id=$3 AND stripe_subscription_id=$4",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,subscription.customer,subscription.id]);
+        }
+      }
     }
-    res.json({received:true});
-  }catch(e){console.error("[STRIPE] webhook handler error",e.message);res.status(500).json({error:"Erreur webhook Stripe."})}
+    await client.query("COMMIT");
+    return res.json({received:true});
+  }catch(e){
+    await client.query("ROLLBACK").catch(()=>{});
+    console.error("[STRIPE] webhook handler error",e.message);
+    return res.status(500).json({error:"Erreur webhook Stripe."});
+  }finally{client.release()}
 });
 
 // Northflank terminates TLS at a reverse proxy. Trust only the configured number
