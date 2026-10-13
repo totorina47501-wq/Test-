@@ -67,6 +67,16 @@ test("React account space covers portfolio, activity and bot strategy management
   await expect(page.getByRole("heading", { name: "Silver Bot" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Gold Bot" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Comparateur de stratégies" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tester des micro-ordres fictifs" })).toBeVisible();
+  await page.getByRole("button", { name: "Acheter virtuellement" }).click();
+  await expect(page.getByText("Achat virtuel enregistré.")).toBeVisible();
+  await page.getByRole("button", { name: "Vendre virtuellement" }).click();
+  await expect(page.getByText("Vente virtuelle enregistrée.")).toBeVisible();
+  await page.getByRole("button", { name: "Réinitialiser le laboratoire" }).click();
+  await expect(page.getByText("Aucun ordre fictif. Les données disparaissent au rechargement.")).toBeVisible();
+  await page.getByLabel("Ordre virtuel").fill("100");
+  await expect(page.getByRole("button", { name: "Acheter virtuellement" })).toBeDisabled();
+  await page.getByLabel("Ordre virtuel").fill("20");
 
   await page.getByRole("button", { name: /Configurer Silver Bot/ }).click();
   await page.getByLabel("Limite par ordre").fill("750");
