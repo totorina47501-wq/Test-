@@ -3,6 +3,7 @@ import {PieChart,Pie,Cell,ResponsiveContainer,Tooltip} from "recharts";
 import {BotBacktestPanel} from "./BotBacktestPanel";
 import {QuantumFundPanel} from "./QuantumFundPanel";
 import {BotObservabilityPanel} from "./BotObservabilityPanel";
+import {MicroAlphaPaperLab} from "./MicroAlphaPaperLab";
 import {ReactOnboarding} from "./ReactOnboarding";
 import {useEffect,useMemo,useState} from "react";
 import {Activity,ArrowLeft,Bot,RefreshCw,ShieldCheck,Wallet} from "lucide-react";
@@ -166,6 +167,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
     {selected&&<BotScenarioPreview bot={selected}/>}
     {selected&&<BotConfig bot={selected} subscription={subscriptions.get(selected.id)} token={token} onExpired={onExpired} onDone={done} onCancel={()=>setSelected(null)}/>}
     <BotObservabilityPanel token={token} botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
+    <MicroAlphaPaperLab/>
     <StrategyCompare bots={data.catalog||[]}/>
     <BotBacktestPanel botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
     <QuantumFundPanel botIds={(data.catalog||[]).map(bot=>bot.id)} onExpired={onExpired}/>
