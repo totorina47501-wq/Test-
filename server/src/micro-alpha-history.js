@@ -11,7 +11,7 @@ export function observedPerformance(points){
 }
 export async function recordMarketValuation(client,userId,valuation){
  if(valuation?.marketVerified!==true||valuation.valuation!=="verified-market-snapshot"||valuation.priceSource!=="CoinGecko"||!Number.isFinite(valuation.priceUpdatedAt))throw Error("Unverified market valuation");
- // A single snapshot per user per provider quote timestamp. A refresh cannot inflate sample count.
+ // One point per user per quote timestamp. Conflict updates the latest account equity without inflating sample count.
  const result=await client.query(`INSERT INTO micro_alpha_valuations(user_id,price_updated_at,price_eur,equity_eur,pnl_eur,exposure_eur)
  VALUES($1,to_timestamp($2::double precision / 1000),$3,$4,$5,$6)
  ON CONFLICT(user_id,price_updated_at) DO UPDATE SET
