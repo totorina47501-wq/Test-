@@ -128,3 +128,8 @@
 - Courbe Bots IA responsive et synthèse réutilisée dans Portefeuille et Cockpit, sans addition aux liquidités du portefeuille ni fausse attribution à Shield/Silver/Gold.
 - Tests unitaires isolation/idempotence/drawdown observé/reset et Playwright isolé desktop/mobile ; CI puis SHA `main` à contrôler. **Production Northflank non confirmée**.
 - Document historique : les formulations V3/V4 désignant le manque de source fraîche sont des limites *à la date de ces versions*, levées en V4 ; absence d'historique durable levée en V5 si la CI réussit. Le calcul du drawdown n'est valable qu'entre relevés enregistrés.
+
+## CI reliability follow-up (2026-10-13)
+- GitHub main V5 38f2cb5d: frontend/tests green, production guest smoke and authenticated journeys red. Production read-only bot backtest GET timed out at 60 seconds; mobile home returned HTTP 503. These are real failures, not ignored/flaky-success. Do not claim production SHA verified.
+- Separate CoinGecko 429 errors occurred in local journey runner. Existing `refreshMarket` is now singleflight (concurrent calls share a single provider request) and honors a bounded cooldown after HTTP 429. Quotes still fail closed on staleness: never mark fallback prices verified. No change to Silver/Shield/Gold.
+- Verify the PR tests and rerun all four main workflows. Northflank 503/backtest latency requires independent production investigation and cannot be corrected by increasing Playwright timeouts or skipping tests.
