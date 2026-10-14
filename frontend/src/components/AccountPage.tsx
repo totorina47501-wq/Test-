@@ -15,7 +15,7 @@ import {useAuth} from "../auth/AuthContext";
 import {SessionExpiredError,simulatedDeposit,activateBot,deactivateBot,useAccountData,type BotDefinition,type BotSubscription} from "../hooks/useAccountData";
 
 type Tab="portfolio"|"activity"|"bots";
-const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
+const eur=(value:number,locale:string="fr")=>new Intl.NumberFormat(locale,{style:"currency",currency:"EUR"}).format(value);
 const date=(value:string)=>new Date(value).toLocaleString("fr-FR");
 
 function Loading({label}:{label:string}){const {t}=useLanguage();return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
@@ -24,7 +24,7 @@ function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){const {t
 function SimulatedFunding({token,onExpired,onSuccess}:{token:string;onExpired:()=>void;onSuccess:()=>void}){const {t}=useLanguage();
   const [method,setMethod]=useState<"card"|"paypal">("card");const [amount,setAmount]=useState("100");const [pending,setPending]=useState(false);const [message,setMessage]=useState("");const [error,setError]=useState("");
   async function submit(event:React.FormEvent){event.preventDefault();const value=Number(amount);if(!Number.isFinite(value)||value<1||value>100000||Math.round(value*100)!==value*100){setError("Choisissez un montant entre 1 et 100 000 €.");return}setPending(true);setError("");setMessage("");try{const requestKey=crypto.randomUUID().replace(/-/g,"");const result=await simulatedDeposit(token,{method,amount:value,requestKey});setMessage("Votre portefeuille virtuel a été crédité de "+eur(value)+". Liquidités disponibles : "+eur(result.cash));onSuccess();}catch(e){if(e instanceof SessionExpiredError)onExpired();setError(e instanceof Error?e.message:"Crédit indisponible.")}finally{setPending(false)}}
-  return <Card><h2 className="text-xl font-bold">Créditer mes liquidités</h2><p className="mt-2 text-sm text-slate-400">Paiement fictif : carte bancaire ou PayPal simulés. Aucun débit réel, aucune donnée de carte demandée, aucune connexion PayPal.</p><form className="mt-4 space-y-4" onSubmit={submit}><fieldset><legend className="mb-2 text-sm font-semibold">Mode de paiement fictif</legend><div className="flex flex-wrap gap-3">{([["card","Carte bancaire"],["paypal","PayPal"]] as const).map(([value,label])=><label key={value} className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm"><input type="radio" name="simulated-method" checked={method===value} onChange={()=>setMethod(value)}/>{label}</label>)}</div></fieldset><label className="block text-sm">Montant en euros<input className="mt-2 block w-full max-w-xs rounded-xl border border-white/20 bg-[#101418] px-4 py-3 text-white" type="number" min="1" max="100000" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label><div className="flex flex-wrap gap-2">{[50,100,500,1000].map(value=><button type="button" key={value} onClick={()=>setAmount(String(value))} className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:border-lime-400">{eur(value)}</button>)}</div><Button disabled={pending} type="submit">{pending?"Crédit en cours…":"Confirmer le crédit fictif"}</Button></form>{message&&<p role="status" className="mt-3 text-lime-300">{message}</p>}{error&&<p role="alert" className="mt-3 text-rose-300">{error}</p>}</Card>
+  return <Card><h2 className="text-xl font-bold">{t("accountCredit")}</h2><p className="mt-2 text-sm text-slate-400">{t("accountPaymentDisclaimer")}</p><form className="mt-4 space-y-4" onSubmit={submit}><fieldset><legend className="mb-2 text-sm font-semibold">Mode de paiement fictif</legend><div className="flex flex-wrap gap-3">{([["card","Carte bancaire"],["paypal","PayPal"]] as const).map(([value,label])=><label key={value} className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm"><input type="radio" name="simulated-method" checked={method===value} onChange={()=>setMethod(value)}/>{label}</label>)}</div></fieldset><label className="block text-sm">Montant en euros<input className="mt-2 block w-full max-w-xs rounded-xl border border-white/20 bg-[#101418] px-4 py-3 text-white" type="number" min="1" max="100000" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label><div className="flex flex-wrap gap-2">{[50,100,500,1000].map(value=><button type="button" key={value} onClick={()=>setAmount(String(value))} className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:border-lime-400">{eur(value)}</button>)}</div><Button disabled={pending} type="submit">{pending?"Crédit en cours…":"Confirmer le crédit fictif"}</Button></form>{message&&<p role="status" className="mt-3 text-lime-300">{message}</p>}{error&&<p role="alert" className="mt-3 text-rose-300">{error}</p>}</Card>
 }
 function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio"]["data"]}){const {t}=useLanguage();
   if(!data)return null;
@@ -37,7 +37,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
     </div>
     {data.positions?.length? <Card>
       <h2 className="text-lg font-semibold">{t("allocation")}</h2>
-      <p className="mt-1 text-xs text-slate-400">Valeurs réelles de votre portefeuille virtuel, issues de vos positions simulées. Cliquez sur un actif pour voir son marché.</p>
+      <p className="mt-1 text-xs text-slate-400">{t("accountAssetNote")}</p>
       <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr] md:items-center">
         <div className="h-52 min-w-0" role="img" aria-label="Graphique de répartition de vos positions simulées et liquidités">
           <ResponsiveContainer width="100%" height="100%">
@@ -60,7 +60,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
         <div className="text-right"><p className="font-semibold">{eur(Number(position.value||0))}</p><p className="text-xs text-slate-500">{eur(Number(position.price||0))} / unité</p></div>
       </div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucune position ouverte.</p>}
     </Card>
-    {data.integrity?.ok===false&&<p role="alert" className="text-sm text-rose-300">Contrôle de cohérence du portefeuille non concluant.</p>}
+    {data.integrity?.ok===false&&<p role="alert" className="text-sm text-rose-300">{t("accountMismatch")}</p>}
   </section>;
 }
 
@@ -73,7 +73,7 @@ function ActivityView({data}:{data:ReturnType<typeof useAccountData>["activity"]
   const filtered=trades.filter(trade=>(side==="all"||trade.side===side)&&(asset==="all"||trade.asset.toUpperCase()===asset));
   if(!data)return null;
   return <section className="space-y-4">
-    <div><Badge>Journal</Badge><h1 className="mt-3 text-3xl font-bold">{t("activities")}</h1><p className="mt-2 text-sm text-slate-400">Transactions et décisions des bots de votre environnement de simulation.</p></div>
+    <div><Badge>Journal</Badge><h1 className="mt-3 text-3xl font-bold">{t("activities")}</h1><p className="mt-2 text-sm text-slate-400">{t("accountBotActivity")}</p></div>
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Transactions</h2><span className="text-xs text-slate-400">{filtered.length} / {trades.length}</span></div>
@@ -128,7 +128,7 @@ function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDe
       <label className="text-sm">Cash minimum (%)<input aria-label="Cash minimum" value={minCash} onChange={e=>setMinCash(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 outline-none focus:border-lime-400/50"/></label>
     </div>
     <div className="mt-5 flex flex-wrap gap-3"><Button disabled={busy||!validLimits} onClick={activate}>{busy?"Enregistrement…":`Activer ${bot.name}`}</Button>{subscription?.active&&<Button variant="secondary" disabled={busy} onClick={remove}>{t("disable")}</Button>}</div>
-    {!validLimits&&<p role="alert" className="mt-3 text-sm text-amber-300">Ordre et position positifs, ordre inférieur ou égal à la position, pourcentages entre 0 et 100.</p>}
+    {!validLimits&&<p role="alert" className="mt-3 text-sm text-amber-300">{t("accountBotGuardrails")}</p>}
     {error&&<p role="alert" className="mt-3 text-sm text-rose-300">{error}</p>}
   </Card>;
 }
@@ -143,12 +143,12 @@ export function BotScenarioPreview({bot}:{bot:Pick<BotDefinition,"id"|"name">}){
   return <Card className="border-lime-400/20">
     <Badge>Strategy DNA · Laboratoire</Badge>
     <h3 className="mt-3 text-xl font-bold">Tester {bot.name} avant activation</h3>
-    <p className="mt-2 text-sm text-slate-400">Projection pédagogique d'un portefeuille fictif de 10 000 €. Ce test ne déclenche aucun ordre.</p>
+    <p className="mt-2 text-sm text-slate-400">{t("accountProjection")}</p>
     <label className="mt-4 block text-sm" htmlFor="bot-lab-cash">Réserve de liquidités : {cashPct} %</label>
     <input id="bot-lab-cash" aria-label="Liquidités du laboratoire" type="range" min="0" max="100" step="5" value={cashPct} onChange={event=>setCashPct(Number(event.target.value))} className="mt-2 w-full accent-lime-400"/>
     <div className="mt-4 grid gap-3 sm:grid-cols-3">{scenarios.map(s=><div key={s.name} className="rounded-xl border border-white/10 bg-black/20 p-3"><p className="text-sm text-slate-400">{s.name} ({s.shock>0?"+":""}{s.shock} %)</p><p className="mt-2 text-lg font-bold">{eur(10000+invested*s.shock/100)}</p></div>)}</div>
     {(100-cashPct)>budget&&<p role="status" className="mt-3 text-sm text-amber-300">Exposition de {100-cashPct} % supérieure au profil indicatif {bot.name} ({budget} %).</p>}
-    <p className="mt-3 text-xs text-slate-500">Hypothèses : choc uniforme, liquidités inchangées, sans frais ni rééquilibrage. Ni prévision, ni backtest, ni conseil financier.</p>
+    <p className="mt-3 text-xs text-slate-500">{t("accountAssumptions")}</p>
   </Card>;
 }
 
@@ -159,7 +159,7 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
   if(!data)return null;
   const done=(value:string)=>{setMessage(value);setSelected(null);reload()};
   return <section className="space-y-4">
-    <div className="flex flex-wrap items-end justify-between gap-3"><div><Badge>Plan {data.plan?.plan||"free"}</Badge><h1 className="mt-3 text-3xl font-bold">Bots IA</h1><p className="mt-2 text-sm text-slate-400">Choisissez une stratégie, ajustez ses garde-fous et activez-la uniquement dans votre portefeuille de simulation.</p></div></div>
+    <div className="flex flex-wrap items-end justify-between gap-3"><div><Badge>Plan {data.plan?.plan||"free"}</Badge><h1 className="mt-3 text-3xl font-bold">Bots IA</h1><p className="mt-2 text-sm text-slate-400">{t("accountStrategy")}</p></div></div>
     {message&&<Card><p role="status" className="text-lime-300">{message}</p></Card>}
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{data.catalog?.map(bot=>{const sub=subscriptions.get(bot.id);return <Card key={bot.id} className="flex flex-col">
       <div className="flex items-center justify-between gap-3"><Badge>{bot.tier}</Badge>{sub?.active?<span className="inline-flex items-center gap-1 text-xs text-lime-300"><ShieldCheck size={14}/> Actif</span>:<span className="text-xs text-slate-500">{bot.plan==="free"?"Free":"Pro"}</span>}</div>
@@ -183,7 +183,7 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
   const [tab,setTab]=useState<Tab>(initialTab);
   const {portfolio,activity,bots,reload}=useAccountData(auth.token,auth.expireSession);
   useEffect(()=>setTab(initialTab),[initialTab]);
-  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous depuis l’accueil pour accéder à votre espace privé.</p><Button className="mt-4" onClick={onBack}>{t("home")}</Button></Card></main>;
+  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">{t("accountLogin")}</p><Button className="mt-4" onClick={onBack}>{t("home")}</Button></Card></main>;
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
     <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-400"><ArrowLeft size={16}/> Retour au cockpit</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> Actualiser</Button></div>
     <ReactOnboarding/>
@@ -199,6 +199,6 @@ export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onB
     {tab==="activity"&&bots.data&&<BotObservabilityPanel compact token={auth.token} botIds={(bots.data.catalog||[]).map(bot=>bot.id)} onExpired={auth.expireSession}/>}
     {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
     {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload} onExpired={auth.expireSession}/>)}
-    <p className="text-center text-xs text-slate-500">Simulation uniquement · aucun ordre ou investissement réel.</p>
+    <p className="text-center text-xs text-slate-500">{t("accountSimulation")}</p>
   </main>;
 }
