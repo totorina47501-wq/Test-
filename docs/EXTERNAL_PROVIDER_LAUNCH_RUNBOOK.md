@@ -29,3 +29,8 @@ Status: **PREPARED / DISABLED**. This file is an operator checklist, not a certi
 
 ## Go/no-go
 Product owner + legal + security + payments + support owners sign a dated release record. Real crypto launch requires its own separate legal and technical project.
+
+## Vérification de préparation commerciale — 2026-10-14
+- Réutiliser Stripe, `commercial-release.js`, `crypto-provider.mjs`, guides SEO, formulaires de consentement et tests existants : aucun nouveau checkout, provider ou système KYC parallèle.
+- Checklist d'acceptation avant activation : preuves de sandbox Stripe (webhooks signés, rejeu, annulation, remboursement, synchronisation des droits), exercice de restauration sur base jetable, authentification 2FA et isolation des comptes, domaine/canonical, CGV/CGU et revue juridique, support opérationnel, contrat/API sandbox partenaire.
+- Tant que ces preuves et signatures externes ne sont pas disponibles, tous les services réels restent désactivés. La CI verte ne constitue pas une autorisation de vente ni d'exécution crypto.
