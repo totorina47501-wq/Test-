@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "lint": "tsc --noEmit"
+    "lint": "npm run lint:tsx && tsc --noEmit",
+    "lint:tsx": "node scripts/lint-tsx.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

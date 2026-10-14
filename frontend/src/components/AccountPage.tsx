@@ -16,7 +16,7 @@ import {SessionExpiredError,simulatedDeposit,activateBot,deactivateBot,useAccoun
 
 type Tab="portfolio"|"activity"|"bots";
 const eur=(value:number,locale:string="fr")=>new Intl.NumberFormat(locale,{style:"currency",currency:"EUR"}).format(value);
-const date=(value:string)=>new Date(value).toLocaleString("fr-FR");
+const date=(value:string,locale:string="fr-FR")=>new Date(value).toLocaleString(locale);
 
 function Loading({label}:{label:string}){const {t}=useLanguage();return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
 function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){const {t}=useLanguage();return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p><Button className="mt-4" onClick={onRetry}>{t("retry")}</Button></Card>}
@@ -26,7 +26,7 @@ function SimulatedFunding({token,onExpired,onSuccess}:{token:string;onExpired:()
   async function submit(event:React.FormEvent){event.preventDefault();const value=Number(amount);if(!Number.isFinite(value)||value<1||value>100000||Math.round(value*100)!==value*100){setError("Choisissez un montant entre 1 et 100 000 €.");return}setPending(true);setError("");setMessage("");try{const requestKey=crypto.randomUUID().replace(/-/g,"");const result=await simulatedDeposit(token,{method,amount:value,requestKey});setMessage("Votre portefeuille virtuel a été crédité de "+eur(value)+". Liquidités disponibles : "+eur(result.cash));onSuccess();}catch(e){if(e instanceof SessionExpiredError)onExpired();setError(e instanceof Error?e.message:"Crédit indisponible.")}finally{setPending(false)}}
   return <Card><h2 className="text-xl font-bold">{t("accountCredit")}</h2><p className="mt-2 text-sm text-slate-400">{t("accountPaymentDisclaimer")}</p><form className="mt-4 space-y-4" onSubmit={submit}><fieldset><legend className="mb-2 text-sm font-semibold">Mode de paiement fictif</legend><div className="flex flex-wrap gap-3">{([["card","Carte bancaire"],["paypal","PayPal"]] as const).map(([value,label])=><label key={value} className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm"><input type="radio" name="simulated-method" checked={method===value} onChange={()=>setMethod(value)}/>{label}</label>)}</div></fieldset><label className="block text-sm">Montant en euros<input className="mt-2 block w-full max-w-xs rounded-xl border border-white/20 bg-[#101418] px-4 py-3 text-white" type="number" min="1" max="100000" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label><div className="flex flex-wrap gap-2">{[50,100,500,1000].map(value=><button type="button" key={value} onClick={()=>setAmount(String(value))} className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:border-lime-400">{eur(value)}</button>)}</div><Button disabled={pending} type="submit">{pending?"Crédit en cours…":"Confirmer le crédit fictif"}</Button></form>{message&&<p role="status" className="mt-3 text-lime-300">{message}</p>}{error&&<p role="alert" className="mt-3 text-rose-300">{error}</p>}</Card>
 }
-function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio"]["data"]}){const {t}=useLanguage();
+function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio"]["data"]}){const {t,language}=useLanguage();
   if(!data)return null;
   return <section className="space-y-4">
     <div><Badge>Simulation</Badge><h1 className="mt-3 text-3xl font-bold">Portefeuille</h1><p className="mt-2 text-sm text-slate-400">{t("virtualWealth")}</p></div>
@@ -56,7 +56,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
     <Card>
       <h2 className="text-lg font-semibold">Positions</h2>
       {data.positions?.length?<div className="mt-4 space-y-3">{data.positions.map(position=><div key={position.asset} className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 pb-3">
-        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><a href={"/investir?asset="+encodeURIComponent(position.asset)} className="font-semibold text-lime-200 hover:underline"><span>{position.asset}</span> <span aria-hidden="true">↗</span></a><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
+        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><a href={"/investir?asset="+encodeURIComponent(position.asset)} className="font-semibold text-lime-200 hover:underline"><span>{position.asset}</span> <span aria-hidden="true">↗</span></a><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString(language==="fr"?"fr-FR":language==="en"?"en-US":language==="es"?"es-ES":language==="de"?"de-DE":"pt-BR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
         <div className="text-right"><p className="font-semibold">{eur(Number(position.value||0))}</p><p className="text-xs text-slate-500">{eur(Number(position.price||0))} / unité</p></div>
       </div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucune position ouverte.</p>}
     </Card>
