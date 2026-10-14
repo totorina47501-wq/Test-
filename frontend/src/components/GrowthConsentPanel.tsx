@@ -14,7 +14,7 @@ export function GrowthConsentPanel({campaign}:{campaign:Campaign}){
  const [consent,setConsent]=useState(()=>allowed());
  return <div className="glass" style={{padding:20,borderRadius:16,marginTop:24}}>
  <h3>{t("growthTitle")}</h3>
- <p>Vous pouvez autoriser l’enregistrement local, sur cet appareil, de vos clics sur les parcours de découverte. Aucun événement n’est transmis à un serveur ni à un partenaire. Vous pouvez effacer ces données à tout moment.</p>
+ <p>{t("growthDesc")}</p>
  <p style={{fontSize:13}}>{t("growthSource")} : {campaign.source.replace(/[<>]/g,"")} · {campaign.medium.replace(/[<>]/g,"")}</p>
  {consent?<button type="button" className="link" onClick={()=>{try{localStorage.removeItem(CONSENT);localStorage.removeItem(EVENTS)}catch{}setConsent(false)}}>{t("growthRevoke")}</button>:<button type="button" className="link" onClick={()=>{try{localStorage.setItem(CONSENT,"yes")}catch{}setConsent(true);trackGrowthEvent("consent_accepted",campaign)}}>{t("growthAccept")}</button>}
  </div>
