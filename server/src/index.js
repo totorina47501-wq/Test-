@@ -1,3 +1,4 @@
+import {createKrakenFeed} from "./kraken-market.js";
 import {resolveMarketQuote} from "./market-freshness.js";
 import {paperSnapshot,applyPersistentPaperSignal,resetPersistentPaper} from "./micro-alpha-store.js";
 import {scenarioValuation,verifiedMarketValuation} from "./micro-alpha-valuation.js";
@@ -347,6 +348,7 @@ let marketRefreshPromise = null;
 let marketRetryAfter = 0;
 const historyCache = new Map();
 const marketTickHistory = new Map();
+const krakenFeed=createKrakenFeed({connect:process.env.KRAKEN_MARKET_ENABLED!=="false"&&process.env.NODE_ENV!=="test"});
 const coingeckoBaseUrl=String(process.env.COINGECKO_API_BASE_URL||"https://api.coingecko.com/api/v3").replace(/\/$/,"");
 const coingeckoApiKey=String(process.env.COINGECKO_API_KEY||"").trim();
 
@@ -975,7 +977,7 @@ async function getBotNewsForAI(){
 
 // Read-only discovery catalogue: intentionally excluded from prices, orders and bots.
 app.get("/api/market/discovery",(_req,res)=>res.json({mode:"discovery",source:"BitGold curated catalog",assets:cryptoDiscovery}));
-app.get("/api/market",async(req,res)=>{ const market=await refreshMarket(); res.json({updatedAt:marketUpdatedAt,source:"CoinGecko",markets:market}); });
+app.get("/api/market",async(req,res)=>{ const market=krakenFeed.overlay(await refreshMarket()); res.json({updatedAt:Date.now(),source:market.some(row=>row.priceSource==="Kraken")?"Kraken + CoinGecko":"CoinGecko",markets:market}); });
 const HISTORY_RANGES={
   "5m":{label:"5 min",days:1,maxAgeMs:5*60*1000},
   "1h":{label:"1 h",days:1,maxAgeMs:60*60*1000},
@@ -992,7 +994,7 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
   const range=Object.prototype.hasOwnProperty.call(HISTORY_RANGES,requestedRange)?requestedRange:"24h";
   const rangeConfig=HISTORY_RANGES[range];
   if(!marketIds[symbol]) return res.status(404).json({error:"Crypto inconnue."});
-  const market=await refreshMarket();
+  const market=krakenFeed.overlay(await refreshMarket());
   const item=market.find(row=>row.symbol===symbol);
   try {
     const pricesHistory=await fetchHistoryRange(symbol,range);
@@ -1001,11 +1003,11 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
       ...item,
       name:{BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche",ADA:"Cardano",XRP:"XRP",LTC:"Litecoin",DOT:"Polkadot"}[symbol],
       history:{range,label:rangeConfig.label,min:values.length?Math.min(...values):item.price,max:values.length?Math.max(...values):item.price,points:pricesHistory},
-      source:"CoinGecko"
+      source:item.priceSource||"CoinGecko"
     });
   } catch(e) {
     console.error("[MARKET] detail error",symbol,range,e.message);
-    res.json({...item,name:symbol,history:{range,label:rangeConfig.label,min:item.price,max:item.price,points:[]},source:"CoinGecko"});
+    res.json({...item,name:symbol,history:{range,label:rangeConfig.label,min:item.price,max:item.price,points:[]},source:item.priceSource||"CoinGecko"});
   }
 });
 
