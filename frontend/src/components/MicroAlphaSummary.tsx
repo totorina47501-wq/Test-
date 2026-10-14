@@ -19,6 +19,6 @@ export function MicroAlphaSummary({token,onExpired}:{token:string;onExpired:()=>
  return <Card aria-label={t("microSummaryTitle")} className="space-y-2">
   <h2 className="text-lg font-semibold">{t("microSummaryTitle")}</h2>
   <p className="text-xs text-slate-400">{t("microSummaryDesc")}</p>
-  {error?<p className="text-sm text-slate-400">{t("microSummaryError")}</p>:!history?<p className="text-sm text-slate-400">{t("microSummaryLoading")}</p>:history.sampleCount?<><p className="text-sm">{t("microSummaryLast")} : <strong>{eur(history.points[history.points.length-1].equityEur,language)}</strong></p><p className="text-xs text-slate-400">{t("microSummaryPoints")} : {history.sampleCount} · {t("microSummaryDrawdown")} : {history.maxObservedDrawdownPct===null?"{t("microSummaryUnavailable")}":history.maxObservedDrawdownPct.toFixed(2)+" %"}</p></>:<p className="text-sm text-slate-400">{t("microSummaryEmpty")}</p>}
+  {error?<p className="text-sm text-slate-400">{t("microSummaryError")}</p>:!history?<p className="text-sm text-slate-400">{t("microSummaryLoading")}</p>:history.sampleCount?<><p className="text-sm">{t("microSummaryLast")} : <strong>{eur(history.points[history.points.length-1].equityEur,language)}</strong></p><p className="text-xs text-slate-400">{t("microSummaryPoints")} : {history.sampleCount} · {t("microSummaryDrawdown")} : {history.maxObservedDrawdownPct===null?t("microSummaryUnavailable"):history.maxObservedDrawdownPct.toFixed(2)+" %"}</p></>:<p className="text-sm text-slate-400">{t("microSummaryEmpty")}</p>}
  </Card>;
 }
