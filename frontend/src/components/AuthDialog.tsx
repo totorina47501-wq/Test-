@@ -1,3 +1,4 @@
+import {useLanguage} from "../i18n";
 import {useEffect,useRef,useState,type FormEvent,type KeyboardEvent} from "react";
 import {X} from "lucide-react";
 import {Button} from "./ui";
@@ -7,6 +8,7 @@ type Mode="login"|"signup";
 const inputClass="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-lime-400/60 focus:ring-2 focus:ring-lime-400/20";
 export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
   const auth=useAuth();
+  const {t,language}=useLanguage();
   const dialogRef=useRef<HTMLDivElement>(null);
   const closeRef=useRef<HTMLButtonElement>(null);
   const previousFocusRef=useRef<HTMLElement|null>(null);
@@ -16,7 +18,7 @@ export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
   const [form,setForm]=useState({email:"",password:"",first_name:"",last_name:"",country:"France",city:"",postal_code:"",code:""});
   useEffect(()=>{if(open)auth.clearError()},[open]);
   useEffect(()=>{if(!open)return;let active=true;fetch("/api/auth/google/config").then(r=>r.ok?r.json():null).then(data=>{if(active&&data?.enabled&&typeof data.clientId==="string")setGoogleClientId(data.clientId)}).catch(()=>{});return()=>{active=false}},[open]);
-  useEffect(()=>{if(!open||!googleClientId||auth.status==="twoFactor")return;let cancelled=false;let script:HTMLScriptElement|null=null;const render=()=>{if(cancelled||!googleRef.current)return;const google=(window as Window & {google?:{accounts?:{id?:{initialize:(options:{client_id:string;callback:(data:{credential:string})=>void})=>void;renderButton:(element:HTMLElement,options:Record<string,unknown>)=>void}}}}).google;if(!google?.accounts?.id)return;googleRef.current.replaceChildren();google.accounts.id.initialize({client_id:googleClientId,callback:({credential})=>{if(credential)void auth.loginGoogle(credential).catch(()=>{})}});google.accounts.id.renderButton(googleRef.current,{theme:"outline",size:"large",width:300,locale:"fr"})};if((window as Window & {google?:unknown}).google)render();else{script=document.createElement("script");script.src="https://accounts.google.com/gsi/client";script.async=true;script.defer=true;script.onload=render;document.head.appendChild(script)}return()=>{cancelled=true;if(script)script.remove()}},[open,googleClientId,auth.status]);
+  useEffect(()=>{if(!open||!googleClientId||auth.status==="twoFactor")return;let cancelled=false;let script:HTMLScriptElement|null=null;const render=()=>{if(cancelled||!googleRef.current)return;const google=(window as Window & {google?:{accounts?:{id?:{initialize:(options:{client_id:string;callback:(data:{credential:string})=>void})=>void;renderButton:(element:HTMLElement,options:Record<string,unknown>)=>void}}}}).google;if(!google?.accounts?.id)return;googleRef.current.replaceChildren();google.accounts.id.initialize({client_id:googleClientId,callback:({credential})=>{if(credential)void auth.loginGoogle(credential).catch(()=>{})}});google.accounts.id.renderButton(googleRef.current,{theme:"outline",size:"large",width:300,locale:language})};if((window as Window & {google?:unknown}).google)render();else{script=document.createElement("script");script.src="https://accounts.google.com/gsi/client";script.async=true;script.defer=true;script.onload=render;document.head.appendChild(script)}return()=>{cancelled=true;if(script)script.remove()}},[open,googleClientId,auth.status,language]);
   useEffect(()=>{if(auth.status==="authenticated"&&open)onClose()},[auth.status,open,onClose]);
   useEffect(()=>{
     if(!open)return;
@@ -38,27 +40,27 @@ export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
   const submit=async(e:FormEvent)=>{e.preventDefault();try{if(auth.status==="twoFactor"){await auth.verify2FA(form.code);return}if(mode==="login"){await auth.login(form.email,form.password)}else{await auth.signup({email:form.email,password:form.password,first_name:form.first_name,last_name:form.last_name,country:form.country,city:form.city,postal_code:form.postal_code})}}catch{}};
   const busy=auth.status==="authenticating";
   return <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" onMouseDown={e=>{if(e.currentTarget===e.target)onClose()}}>
-    <div ref={dialogRef} onKeyDown={onDialogKeyDown} role="dialog" aria-modal="true" aria-label="Authentification BitGold" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111419] p-5 shadow-2xl">
-      <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">Espace sécurisé</p><h2 className="mt-1 text-2xl font-bold">{auth.status==="twoFactor"?"Vérification en deux étapes":"Bienvenue sur BitGold"}</h2></div><button ref={closeRef} type="button" aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={onClose}><X size={20}/></button></div>
-      {auth.status!=="twoFactor"&&<div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1"><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="login"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("login");auth.clearError()}}>Connexion</button><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="signup"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("signup");auth.clearError()}}>Créer un compte</button></div>}
-      {googleClientId&&auth.status!=="twoFactor"&&<div className="mt-5"><div ref={googleRef} className="flex justify-center" aria-label="Connexion avec Google"/></div>}
+    <div ref={dialogRef} onKeyDown={onDialogKeyDown} role="dialog" aria-modal="true" aria-label={t("authDialog")} className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111419] p-5 shadow-2xl">
+      <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">{t("authSecure")}</p><h2 className="mt-1 text-2xl font-bold">{auth.status==="twoFactor"?t("authTwoFactor"):t("authWelcome")}</h2></div><button ref={closeRef} type="button" aria-label={t("authClose")} className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={onClose}><X size={20}/></button></div>
+      {auth.status!=="twoFactor"&&<div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1"><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="login"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("login");auth.clearError()}}>{t("authLogin")}</button><button className={`rounded-lg px-3 py-2 text-sm font-medium ${mode==="signup"?"bg-white/10 text-white":"text-slate-400"}`} onClick={()=>{setMode("signup");auth.clearError()}}>{t("authSignup")}</button></div>}
+      {googleClientId&&auth.status!=="twoFactor"&&<div className="mt-5"><div ref={googleRef} className="flex justify-center" aria-label={t("authGoogle")}/></div>}
       <form className="mt-5 space-y-4" onSubmit={submit}>
         {auth.status==="twoFactor"?<>
-          <p className="text-sm leading-6 text-slate-400">Saisissez le code Google Authenticator ou un code de récupération. Le jeton de challenge ne donne pas accès au cockpit.</p>
-          <label className="block text-sm font-medium">Code Google Authenticator ou récupération<input autoComplete="one-time-code" className={inputClass} value={form.code} onChange={e=>update("code",e.target.value)} required/></label>
+          <p className="text-sm leading-6 text-slate-400">{t("authTwoFactorHelp")}</p>
+          <label className="block text-sm font-medium">{t("authCode")}<input autoComplete="one-time-code" className={inputClass} value={form.code} onChange={e=>update("code",e.target.value)} required/></label>
         </>:<>
-          <label className="block text-sm font-medium">E-mail<input type="email" autoComplete="email" className={inputClass} value={form.email} onChange={e=>update("email",e.target.value)} required/></label>
-          <label className="block text-sm font-medium">Mot de passe<input type="password" autoComplete={mode==="login"?"current-password":"new-password"} minLength={8} className={inputClass} value={form.password} onChange={e=>update("password",e.target.value)} required/></label>
+          <label className="block text-sm font-medium">{t("authEmail")}<input type="email" autoComplete="email" className={inputClass} value={form.email} onChange={e=>update("email",e.target.value)} required/></label>
+          <label className="block text-sm font-medium">{t("authPassword")}<input type="password" autoComplete={mode==="login"?"current-password":"new-password"} minLength={8} className={inputClass} value={form.password} onChange={e=>update("password",e.target.value)} required/></label>
           {mode==="signup"&&<div className="grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-medium">Prénom<input className={inputClass} value={form.first_name} onChange={e=>update("first_name",e.target.value)} required/></label>
-            <label className="block text-sm font-medium">Nom<input className={inputClass} value={form.last_name} onChange={e=>update("last_name",e.target.value)} required/></label>
-            <label className="block text-sm font-medium">Pays<input className={inputClass} value={form.country} onChange={e=>update("country",e.target.value)} required/></label>
-            <label className="block text-sm font-medium">Ville<input className={inputClass} value={form.city} onChange={e=>update("city",e.target.value)} required/></label>
-            <label className="block text-sm font-medium sm:col-span-2">Code postal<input className={inputClass} value={form.postal_code} onChange={e=>update("postal_code",e.target.value)} required/></label>
+            <label className="block text-sm font-medium">{t("authFirstName")}<input className={inputClass} value={form.first_name} onChange={e=>update("first_name",e.target.value)} required/></label>
+            <label className="block text-sm font-medium">{t("authLastName")}<input className={inputClass} value={form.last_name} onChange={e=>update("last_name",e.target.value)} required/></label>
+            <label className="block text-sm font-medium">{t("authCountry")}<input className={inputClass} value={form.country} onChange={e=>update("country",e.target.value)} required/></label>
+            <label className="block text-sm font-medium">{t("authCity")}<input className={inputClass} value={form.city} onChange={e=>update("city",e.target.value)} required/></label>
+            <label className="block text-sm font-medium sm:col-span-2">{t("authPostal")}<input className={inputClass} value={form.postal_code} onChange={e=>update("postal_code",e.target.value)} required/></label>
           </div>}
         </>}
         {auth.error&&<p role="alert" className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-rose-200">{auth.error}</p>}
-        <Button className="w-full justify-center" disabled={busy}>{busy?"Connexion sécurisée…":auth.status==="twoFactor"?"Vérifier":mode==="login"?"Connexion":"Créer mon compte"}</Button>
+        <Button className="w-full justify-center" disabled={busy}>{busy?t("authBusy"):auth.status==="twoFactor"?t("authVerify"):mode==="login"?t("authLogin"):t("authCreate")}</Button>
       </form>
     </div>
   </div>;
