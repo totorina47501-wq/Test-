@@ -20,7 +20,7 @@ export function createKrakenFeed({WebSocketImpl=globalThis.WebSocket,now=Date.no
     const active=socket;
     active.addEventListener("open",()=>{if(stopped||socket!==active)return;attempt=0;try{active.send(JSON.stringify({method:"subscribe",params:{channel:"ticker",symbol:Object.values(KRAKEN_PAIRS),snapshot:true}}))}catch{try{active.close()}catch{schedule()}}});
     active.addEventListener("message",event=>{if(stopped||socket!==active)return;try{for(const quote of parseKrakenTicker(JSON.parse(String(event.data)),now()))quotes.set(quote.symbol,quote)}catch{/* invalid upstream payload */}});
-    socket.addEventListener("close",()=>{if(!stopped)schedule()});
+    active.addEventListener("close",()=>{if(!stopped&&socket===active)schedule()});
     active.addEventListener("error",()=>{try{active.close()}catch{schedule()}});
   }
   function schedule(){if(stopped||retry)return;retry=setTimeout(()=>{retry=null;start()},Math.min(30000,1000*2**Math.min(attempt++,5)));retry.unref?.()}

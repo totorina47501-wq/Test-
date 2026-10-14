@@ -27,3 +27,7 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 - Localisation du guide d'onboarding, consentement marketing local et résumé Micro Alpha dans les cinq langues, sans changer les flux métiers.
 - Les libellés accessibles suivent la langue active. Les valeurs monétaires du résumé Micro Alpha utilisent `Intl` avec la locale sélectionnée.
 - L'audit exhaustif des autres composants, erreurs API et dates reste nécessaire avant de certifier 100 % de couverture.
+
+## Lot de finition complémentaire
+- Composants Micro Alpha (laboratoire et compte persistant) et laboratoire de backtests : traduction progressive avec le dictionnaire existant, et formats monétaires alignés sur la locale.
+- Les textes restants doivent être détectés par un contrôle statique avant toute affirmation de couverture intégrale ; certains retours serveur et phrases composées restent en français.

@@ -10,3 +10,6 @@
 - Ignore les messages d'une ancienne connexion WebSocket et les événements reçus après arrêt.
 - Protège l'envoi de souscription et refuse les timestamps de cotation futurs.
 - Les prix Kraken expirés continuent de céder la place au repli REST CoinGecko. Aucune modification des stratégies de trading.
+
+- Tests unitaires complémentaires : cotation horodatée dans le futur et messages reçus après `stop()` ; aucun réseau externe ni clé requis.
+- Le client frontend continue d'interroger `/api/market` ; aucune promesse de streaming navigateur natif.
