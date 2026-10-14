@@ -7,3 +7,6 @@ Only visitor-visible pages can be captured. Routes without public pages are inte
 ## Visitor-safe captures
 
 The automated artifact contains **investir.png** and **cockpit.png** only. The activity route is behind authentication and must not be represented by a login popup screenshot. Bots and transparency must not be represented by screenshots taken from unrelated pages. The product carousel continues to use its existing live-page previews until truthful, reviewed images are published.
+
+## Captures localisées
+Le script `server/scripts/capture-showcase.mjs` génère des sous-répertoires `fr/`, `en/`, `es/`, `de/`, `pt-BR/` à partir de l’interface réelle. Pour chaque langue, vérifier manuellement les captures et les libellés, puis versionner les PNG. La landing affiche automatiquement la capture existante d’origine en cas de variante manquante. Aucune capture de compte client réel.
