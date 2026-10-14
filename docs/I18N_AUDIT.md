@@ -18,3 +18,7 @@ Le dialogue d'authentification (connexion, inscription et 2FA) utilise désormai
 ## Solution gratuite
 
 Conserver le dictionnaire local et `Intl` est gratuit, sans service tiers ni coût de licence. `i18next` et `react-i18next` sont également libres et gratuits si une migration devient utile. Les services de traduction hébergés peuvent avoir des quotas ou frais : ils ne sont pas requis ici.
+
+## Lot complémentaire
+
+Traduction de libellés statiques supplémentaires dans les écrans principaux et les composants de sécurité, cockpit, portefeuille et bots, avec clés cohérentes dans les cinq dictionnaires. Restent à contrôler les phrases interpolées, les erreurs API et le contenu marketing long : ne pas déclarer une couverture totale sans audit automatisé.

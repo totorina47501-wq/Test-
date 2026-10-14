@@ -1,3 +1,4 @@
+import {useLanguage} from "../i18n";
 import {CryptoAssetMark} from "./CryptoAssetMark";
 import {PieChart,Pie,Cell,ResponsiveContainer,Tooltip} from "recharts";
 import {BotBacktestPanel} from "./BotBacktestPanel";
@@ -17,25 +18,25 @@ type Tab="portfolio"|"activity"|"bots";
 const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
 const date=(value:string)=>new Date(value).toLocaleString("fr-FR");
 
-function Loading({label}:{label:string}){return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
-function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p><Button className="mt-4" onClick={onRetry}>Réessayer</Button></Card>}
+function Loading({label}:{label:string}){const {t}=useLanguage();return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
+function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){const {t}=useLanguage();return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p><Button className="mt-4" onClick={onRetry}>{t("retry")}</Button></Card>}
 
-function SimulatedFunding({token,onExpired,onSuccess}:{token:string;onExpired:()=>void;onSuccess:()=>void}){
+function SimulatedFunding({token,onExpired,onSuccess}:{token:string;onExpired:()=>void;onSuccess:()=>void}){const {t}=useLanguage();
   const [method,setMethod]=useState<"card"|"paypal">("card");const [amount,setAmount]=useState("100");const [pending,setPending]=useState(false);const [message,setMessage]=useState("");const [error,setError]=useState("");
   async function submit(event:React.FormEvent){event.preventDefault();const value=Number(amount);if(!Number.isFinite(value)||value<1||value>100000||Math.round(value*100)!==value*100){setError("Choisissez un montant entre 1 et 100 000 €.");return}setPending(true);setError("");setMessage("");try{const requestKey=crypto.randomUUID().replace(/-/g,"");const result=await simulatedDeposit(token,{method,amount:value,requestKey});setMessage("Votre portefeuille virtuel a été crédité de "+eur(value)+". Liquidités disponibles : "+eur(result.cash));onSuccess();}catch(e){if(e instanceof SessionExpiredError)onExpired();setError(e instanceof Error?e.message:"Crédit indisponible.")}finally{setPending(false)}}
   return <Card><h2 className="text-xl font-bold">Créditer mes liquidités</h2><p className="mt-2 text-sm text-slate-400">Paiement fictif : carte bancaire ou PayPal simulés. Aucun débit réel, aucune donnée de carte demandée, aucune connexion PayPal.</p><form className="mt-4 space-y-4" onSubmit={submit}><fieldset><legend className="mb-2 text-sm font-semibold">Mode de paiement fictif</legend><div className="flex flex-wrap gap-3">{([["card","Carte bancaire"],["paypal","PayPal"]] as const).map(([value,label])=><label key={value} className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm"><input type="radio" name="simulated-method" checked={method===value} onChange={()=>setMethod(value)}/>{label}</label>)}</div></fieldset><label className="block text-sm">Montant en euros<input className="mt-2 block w-full max-w-xs rounded-xl border border-white/20 bg-[#101418] px-4 py-3 text-white" type="number" min="1" max="100000" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label><div className="flex flex-wrap gap-2">{[50,100,500,1000].map(value=><button type="button" key={value} onClick={()=>setAmount(String(value))} className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:border-lime-400">{eur(value)}</button>)}</div><Button disabled={pending} type="submit">{pending?"Crédit en cours…":"Confirmer le crédit fictif"}</Button></form>{message&&<p role="status" className="mt-3 text-lime-300">{message}</p>}{error&&<p role="alert" className="mt-3 text-rose-300">{error}</p>}</Card>
 }
-function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio"]["data"]}){
+function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio"]["data"]}){const {t}=useLanguage();
   if(!data)return null;
   return <section className="space-y-4">
-    <div><Badge>Simulation</Badge><h1 className="mt-3 text-3xl font-bold">Portefeuille</h1><p className="mt-2 text-sm text-slate-400">Votre patrimoine virtuel BitGold, valorisé en euros.</p></div>
+    <div><Badge>Simulation</Badge><h1 className="mt-3 text-3xl font-bold">Portefeuille</h1><p className="mt-2 text-sm text-slate-400">{t("virtualWealth")}</p></div>
     <div className="grid gap-3 sm:grid-cols-3">
       <Card><p className="text-sm text-slate-400">Solde total</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.total||0))}</p></Card>
-      <Card><p className="text-sm text-slate-400">Liquidités</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.cash||0))}</p></Card>
+      <Card><p className="text-sm text-slate-400">{t("liquidity")}</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.cash||0))}</p></Card>
       <Card><p className="text-sm text-slate-400">Investi</p><p className="mt-2 text-2xl font-bold">{eur(Number(data.invested||0))}</p></Card>
     </div>
     {data.positions?.length? <Card>
-      <h2 className="text-lg font-semibold">Répartition de vos actifs détenus</h2>
+      <h2 className="text-lg font-semibold">{t("allocation")}</h2>
       <p className="mt-1 text-xs text-slate-400">Valeurs réelles de votre portefeuille virtuel, issues de vos positions simulées. Cliquez sur un actif pour voir son marché.</p>
       <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr] md:items-center">
         <div className="h-52 min-w-0" role="img" aria-label="Graphique de répartition de vos positions simulées et liquidités">
@@ -47,7 +48,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
         </div>
         <div className="space-y-2">{[...data.positions.map(p=>({name:p.asset,value:Math.max(0,Number(p.value)||0)})),{name:"Liquidités",value:Math.max(0,Number(data.cash)||0)}].filter(p=>p.value>0).map(p=><div key={p.name} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2 text-sm">
           <span className="flex min-w-0 items-center gap-2">{p.name==="Liquidités"?<span className="grid h-7 w-7 place-items-center rounded-full bg-slate-600 text-xs">€</span>:<CryptoAssetMark symbol={p.name} size={28}/>}
-          {p.name==="Liquidités"?<span>Liquidités</span>:<a href={"/investir?asset="+encodeURIComponent(p.name)} className="font-semibold text-lime-200 hover:underline" aria-label={"Voir le marché "+p.name}><span>{p.name}</span> <span aria-hidden="true">↗</span></a>}</span>
+          {p.name==="Liquidités"?<span>{t("liquidity")}</span>:<a href={"/investir?asset="+encodeURIComponent(p.name)} className="font-semibold text-lime-200 hover:underline" aria-label={"Voir le marché "+p.name}><span>{p.name}</span> <span aria-hidden="true">↗</span></a>}</span>
           <strong className="whitespace-nowrap">{eur(p.value)}</strong>
         </div>)}</div>
       </div>
@@ -63,7 +64,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
   </section>;
 }
 
-function ActivityView({data}:{data:ReturnType<typeof useAccountData>["activity"]["data"]}){
+function ActivityView({data}:{data:ReturnType<typeof useAccountData>["activity"]["data"]}){const {t}=useLanguage();
   const [side,setSide]=useState<"all"|"buy"|"sell">("all");
   const [asset,setAsset]=useState("all");
   const [expanded,setExpanded]=useState(false);
@@ -72,12 +73,12 @@ function ActivityView({data}:{data:ReturnType<typeof useAccountData>["activity"]
   const filtered=trades.filter(trade=>(side==="all"||trade.side===side)&&(asset==="all"||trade.asset.toUpperCase()===asset));
   if(!data)return null;
   return <section className="space-y-4">
-    <div><Badge>Journal</Badge><h1 className="mt-3 text-3xl font-bold">Activités</h1><p className="mt-2 text-sm text-slate-400">Transactions et décisions des bots de votre environnement de simulation.</p></div>
+    <div><Badge>Journal</Badge><h1 className="mt-3 text-3xl font-bold">{t("activities")}</h1><p className="mt-2 text-sm text-slate-400">Transactions et décisions des bots de votre environnement de simulation.</p></div>
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Transactions</h2><span className="text-xs text-slate-400">{filtered.length} / {trades.length}</span></div>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <label className="text-xs text-slate-400">Type d'opération<select aria-label="Filtrer par opération" value={side} onChange={event=>setSide(event.target.value as "all"|"buy"|"sell")} className="mt-1 w-full min-w-0 rounded-xl border border-white/15 bg-[#202329] px-3 py-2.5 text-sm text-white"><option value="all">Achats et ventes</option><option value="buy">Achats</option><option value="sell">Ventes</option></select></label>
+          <label className="text-xs text-slate-400">{t("operation")}<select aria-label="Filtrer par opération" value={side} onChange={event=>setSide(event.target.value as "all"|"buy"|"sell")} className="mt-1 w-full min-w-0 rounded-xl border border-white/15 bg-[#202329] px-3 py-2.5 text-sm text-white"><option value="all">Achats et ventes</option><option value="buy">Achats</option><option value="sell">Ventes</option></select></label>
           <label className="text-xs text-slate-400">Crypto<select aria-label="Filtrer par crypto" value={asset} onChange={event=>setAsset(event.target.value)} className="mt-1 w-full min-w-0 rounded-xl border border-white/15 bg-[#202329] px-3 py-2.5 text-sm text-white"><option value="all">Toutes les cryptos</option>{assets.map(symbol=><option key={symbol} value={symbol}>{symbol}</option>)}</select></label>
         </div>
         {filtered.length?<div className="mt-4 space-y-3">{filtered.slice(0,expanded?undefined:8).map((trade,index)=><div key={`${trade.created_at}-${index}`} className="border-b border-white/10 pb-3"><div className="flex items-center justify-between gap-3"><p className="flex min-w-0 items-center gap-2 font-medium"><CryptoAssetMark symbol={trade.asset} size={24}/>{trade.side==="buy"?"Achat":"Vente"} {trade.asset}</p><p className={`shrink-0 ${trade.side==="buy"?"text-lime-300":"text-rose-300"}`}>{eur(Number(trade.amount_eur||0))}</p></div><p className="mt-1 text-xs text-slate-500">{date(trade.created_at)} · {eur(Number(trade.price_eur||0))} / unité</p></div>)}</div>:<p className="mt-5 text-sm text-slate-400">{trades.length?"Aucune transaction pour ces filtres.":"Aucune transaction."}</p>}
@@ -88,16 +89,16 @@ function ActivityView({data}:{data:ReturnType<typeof useAccountData>["activity"]
   </section>;
 }
 
-function StrategyCompare({bots}:{bots:BotDefinition[]}){
+function StrategyCompare({bots}:{bots:BotDefinition[]}){const {t}=useLanguage();
   const focus=bots.filter(bot=>["shield","silver","gold"].includes(bot.id));
   return <Card>
-    <h2 className="text-xl font-bold">Comparateur de stratégies</h2>
+    <h2 className="text-xl font-bold">{t("strategyCompare")}</h2>
     <p className="mt-2 text-sm text-slate-400">Comparez le niveau de risque, l’allocation cible et l’univers d’actifs avant d’activer un bot.</p>
-    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-slate-500"><tr><th className="py-2">Bot</th><th>Risque</th><th>Allocation</th><th>Stratégie</th><th>Actifs</th></tr></thead><tbody>{focus.map(bot=><tr key={bot.id} className="border-t border-white/10"><td className="py-3 font-semibold">{bot.name}</td><td>{bot.risk}</td><td>{bot.allocation} %</td><td>{bot.strategy}</td><td><div className="flex flex-wrap gap-1">{bot.compatible_assets?.map(asset=><span key={asset} title={asset}><CryptoAssetMark symbol={asset} size={23}/></span>)}</div></td></tr>)}</tbody></table></div>
+    <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-slate-500"><tr><th className="py-2">Bot</th><th>Risque</th><th>Allocation</th><th>{t("strategy")}</th><th>Actifs</th></tr></thead><tbody>{focus.map(bot=><tr key={bot.id} className="border-t border-white/10"><td className="py-3 font-semibold">{bot.name}</td><td>{bot.risk}</td><td>{bot.allocation} %</td><td>{bot.strategy}</td><td><div className="flex flex-wrap gap-1">{bot.compatible_assets?.map(asset=><span key={asset} title={asset}><CryptoAssetMark symbol={asset} size={23}/></span>)}</div></td></tr>)}</tbody></table></div>
   </Card>;
 }
 
-function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDefinition;subscription?:BotSubscription;token:string;onDone:(message:string)=>void;onCancel:()=>void;onExpired:()=>void}){
+function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDefinition;subscription?:BotSubscription;token:string;onDone:(message:string)=>void;onCancel:()=>void;onExpired:()=>void}){const {t}=useLanguage();
   const [maxTrade,setMaxTrade]=useState(String(subscription?.max_trade_eur??(bot.id==="shield"?250:1000)));
   const [maxPosition,setMaxPosition]=useState(String(subscription?.max_position_eur??5000));
   const [stopLoss,setStopLoss]=useState(String(subscription?.stop_loss_pct??5));
@@ -126,14 +127,14 @@ function BotConfig({bot,subscription,token,onDone,onCancel,onExpired}:{bot:BotDe
       <label className="text-sm">Stop loss (%)<input aria-label="Stop loss" value={stopLoss} onChange={e=>setStopLoss(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 outline-none focus:border-lime-400/50"/></label>
       <label className="text-sm">Cash minimum (%)<input aria-label="Cash minimum" value={minCash} onChange={e=>setMinCash(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 outline-none focus:border-lime-400/50"/></label>
     </div>
-    <div className="mt-5 flex flex-wrap gap-3"><Button disabled={busy||!validLimits} onClick={activate}>{busy?"Enregistrement…":`Activer ${bot.name}`}</Button>{subscription?.active&&<Button variant="secondary" disabled={busy} onClick={remove}>Désactiver</Button>}</div>
+    <div className="mt-5 flex flex-wrap gap-3"><Button disabled={busy||!validLimits} onClick={activate}>{busy?"Enregistrement…":`Activer ${bot.name}`}</Button>{subscription?.active&&<Button variant="secondary" disabled={busy} onClick={remove}>{t("disable")}</Button>}</div>
     {!validLimits&&<p role="alert" className="mt-3 text-sm text-amber-300">Ordre et position positifs, ordre inférieur ou égal à la position, pourcentages entre 0 et 100.</p>}
     {error&&<p role="alert" className="mt-3 text-sm text-rose-300">{error}</p>}
   </Card>;
 }
 
 
-export function BotScenarioPreview({bot}:{bot:Pick<BotDefinition,"id"|"name">}){
+export function BotScenarioPreview({bot}:{bot:Pick<BotDefinition,"id"|"name">}){const {t}=useLanguage();
   const [cashPct,setCashPct]=useState(40);
   const budget=bot.id==="shield"?25:bot.id==="silver"?45:bot.id==="gold"?65:null;
   if(budget===null)return null;
@@ -151,7 +152,7 @@ export function BotScenarioPreview({bot}:{bot:Pick<BotDefinition,"id"|"name">}){
   </Card>;
 }
 
-function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccountData>["bots"]["data"];token:string;reload:()=>void;onExpired:()=>void}){
+function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccountData>["bots"]["data"];token:string;reload:()=>void;onExpired:()=>void}){const {t}=useLanguage();
   const [selected,setSelected]=useState<BotDefinition|null>(null);
   const [message,setMessage]=useState("");
   const subscriptions=useMemo(()=>new Map((data?.items||[]).map(item=>[item.bot_type,item])),[data]);
@@ -177,12 +178,12 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
   </section>;
 }
 
-export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onBack:()=>void}){
+export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onBack:()=>void}){const {t}=useLanguage();
   const auth=useAuth();
   const [tab,setTab]=useState<Tab>(initialTab);
   const {portfolio,activity,bots,reload}=useAccountData(auth.token,auth.expireSession);
   useEffect(()=>setTab(initialTab),[initialTab]);
-  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous depuis l’accueil pour accéder à votre espace privé.</p><Button className="mt-4" onClick={onBack}>Retour à l’accueil</Button></Card></main>;
+  if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">Connectez-vous depuis l’accueil pour accéder à votre espace privé.</p><Button className="mt-4" onClick={onBack}>{t("home")}</Button></Card></main>;
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
     <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-400"><ArrowLeft size={16}/> Retour au cockpit</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> Actualiser</Button></div>
     <ReactOnboarding/>
