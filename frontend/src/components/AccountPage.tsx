@@ -16,7 +16,7 @@ import {SessionExpiredError,simulatedDeposit,activateBot,deactivateBot,useAccoun
 
 type Tab="portfolio"|"activity"|"bots";
 const eur=(value:number,locale:string="fr")=>new Intl.NumberFormat(locale,{style:"currency",currency:"EUR"}).format(value);
-const date=(value:string)=>new Date(value).toLocaleString("fr-FR");
+const date=(value:string)=>new Date(value).toLocaleString(language==="fr"?"fr-FR":language==="en"?"en-US":language==="es"?"es-ES":language==="de"?"de-DE":"pt-BR");
 
 function Loading({label}:{label:string}){const {t}=useLanguage();return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
 function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){const {t}=useLanguage();return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p><Button className="mt-4" onClick={onRetry}>{t("retry")}</Button></Card>}
@@ -56,7 +56,7 @@ function PortfolioView({data}:{data:ReturnType<typeof useAccountData>["portfolio
     <Card>
       <h2 className="text-lg font-semibold">Positions</h2>
       {data.positions?.length?<div className="mt-4 space-y-3">{data.positions.map(position=><div key={position.asset} className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 pb-3">
-        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><a href={"/investir?asset="+encodeURIComponent(position.asset)} className="font-semibold text-lime-200 hover:underline"><span>{position.asset}</span> <span aria-hidden="true">↗</span></a><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString("fr-FR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
+        <div className="flex items-center gap-3"><CryptoAssetMark symbol={position.asset} size={36}/><div><a href={"/investir?asset="+encodeURIComponent(position.asset)} className="font-semibold text-lime-200 hover:underline"><span>{position.asset}</span> <span aria-hidden="true">↗</span></a><p className="text-xs text-slate-500">{Number(position.quantity).toLocaleString(language==="fr"?"fr-FR":language==="en"?"en-US":language==="es"?"es-ES":language==="de"?"de-DE":"pt-BR",{maximumFractionDigits:8})} unités · {Number(position.allocation||0).toFixed(1)} %</p></div></div>
         <div className="text-right"><p className="font-semibold">{eur(Number(position.value||0))}</p><p className="text-xs text-slate-500">{eur(Number(position.price||0))} / unité</p></div>
       </div>)}</div>:<p className="mt-5 text-sm text-slate-400">Aucune position ouverte.</p>}
     </Card>
