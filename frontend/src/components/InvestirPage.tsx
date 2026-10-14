@@ -14,29 +14,30 @@ const ranges=[
   {id:"5m",label:"5 min"},
   {id:"1h",label:"1 h"},
   {id:"24h",label:"24 h"},
-  {id:"7d",label:"7 jours"},
-  {id:"30d",label:"30 jours"},
-  {id:"1y",label:"1 an"},
-  {id:"5y",label:"5 ans"}
+  {id:"7d",label:"7d"},
+  {id:"30d",label:"30d"},
+  {id:"1y",label:"1y"},
+  {id:"5y",label:"5y"}
 ];
 
 const names:Record<string,string>={
   BTC:"Bitcoin",ETH:"Ethereum",SOL:"Solana",USDC:"USD Coin",LINK:"Chainlink",AVAX:"Avalanche",ADA:"Cardano",XRP:"XRP",LTC:"Litecoin",DOT:"Polkadot"
 };
 
-const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
-const compact=(value:number)=>new Intl.NumberFormat("fr-FR",{notation:"compact",maximumFractionDigits:1}).format(value);
-const qty=(value:number)=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:8}).format(value);
-const formatChartTick=(timestamp:number,range:string)=>{
+const eur=(value:number,locale:string)=>new Intl.NumberFormat(locale,{style:"currency",currency:"EUR"}).format(value);
+const compact=(value:number,locale:string)=>new Intl.NumberFormat(locale,{notation:"compact",maximumFractionDigits:1}).format(value);
+const qty=(value:number,locale:string)=>new Intl.NumberFormat(locale,{maximumFractionDigits:8}).format(value);
+const formatChartTick=(timestamp:number,range:string,locale:string)=>{
   const date=new Date(timestamp);
-  if(range==="5m"||range==="1h"||range==="24h")return date.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-  if(range==="1y"||range==="5y")return date.toLocaleDateString("fr-FR",{month:"short",year:"2-digit"});
-  return date.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
+  if(range==="5m"||range==="1h"||range==="24h")return date.toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit"});
+  if(range==="1y"||range==="5y")return date.toLocaleDateString(locale,{month:"short",year:"2-digit"});
+  return date.toLocaleDateString(locale,{day:"2-digit",month:"2-digit"});
 };
 
 export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   const auth=useAuth();
-  const {t}=useLanguage();
+  const {t,language}=useLanguage();
+  const locale=language==="pt-BR"?"pt-BR":language;
   const market=useInvestirMarket();
   const [selected,setSelected]=useState(()=>{const requested=new URLSearchParams(window.location.search).get("asset")?.toUpperCase()||"BTC";return /^[A-Z0-9]{2,12}$/.test(requested)?requested:"BTC"});
   const [range,setRange]=useState("24h");
@@ -68,7 +69,7 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
   async function submitTrade(){
     if(!auth.token){onAuth();return}
     if(tradePending.current)return;
-    if(!Number.isFinite(numericAmount)||numericAmount<=0||!selected||price<=0){setTradeState("error");setTradeMessage("Vérifiez le montant et attendez une cotation disponible.");return;}
+    if(!Number.isFinite(numericAmount)||numericAmount<=0||!selected||price<=0){setTradeState("error");setTradeMessage(t("invalidAmount"));return;}
     tradePending.current=true;
     const submittedSide=side;
     const submittedAsset=selected;
@@ -78,11 +79,11 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
       market.reload();
       notifyTradeCompleted();
       setTradeState("success");
-      setTradeMessage(`${submittedSide==="buy"?"Achat":"Vente"} simulé(e) de ${submittedAsset} enregistré(e). Consultez votre portefeuille ou vos activités pour voir le résultat.`);
+      setTradeMessage(`${submittedSide==="buy"?t("buy"):t("sell")} ${submittedAsset} ${t("tradeRecorded")}`);
     }catch(error){
       if(error instanceof TradeSessionExpiredError)auth.expireSession();
       setTradeState("error");
-      setTradeMessage(error instanceof Error?error.message:"Impossible d’enregistrer l’ordre simulé.");
+      setTradeMessage(error instanceof Error?error.message:t("tradeFailure"));
     }finally{
       tradePending.current=false;
     }
@@ -92,25 +93,25 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={16}/> {t("back")}</button>
-        <div className="flex flex-wrap items-center gap-3"><Badge>Marchés · EUR</Badge><span className="text-xs text-slate-500">Simulation uniquement · aucun ordre réel</span></div>
+        <div className="flex flex-wrap items-center gap-3"><Badge>{t("market")} · EUR</Badge><span className="text-xs text-slate-500">{t("simulation")}</span></div>
         <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{t("invest")}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{t("market")} · {t("explore")}. Explorez les cours des actifs compatibles avec la simulation, puis découvrez les autres cryptomonnaies sans transaction.</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{t("market")} · {t("explore")}. {t("investIntro")}</p>
       </div>
       <Button variant="secondary" onClick={market.reload}><RefreshCw size={16}/> {t("refresh")}</Button>
     </div>
 
-    {market.status==="loading"&&<Card aria-busy="true"><p role="status">Chargement des marchés…</p></Card>}
-    {market.status==="error"&&<Card role="alert"><p className="text-rose-300">{market.error}</p><Button className="mt-4" onClick={market.reload}>Réessayer</Button></Card>}
-    {market.status==="ready"&&market.data?.length===0&&<Card><p className="text-slate-400">Aucun marché disponible pour le moment.</p></Card>}
+    {market.status==="loading"&&<Card aria-busy="true"><p role="status">{t("loadingMarkets")}</p></Card>}
+    {market.status==="error"&&<Card role="alert"><p className="text-rose-300">{market.error}</p><Button className="mt-4" onClick={market.reload}>{t("retry")}</Button></Card>}
+    {market.status==="ready"&&market.data?.length===0&&<Card><p className="text-slate-400">{t("noMarkets")}</p></Card>}
 
     {market.status==="ready"&&Boolean(market.data?.length)&&<>
-      <section aria-label="Marchés crypto" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <section aria-label={t("market")} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {market.data!.map(item=>{
           const positive=Number(item.change24h)>=0;
           const active=item.symbol===selected;
           return <button key={item.symbol} type="button" onClick={()=>{setSelected(item.symbol);setRange("24h");setTradeState("idle");setTradeMessage("")}} aria-pressed={active} className={`min-w-0 rounded-2xl border p-4 text-left transition-colors ${active?"border-lime-400/40 bg-lime-400/10":"border-white/10 bg-[#15171b]/95 hover:bg-white/5"}`}>
             <div className="flex items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><CryptoAssetMark symbol={item.symbol} size={30}/><strong className="truncate">{names[item.symbol]||item.symbol}</strong></div><span className="text-xs text-slate-500">{item.symbol}</span></div>
-            <span className="mt-3 block text-lg font-bold">{eur(Number(item.price||0))}</span>
+            <span className="mt-3 block text-lg font-bold">{eur(Number(item.price||0),locale)}</span>
             <span className={`mt-1 flex items-center gap-1 text-xs ${positive?"text-lime-300":"text-rose-300"}`}>{positive?<TrendingUp size={13}/>:<TrendingDown size={13}/>} {positive?"+":""}{Number(item.change24h||0).toFixed(2)} %</span>
           </button>;
         })}
@@ -120,58 +121,58 @@ export function InvestirPage({onBack,onAuth}:{onBack:()=>void;onAuth:()=>void}){
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">{selected} · détail marché</p>
+              <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">{selected} · {t("marketDetail")}</p>
               <h2 className="mt-2 text-2xl font-bold">{detail.data?.name||names[selected]||selected}</h2>
-              <p className="mt-1 text-sm text-slate-400">Cours actuel {eur(price)}</p>
+              <p className="mt-1 text-sm text-slate-400">{t("currentPrice")} {eur(price,locale)}</p>
             </div>
-            <div className="flex max-w-full flex-wrap gap-2" aria-label="Période du graphique">
-              {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium ${range===item.id?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400 hover:bg-white/5"}`}>{item.label}</button>)}
+            <div className="flex max-w-full flex-wrap gap-2" aria-label={t("chartPeriod")}>
+              {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium ${range===item.id?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400 hover:bg-white/5"}`}>{item.id==="7d"?`7 ${t("days")}`:item.id==="30d"?`30 ${t("days")}`:item.id==="1y"?`1 ${t("year")}`:item.id==="5y"?`5 ${t("years")}`:item.label}</button>)}
             </div>
           </div>
 
-          {detail.status==="loading"&&<p role="status" className="py-20 text-center text-sm text-slate-400">Chargement du détail…</p>}
-          {detail.status==="error"&&<div role="alert" className="py-12 text-center"><p className="text-sm text-rose-300">{detail.error||"Détail indisponible."}</p><Button className="mt-4" onClick={detail.reload}>Réessayer le graphique</Button></div>}
+          {detail.status==="loading"&&<p role="status" className="py-20 text-center text-sm text-slate-400">{t("loadingDetail")}</p>}
+          {detail.status==="error"&&<div role="alert" className="py-12 text-center"><p className="text-sm text-rose-300">{detail.error||t("priceUnavailable")}</p><Button className="mt-4" onClick={detail.reload}>{t("retryChart")}</Button></div>}
           {detail.status==="ready"&&chartData.length>1?<div className="mt-5 h-72 min-w-0" role="img" aria-label={`Courbe ${selected} ${range}`}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
-                <XAxis dataKey="timestamp" type="number" domain={["dataMin","dataMax"]} tickFormatter={(value)=>formatChartTick(Number(value),range)} tick={{fill:"#94a3b8",fontSize:11}}/>
-                <YAxis domain={["auto","auto"]} tickFormatter={(value)=>eur(Number(value))} width={82} tick={{fill:"#94a3b8",fontSize:10}}/>
-                <Tooltip labelFormatter={(value)=>new Date(Number(value)).toLocaleString("fr-FR")} formatter={(value:number)=>[eur(Number(value)),"Cours"]}/>
+                <XAxis dataKey="timestamp" type="number" domain={["dataMin","dataMax"]} tickFormatter={(value)=>formatChartTick(Number(value),range,locale)} tick={{fill:"#94a3b8",fontSize:11}}/>
+                <YAxis domain={["auto","auto"]} tickFormatter={(value)=>eur(Number(value),locale)} width={82} tick={{fill:"#94a3b8",fontSize:10}}/>
+                <Tooltip labelFormatter={(value)=>new Date(Number(value)).toLocaleString(locale)} formatter={(value:number)=>[eur(Number(value),locale),t("priceLabel")]}/>
                 <Area type="monotone" dataKey="price" stroke="#c8ff2e" fill="#c8ff2e" fillOpacity={.08}/>
               </AreaChart>
             </ResponsiveContainer>
-          </div>:detail.status==="ready"?<p className="py-20 text-center text-sm text-slate-400">Historique insuffisant pour cette période.</p>:null}
+          </div>:detail.status==="ready"?<p className="py-20 text-center text-sm text-slate-400">{t("insufficientHistory")}</p>:null}
 
           {detail.status==="ready"&&<div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">Variation 24 h</p><p className={`mt-1 font-semibold ${Number(detail.data?.change24h||0)>=0?"text-lime-300":"text-rose-300"}`}>{Number(detail.data?.change24h||0).toFixed(2)} %</p></div>
-            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">Capitalisation</p><p className="mt-1 font-semibold">{detail.data?.marketCap?compact(Number(detail.data.marketCap))+" €":"—"}</p></div>
-            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">Volume 24 h</p><p className="mt-1 font-semibold">{detail.data?.volume24h?compact(Number(detail.data.volume24h))+" €":"—"}</p></div>
+            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">{t("change24h")}</p><p className={`mt-1 font-semibold ${Number(detail.data?.change24h||0)>=0?"text-lime-300":"text-rose-300"}`}>{Number(detail.data?.change24h||0).toFixed(2)} %</p></div>
+            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">{t("marketCap")}</p><p className="mt-1 font-semibold">{detail.data?.marketCap?compact(Number(detail.data.marketCap),locale)+" €":"—"}</p></div>
+            <div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-slate-500">{t("volume24h")}</p><p className="mt-1 font-semibold">{detail.data?.volume24h?compact(Number(detail.data.volume24h),locale)+" €":"—"}</p></div>
           </div>}
         </Card>
 
         <Card className="h-fit">
-          <p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">Simulateur</p>
-          <h2 className="mt-2 text-xl font-bold">Simuler une opération</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-400">L’ordre reste virtuel et utilise le moteur de trading simulé BitGold.</p>
-          <div className="mt-4 grid grid-cols-2 gap-2" aria-label="Type d’opération">
-            <button type="button" aria-pressed={side==="buy"} onClick={()=>{setSide("buy");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="buy"?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400"}`}>Acheter</button>
-            <button type="button" aria-pressed={side==="sell"} onClick={()=>{setSide("sell");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="sell"?"border-rose-400/40 bg-rose-400/15 text-rose-300":"border-white/10 text-slate-400"}`}>Vendre</button>
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-300">{t("simulator")}</p>
+          <h2 className="mt-2 text-xl font-bold">{t("simulateTrade")}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-400">{t("virtualOrder")}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2" aria-label={t("tradeType")}>
+            <button type="button" aria-pressed={side==="buy"} onClick={()=>{setSide("buy");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="buy"?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400"}`}>{t("buy")}</button>
+            <button type="button" aria-pressed={side==="sell"} onClick={()=>{setSide("sell");setTradeState("idle");setTradeMessage("")}} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${side==="sell"?"border-rose-400/40 bg-rose-400/15 text-rose-300":"border-white/10 text-slate-400"}`}>{t("sell")}</button>
           </div>
-          <label className="mt-5 block text-sm font-medium" htmlFor="invest-amount">Montant en euros</label>
+          <label className="mt-5 block text-sm font-medium" htmlFor="invest-amount">{t("amountEur")}</label>
           <div className="mt-2 flex items-center rounded-xl border border-white/15 bg-black/20 px-3">
             <span className="text-slate-500">€</span>
-            <input id="invest-amount" aria-label="Montant en euros" inputMode="decimal" value={amount} onChange={event=>{setAmount(event.target.value);setTradeState("idle");setTradeMessage("")}} className="min-w-0 flex-1 bg-transparent px-3 py-3 text-base outline-none" />
+            <input id="invest-amount" aria-label={t("amountEur")} inputMode="decimal" value={amount} onChange={event=>{setAmount(event.target.value);setTradeState("idle");setTradeMessage("")}} className="min-w-0 flex-1 bg-transparent px-3 py-3 text-base outline-none" />
           </div>
           <div className="mt-4 rounded-xl bg-white/5 p-4">
-            <p className="text-xs text-slate-500">Estimation au cours affiché</p>
-            <p className="mt-1 text-lg font-semibold">≈ {qty(estimated)} {selected}</p>
-            <p className="mt-1 text-xs text-slate-500">{price>0?eur(price)+" / "+selected:"Cours indisponible"}</p>
+            <p className="text-xs text-slate-500">{t("estimate")}</p>
+            <p className="mt-1 text-lg font-semibold">≈ {qty(estimated,locale)} {selected}</p>
+            <p className="mt-1 text-xs text-slate-500">{price>0?eur(price,locale)+" / "+selected:t("priceUnavailable")}</p>
           </div>
-          <Button className="mt-5 w-full" disabled={tradeState==="submitting"||!estimated} onClick={submitTrade}>{tradeState==="submitting"?"Enregistrement…":auth.token?(side==="buy"?"Acheter en simulation":"Vendre en simulation"):"Se connecter pour simuler"} <ArrowRight size={16}/></Button>
-          {tradeState==="error"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille?action=crediter" className="font-semibold text-lime-300 underline underline-offset-4">Créditer mes liquidités</a><a href="/portefeuille" className="text-slate-300 underline underline-offset-4">Consulter mes actifs</a></div>}
+          <Button className="mt-5 w-full" disabled={tradeState==="submitting"||!estimated} onClick={submitTrade}>{tradeState==="submitting"?t("saving"):auth.token?(side==="buy"?t("buySimulation"):t("sellSimulation")):t("signInSimulate")} <ArrowRight size={16}/></Button>
+          {tradeState==="error"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille?action=crediter" className="font-semibold text-lime-300 underline underline-offset-4">{t("creditFunds")}</a><a href="/portefeuille" className="text-slate-300 underline underline-offset-4">{t("viewAssets")}</a></div>}
           {tradeMessage&&<p role={tradeState==="error"?"alert":"status"} className={`mt-3 text-sm ${tradeState==="error"?"text-rose-300":"text-lime-300"}`}>{tradeMessage}</p>}
-          {tradeState==="success"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille" className="text-lime-300 underline underline-offset-4">Voir mon portefeuille</a><a href="/activite" className="text-lime-300 underline underline-offset-4">Voir mes activités</a></div>}
-          <p className="mt-4 text-xs leading-5 text-slate-500">Aucun actif réel n’est acheté. Cette action modifie uniquement votre portefeuille de simulation.</p>
+          {tradeState==="success"&&<div className="mt-3 flex flex-wrap gap-3 text-sm"><a href="/portefeuille" className="text-lime-300 underline underline-offset-4">{t("viewPortfolio")}</a><a href="/activite" className="text-lime-300 underline underline-offset-4">{t("viewActivity")}</a></div>}
+          <p className="mt-4 text-xs leading-5 text-slate-500">{t("noRealAssets")}</p>
         </Card>
       </div>
     </>}
