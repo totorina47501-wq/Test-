@@ -52,7 +52,10 @@ useEffect(()=>{
 },[]);
 const access=authenticated?"/portefeuille":undefined;
 const {t,language}=useLanguage();
-const lc=landingCopy[language];\nconst x=landingExtra[language];\nconst modules=[{title:x.portfolio,text:x.portfolioDesc,href:"/portefeuille",file:"portfolio-auth-demo.png"},{title:x.invest,text:x.investDesc,href:"/investir",file:"investir.png"},{title:x.activity,text:x.activityDesc,href:"/activite",file:"activity-auth-demo.png"}];\nconst bots=[{name:"Silver",risk:x.balanced},{name:"Shield",risk:x.prudent},{name:"Gold",risk:x.dynamic}];
+const lc=landingCopy[language];
+const x=landingExtra[language];
+const modules=[{title:x.portfolio,text:x.portfolioDesc,href:"/portefeuille",file:"portfolio-auth-demo.png"},{title:x.invest,text:x.investDesc,href:"/investir",file:"investir.png"},{title:x.activity,text:x.activityDesc,href:"/activite",file:"activity-auth-demo.png"}];
+const bots=[{name:"Silver",risk:x.balanced},{name:"Shield",risk:x.prudent},{name:"Gold",risk:x.dynamic}];
 return <div className="bg-landing">
 <header className="top shell glass"><a className="brand" href="/" aria-label="BitGold accueil"><span>₿</span> BitGold</a><nav aria-label="Navigation landing"><a href="#modules">{x.navModules}</a><a href="#bots">{t("bots")}</a><a href="#cockpit-preview">{t("cockpit")}</a><a href="#fonctionnement">{x.navHow}</a><a href="#parcours-demo">{t("landingDemo")}</a><a href="#visite-guidee">{t("landingTour")}</a><a href="#architecture">{x.navArchitecture}</a><a href="#partenaires">{t("landingPartners")}</a></nav><LanguageSelector/>{access?<a className="cta" href={access}>Ouvrir BitGold <ArrowRight size={15}/></a>:<button className="cta" onClick={onAccess}>{x.login} <ArrowRight size={15}/></button>}</header>
 <main>
