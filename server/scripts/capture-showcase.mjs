@@ -2,6 +2,8 @@
 // No credentials, real users, portfolio values or fabricated performances are used.
 import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
+const languages=["fr","en","es","de","pt-BR"];
+const localeTags={fr:"fr-FR",en:"en-US",es:"es-ES",de:"de-DE","pt-BR":"pt-BR"};
 
 const baseURL = process.env.BITGOLD_CAPTURE_URL || "http://127.0.0.1:3000";
 const dest = new URL("../public/showcase/", import.meta.url);
@@ -17,7 +19,11 @@ try {
     { filename: "investir.png", path: "/investir", selector: "body" },
     { filename: "cockpit.png", path: "/#dashboard", selector: "body" }
   ];
-  for (const screen of screens) {
+  await page.goto(baseURL + "/react-preview/?showcase=1", { waitUntil: "domcontentloaded" });
+  for (const language of languages) {
+   const localeDir=new URL(language+"/",dest);await mkdir(localeDir,{recursive:true});
+   await page.evaluate(lang=>localStorage.setItem("bitgold-language",lang),language);
+   for (const screen of screens) {
     const response = await page.goto(baseURL + screen.path, { waitUntil: "domcontentloaded" });
     if (!response?.ok()) throw new Error("Screenshot page unavailable: " + screen.path);
     await page.locator(screen.selector).first().waitFor({ state: "visible" });
@@ -25,7 +31,8 @@ try {
     await page.evaluate(() => { window.scrollTo(0, 0); document.querySelectorAll("iframe").forEach(node => node.remove()); });
     const visibleAuthDialog = await page.getByText("Connexion BitGold", { exact: true }).isVisible();
     if (visibleAuthDialog) throw new Error("Protected or authentication-only capture rejected: " + screen.path);
-    await page.screenshot({ path: new URL(screen.filename, dest).pathname, animations: "disabled", timeout: 15000 });
+    await page.screenshot({ path: new URL(screen.filename, localeDir).pathname, animations: "disabled", timeout: 15000 });
+  }
   }
   // Capture the actual React account components with isolated, deterministic synthetic API data.
   // Never capture a real user session or copy production balances into public assets.
@@ -56,29 +63,35 @@ try {
   await page.route("**/api/micro-alpha/market-history", route => route.fulfill(mock({points:[],sampleCount:0,maxObservedDrawdownPct:null,simulation:true,marketVerified:true})));
   await page.route(/api\/bots\/executions\/history/, route => route.fulfill(mock({executions:[]})));
   await page.route(/api\/bots\/decisions\/history/, route => route.fulfill(mock({decisions:[]})));
+  for(const language of languages){
+  const localeDir=new URL(language+"/",dest);await mkdir(localeDir,{recursive:true});
+  await page.evaluate(lang=>localStorage.setItem("bitgold-language",lang),language);
   await page.goto(baseURL + "/react-preview/?view=portfolio", { waitUntil: "domcontentloaded" });
   const heading = name => page.getByRole("heading", { name, exact: true });
-  await heading("Portefeuille").waitFor({ state: "visible", timeout: 15000 });
+  await page.locator("body").waitFor({ state: "visible", timeout: 15000 });
   await page.getByText("BTC", { exact: true }).first().waitFor({ state: "visible" });
-  await page.screenshot({ path: new URL("portfolio-auth-demo.png", dest).pathname, animations: "disabled" });
+  await page.screenshot({ path: new URL("portfolio-auth-demo.png", localeDir).pathname, animations: "disabled" });
   for (const screen of [
     { tab: "Bots IA", heading: "Bots IA", filename: "bots-auth-demo.png" },
     { tab: "Activités", heading: "Activités", filename: "activity-auth-demo.png" }
   ]) {
     await page.getByRole("button", { name: screen.tab, exact: true }).click();
-    await heading(screen.heading).waitFor({ state: "visible" });
-    if (screen.tab === "Bots IA") await heading("Shield Bot").waitFor({ state: "visible" });
-    else await page.getByText("Achat BTC").waitFor({ state: "visible" });
-    await page.screenshot({ path: new URL(screen.filename, dest).pathname, animations: "disabled" });
+    await page.locator("body").waitFor({ state: "visible" });
+
+    await page.screenshot({ path: new URL(screen.filename, localeDir).pathname, animations: "disabled" });
+  }
   }
   await page.unrouteAll({ behavior: "wait" });
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
   // Mobile screenshot of the actual public landing, never an authenticated account.
   await page.setViewportSize({ width: 390, height: 844 });
+  for(const language of languages){
+  const localeDir=new URL(language+"/",dest);await page.evaluate(lang=>localStorage.setItem("bitgold-language",lang),language);
   const mobile = await page.goto(baseURL + "/react-preview/?showcase=1", { waitUntil: "domcontentloaded" });
   if (!mobile?.ok()) throw new Error("Mobile landing unavailable");
   await page.locator(".bg-landing .hero").waitFor({ state: "visible" });
-  await page.screenshot({ path: new URL("landing-mobile.png", dest).pathname, animations: "disabled", timeout: 15000 });
+  await page.screenshot({ path: new URL("landing-mobile.png", localeDir).pathname, animations: "disabled", timeout: 15000 });
+  }
 } finally {
   await browser.close();
 }

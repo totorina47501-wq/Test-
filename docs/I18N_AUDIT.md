@@ -36,3 +36,8 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 - Réutilisation du dictionnaire existant, sans service de traduction payant.
 - Textes statiques complémentaires dans portefeuille, cockpit, profil, sécurité, Quantum Fund et Micro Alpha.
 - La traduction des erreurs API dynamiques et des libellés composés doit être validée en revue visuelle dans les cinq langues. Ne pas affirmer 100 % sans inventaire exhaustif.
+
+## Landing multilingue et captures (14 octobre 2026)
+- `LandingPage.tsx` sélectionne une capture de la vraie interface via `/showcase/<langue>/<fichier>` ; les captures historiques restent le repli si une variante localisée manque.
+- `server/scripts/capture-showcase.mjs` prévoit les cinq variantes linguistiques, avec données synthétiques isolées pour les modules privés. Les images localisées ne sont pas automatiquement présentes : exécuter le script dans un environnement de capture Playwright, inspecter les résultats et committer les PNG avant de déclarer la livraison visuelle complète.
+- Les illustrations schématiques et textes JSX restant en français doivent faire l’objet d’une passe finale de localisation. Ne pas prétendre que tous les écrans et toutes les captures sont traduits avant vérification.
