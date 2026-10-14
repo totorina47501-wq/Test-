@@ -67,15 +67,14 @@ try {
   const localeDir=new URL(language+"/",dest);await mkdir(localeDir,{recursive:true});
   await page.evaluate(lang=>localStorage.setItem("bitgold-language",lang),language);
   await page.goto(baseURL + "/react-preview/?view=portfolio", { waitUntil: "domcontentloaded" });
-  const heading = name => page.getByRole("heading", { name, exact: true });
   await page.locator("body").waitFor({ state: "visible", timeout: 15000 });
   await page.getByText("BTC", { exact: true }).first().waitFor({ state: "visible" });
   await page.screenshot({ path: new URL("portfolio-auth-demo.png", localeDir).pathname, animations: "disabled" });
   for (const screen of [
-    { tab: "Bots IA", heading: "Bots IA", filename: "bots-auth-demo.png" },
-    { tab: "Activités", heading: "Activités", filename: "activity-auth-demo.png" }
+    { testId: "tab-bots", filename: "bots-auth-demo.png" },
+    { testId: "tab-activity", filename: "activity-auth-demo.png" }
   ]) {
-    await page.getByRole("button", { name: screen.tab, exact: true }).click();
+    await page.getByTestId(screen.testId).click();
     await page.locator("body").waitFor({ state: "visible" });
 
     await page.screenshot({ path: new URL(screen.filename, localeDir).pathname, animations: "disabled" });

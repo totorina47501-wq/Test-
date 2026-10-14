@@ -41,3 +41,8 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 - `LandingPage.tsx` sélectionne une capture de la vraie interface via `/showcase/<langue>/<fichier>` ; les captures historiques restent le repli si une variante localisée manque.
 - `server/scripts/capture-showcase.mjs` prévoit les cinq variantes linguistiques, avec données synthétiques isolées pour les modules privés. Les images localisées ne sont pas automatiquement présentes : exécuter le script dans un environnement de capture Playwright, inspecter les résultats et committer les PNG avant de déclarer la livraison visuelle complète.
 - Les illustrations schématiques et textes JSX restant en français doivent faire l’objet d’une passe finale de localisation. Ne pas prétendre que tous les écrans et toutes les captures sont traduits avant vérification.
+
+## Clôture des captures localisées — lot en cours
+- Les onglets de l’espace connecté utilisent désormais les libellés du dictionnaire actif et des identifiants de test stables, afin que Playwright capture la bonne vue indépendamment de la langue.
+- Le workflow archive récursivement `server/public/showcase/<langue>/...` et publie récursivement ces captures synthétiques sur `main` après validation du workflow de push. Cela permet à la landing de charger de vraies captures localisées au lieu de retomber systématiquement sur les PNG racine.
+- Cette étape ferme le défaut de pipeline d’images. L’audit des chaînes françaises restantes dans les composants continue : ne pas annoncer 100 % de couverture tant que le contrôle statique final n’est pas vert.

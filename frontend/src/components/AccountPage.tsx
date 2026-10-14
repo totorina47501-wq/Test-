@@ -178,27 +178,27 @@ function BotsView({data,token,reload,onExpired}:{data:ReturnType<typeof useAccou
   </section>;
 }
 
-export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onBack:()=>void}){const {t}=useLanguage();
+export function AccountPage({initialTab="portfolio",onBack}:{initialTab?:Tab;onBack:()=>void}){const {t,language}=useLanguage();
   const auth=useAuth();
   const [tab,setTab]=useState<Tab>(initialTab);
   const {portfolio,activity,bots,reload}=useAccountData(auth.token,auth.expireSession);
   useEffect(()=>setTab(initialTab),[initialTab]);
   if(!auth.token)return <main className="mx-auto max-w-7xl px-5 py-8"><Card><h1 className="text-2xl font-bold">{auth.status==="expired"?"Session expirée":"Connexion requise"}</h1><p className="mt-2 text-slate-400">{t("accountLogin")}</p><Button className="mt-4" onClick={onBack}>{t("home")}</Button></Card></main>;
   return <main className="mx-auto max-w-7xl space-y-6 px-5 py-8">
-    <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-400"><ArrowLeft size={16}/> Retour au cockpit</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> Actualiser</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-400"><ArrowLeft size={16}/> {t("back")}</button><Button variant="secondary" onClick={reload}><RefreshCw size={16}/> {t("refresh")}</Button></div>
     <ReactOnboarding/>
-    <nav aria-label="Espace connecté" className="flex max-w-full flex-wrap gap-2 rounded-2xl border border-white/10 bg-[#15171b]/80 p-2">
-      <button type="button" onClick={()=>setTab("portfolio")} aria-current={tab==="portfolio"?"page":undefined} aria-pressed={tab==="portfolio"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="portfolio"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Wallet size={16}/> Portefeuille</button>
-      <button type="button" onClick={()=>setTab("activity")} aria-current={tab==="activity"?"page":undefined} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="activity"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Activity size={16}/> Activités</button>
-      <button type="button" onClick={()=>setTab("bots")} aria-current={tab==="bots"?"page":undefined} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="bots"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Bot size={16}/> Bots IA</button>
+    <nav data-testid="account-tabs" aria-label={language==="fr"?"Espace connecté":"Account area"} className="flex max-w-full flex-wrap gap-2 rounded-2xl border border-white/10 bg-[#15171b]/80 p-2">
+      <button type="button" data-testid="tab-portfolio" onClick={()=>setTab("portfolio")} aria-current={tab==="portfolio"?"page":undefined} aria-pressed={tab==="portfolio"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="portfolio"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Wallet size={16}/> {t("portfolio")}</button>
+      <button type="button" data-testid="tab-activity" onClick={()=>setTab("activity")} aria-current={tab==="activity"?"page":undefined} aria-pressed={tab==="activity"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="activity"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Activity size={16}/> {t("activities")}</button>
+      <button type="button" data-testid="tab-bots" onClick={()=>setTab("bots")} aria-current={tab==="bots"?"page":undefined} aria-pressed={tab==="bots"} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 ${tab==="bots"?"bg-lime-400/15 text-lime-300":"text-slate-400"}`}><Bot size={16}/> {t("bots")}</button>
     </nav>
     {tab==="portfolio"&&bots.data&&<BotObservabilityPanel compact token={auth.token} botIds={(bots.data.catalog||[]).map(bot=>bot.id)} onExpired={auth.expireSession}/>}
     {tab==="portfolio"&&<MicroAlphaSummary token={auth.token} onExpired={auth.expireSession}/>}
     {tab==="portfolio"&&<SimulatedFunding token={auth.token} onExpired={auth.expireSession} onSuccess={reload}/>}
-    {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label="votre portefeuille"/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
+    {tab==="portfolio"&&(portfolio.status==="loading"?<Loading label={t("portfolio")}/>:portfolio.status==="error"?<ErrorBox message={portfolio.error} onRetry={reload}/>:<PortfolioView data={portfolio.data}/>)}
     {tab==="activity"&&bots.data&&<BotObservabilityPanel compact token={auth.token} botIds={(bots.data.catalog||[]).map(bot=>bot.id)} onExpired={auth.expireSession}/>}
-    {tab==="activity"&&(activity.status==="loading"?<Loading label="vos activités"/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
-    {tab==="bots"&&(bots.status==="loading"?<Loading label="vos bots"/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload} onExpired={auth.expireSession}/>)}
+    {tab==="activity"&&(activity.status==="loading"?<Loading label={t("activities")}/>:activity.status==="error"?<ErrorBox message={activity.error} onRetry={reload}/>:<ActivityView data={activity.data}/>)}
+    {tab==="bots"&&(bots.status==="loading"?<Loading label={t("bots")}/>:bots.status==="error"?<ErrorBox message={bots.error} onRetry={reload}/>:<BotsView data={bots.data} token={auth.token} reload={reload} onExpired={auth.expireSession}/>)}
     <p className="text-center text-xs text-slate-500">{t("accountSimulation")}</p>
   </main>;
 }
