@@ -47,7 +47,7 @@ export function AuthDialog({open,onClose}:{open:boolean;onClose:()=>void}){
       <form className="mt-5 space-y-4" onSubmit={submit}>
         {auth.status==="twoFactor"?<>
           <p className="text-sm leading-6 text-slate-400">{t("authTwoFactorHelp")}</p>
-          <label className="block text-sm font-medium">{t("authCode")}<input autoComplete="one-time-code" className={inputClass} value={form.code} onChange={e=>update("code",e.target.value)} required/></label>
+          <label className="block text-sm font-medium">{t("auth2faInput")}<input autoComplete="one-time-code" className={inputClass} value={form.code} onChange={e=>update("code",e.target.value)} required/></label>
         </>:<>
           <label className="block text-sm font-medium">{t("authEmail")}<input type="email" autoComplete="email" className={inputClass} value={form.email} onChange={e=>update("email",e.target.value)} required/></label>
           <label className="block text-sm font-medium">{t("authPassword")}<input type="password" autoComplete={mode==="login"?"current-password":"new-password"} minLength={8} className={inputClass} value={form.password} onChange={e=>update("password",e.target.value)} required/></label>
