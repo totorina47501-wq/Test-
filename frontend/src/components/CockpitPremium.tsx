@@ -1,3 +1,4 @@
+import {useLanguage} from "../i18n";
 import {useMemo,useState} from "react";
 import {Card} from "./ui";
 import {BotObservabilityPanel} from "./BotObservabilityPanel";
@@ -16,7 +17,7 @@ const ranges=[
 
 const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
 
-function CandlestickChart({points}:{points:MarketPoint[]}){
+function CandlestickChart({points}:{points:MarketPoint[]}){const {t}=useLanguage();
   const candles=useMemo(()=>{
     if(points.length<2)return [];
     const bucket=Math.max(1,Math.ceil(points.length/24));
@@ -36,7 +37,7 @@ function CandlestickChart({points}:{points:MarketPoint[]}){
     return rows;
   },[points]);
 
-  if(candles.length<2)return <p className="py-14 text-center text-sm text-slate-400">Données OHLC insuffisantes pour cette période.</p>;
+  if(candles.length<2)return <p className="py-14 text-center text-sm text-slate-400">{t("ohlcMissing")}</p>;
 
   const low=Math.min(...candles.map(candle=>candle.low));
   const high=Math.max(...candles.map(candle=>candle.high));
@@ -74,7 +75,7 @@ function CandlestickChart({points}:{points:MarketPoint[]}){
   </div>;
 }
 
-export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>void}){
+export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>void}){const {t}=useLanguage();
   const [range,setRange]=useState("24h");
   const {activity,market}=useCockpitExtras(token,range,onExpired);
   const points=market.data?.history?.points??[];
@@ -83,8 +84,8 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">Marché authentifié</p>
-          <h3 className="mt-2 text-lg font-semibold">Marché BTC</h3>
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">{t("marketAuth")}</p>
+          <h3 className="mt-2 text-lg font-semibold">{t("marketBtc")}</h3>
           <p className="mt-1 text-xs text-slate-400">OHLC calculé à partir des points de prix renvoyés par l’API BitGold.</p>
         </div>
         <div className="flex flex-wrap gap-2" aria-label="Période du marché">
@@ -92,18 +93,18 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
         </div>
       </div>
       <div className="mt-5">
-        {market.status==="loading"&&<p role="status" className="py-14 text-center text-sm text-slate-400">Chargement du marché…</p>}
+        {market.status==="loading"&&<p role="status" className="py-14 text-center text-sm text-slate-400">{t("marketLoading")}</p>}
         {market.status==="error"&&<p role="alert" className="py-14 text-center text-sm text-rose-300">{market.error}</p>}
         {market.status==="ready"&&<CandlestickChart points={points}/>}
       </div>
     </Card>
 
     <Card>
-      <h3 className="text-lg font-semibold">Transactions récentes</h3>
+      <h3 className="text-lg font-semibold">{t("recentTrades")}</h3>
       <p className="mt-1 text-xs text-slate-400">Ordres simulés enregistrés sur votre compte.</p>
       {activity.status==="loading"&&<p role="status" className="py-10 text-sm text-slate-400">Chargement des transactions…</p>}
       {activity.status==="error"&&<p role="alert" className="py-10 text-sm text-rose-300">{activity.error}</p>}
-      {activity.status==="ready"&&activity.data?.trades?.length===0&&<p className="py-10 text-sm text-slate-400">Aucune transaction simulée pour le moment.</p>}
+      {activity.status==="ready"&&activity.data?.trades?.length===0&&<p className="py-10 text-sm text-slate-400">{t("noTrades")}</p>}
       {activity.status==="ready"&&Boolean(activity.data?.trades?.length)&&<div className="mt-4 space-y-3">
         {activity.data!.trades.slice(0,6).map((trade,index)=><div key={`${trade.created_at}-${trade.asset}-${index}`} className="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
           <div>
