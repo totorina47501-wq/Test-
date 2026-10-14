@@ -31,3 +31,8 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 ## Lot de finition complémentaire
 - Composants Micro Alpha (laboratoire et compte persistant) et laboratoire de backtests : traduction progressive avec le dictionnaire existant, et formats monétaires alignés sur la locale.
 - Les textes restants doivent être détectés par un contrôle statique avant toute affirmation de couverture intégrale ; certains retours serveur et phrases composées restent en français.
+
+## Passe de traduction ciblée — 14 octobre 2026
+- Réutilisation du dictionnaire existant, sans service de traduction payant.
+- Textes statiques complémentaires dans portefeuille, cockpit, profil, sécurité, Quantum Fund et Micro Alpha.
+- La traduction des erreurs API dynamiques et des libellés composés doit être validée en revue visuelle dans les cinq langues. Ne pas affirmer 100 % sans inventaire exhaustif.

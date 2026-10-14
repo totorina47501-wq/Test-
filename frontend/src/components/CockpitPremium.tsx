@@ -86,7 +86,7 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">{t("marketAuth")}</p>
           <h3 className="mt-2 text-lg font-semibold">{t("marketBtc")}</h3>
-          <p className="mt-1 text-xs text-slate-400">OHLC calculé à partir des points de prix renvoyés par l’API BitGold.</p>
+          <p className="mt-1 text-xs text-slate-400">{t("cockpitOhlc")}</p>
         </div>
         <div className="flex flex-wrap gap-2" aria-label="Période du marché">
           {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${range===item.id?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400 hover:bg-white/5 hover:text-white"}`}>{item.label}</button>)}
@@ -101,7 +101,7 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
 
     <Card>
       <h3 className="text-lg font-semibold">{t("recentTrades")}</h3>
-      <p className="mt-1 text-xs text-slate-400">Ordres simulés enregistrés sur votre compte.</p>
+      <p className="mt-1 text-xs text-slate-400">{t("cockpitOrders")}</p>
       {activity.status==="loading"&&<p role="status" className="py-10 text-sm text-slate-400">Chargement des transactions…</p>}
       {activity.status==="error"&&<p role="alert" className="py-10 text-sm text-rose-300">{activity.error}</p>}
       {activity.status==="ready"&&activity.data?.trades?.length===0&&<p className="py-10 text-sm text-slate-400">{t("noTrades")}</p>}
