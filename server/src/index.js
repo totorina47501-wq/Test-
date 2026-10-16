@@ -1311,8 +1311,11 @@ app.get("/api/bots/:botType/backtest",auth,async(req,res)=>{
     if(!botDefinition(botType))return res.status(404).json({error:"Bot inconnu."});
     const simulationOptions=parseBacktestSimulationOptions(req.query);
     const days=Math.min(Math.max(Number(req.query.days||30),14),180);
+    // BTC is the reference timeline. Missing optional assets must not prevent a read-only backtest.
     const symbols=Object.keys(marketIds).filter(symbol=>symbol!=="USDC");
-    const histories=Object.fromEntries(await Promise.all(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)])));
+    const results=await Promise.allSettled(symbols.map(async symbol=>[symbol,await fetchHistory(symbol,days)]));
+    const histories=Object.fromEntries(results.filter(result=>result.status==="fulfilled"&&result.value[1].length>=16).map(result=>result.value));
+    if(!histories.BTC)throw Error("Historique BTC indisponible pour le backtest.");
     const backtest=simulateBacktest({botType,histories,...simulationOptions});
     res.json({ok:true,source:"CoinGecko",days,backtest});
   }catch(e){console.error("[BOT-AI] backtest error",e.message);res.status(502).json({error:"Backtest IA temporairement indisponible."})}
