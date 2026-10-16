@@ -41,6 +41,8 @@ export function useInvestirMarket(){
       .catch((error:unknown)=>{if(!controller.signal.aborted)setMarket({status:"error",error:error instanceof Error?error.message:"Marchés indisponibles."})});
     return()=>controller.abort();
   },[retryKey]);
+  // Recover from silent proxy/WebSocket failures without requiring a page refresh.
+  useEffect(()=>{const timer=setInterval(()=>{if(document.visibilityState==="visible")reload()},60000);return()=>clearInterval(timer)},[reload]);
   return {...market,reload};
 }
 
