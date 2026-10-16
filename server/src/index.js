@@ -362,7 +362,7 @@ function coingeckoHeaders(){
 }
 
 async function coingeckoFetch(path, options={}){
-  const request=()=>fetch(coingeckoBaseUrl+path,{...options,headers:{...coingeckoHeaders(),...(options.headers||{})}});
+  const request=()=>fetch(coingeckoBaseUrl+path,{...options,signal:options.signal||AbortSignal.timeout(8000),headers:{...coingeckoHeaders(),...(options.headers||{})}});
   let response=await request();
   if(response.status===429){
     const retryAfter=Number(response.headers.get("retry-after"));
