@@ -12,8 +12,8 @@ test("production authenticated profile, 2FA status and bot backtest are read-onl
   if (!email || !password) throw new Error("Missing dedicated production E2E credentials");
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Se connecter" }).first().click();
-  const dialog = page.getByRole("dialog", { name: "Authentification BitGold" });
+  await page.getByRole("button", { name: /Se connecter|Log in|Sign in/i }).first().click();
+  const dialog = page.getByRole("dialog", { name: /Authentification BitGold|BitGold authentication/i });
   await dialog.getByLabel("E-mail").fill(email);
   await dialog.getByLabel("Mot de passe").fill(password);
   await dialog.getByRole("button", { name: "Connexion", exact: true }).last().click();
