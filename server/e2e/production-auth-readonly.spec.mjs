@@ -19,8 +19,8 @@ test("production authenticated account is readable without mutations", async ({ 
 
   const home = await page.goto("/", { waitUntil: "domcontentloaded" });
   expect(home?.status()).toBe(200);
-  await page.getByRole("button", { name: "Se connecter" }).first().click();
-  const dialog = page.getByRole("dialog", { name: "Authentification BitGold" });
+  await page.getByRole("button", { name: /Se connecter|Log in|Sign in/i }).first().click();
+  const dialog = page.getByRole("dialog", { name: /Authentification BitGold|BitGold authentication/i });
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("E-mail").fill(email);
   await dialog.getByLabel("Mot de passe").fill(password);
