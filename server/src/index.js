@@ -1016,6 +1016,21 @@ app.get("/api/market/details/:symbol",async(req,res)=>{
 
 // Share identical in-flight market requests across dashboard, bots and comparator.
 const pendingHistoryRequests=new Map();
+// Public Kraken OHLC fallback for real BTC/EUR candles when CoinGecko is rate-limited.
+// No synthetic points, no changes to bot strategy or simulation logic.
+async function fetchKrakenBtcHistory(days){
+  const response=await fetch("https://api.kraken.com/0/public/OHLC?pair=XBTEUR&interval=60",{signal:AbortSignal.timeout(8000),headers:{accept:"application/json"}});
+  if(!response.ok)throw Error("Kraken OHLC HTTP "+response.status);
+  const body=await response.json();
+  if(body.error?.length)throw Error("Kraken OHLC "+body.error.join(", "));
+  const rows=Object.entries(body.result||{}).find(([key,value])=>key!=="last"&&Array.isArray(value))?.[1]||[];
+  const cutoff=Date.now()-days*86400000;
+  const prices=rows.map(row=>({timestamp:Number(row[0])*1000,price:Number(row[4])}))
+    .filter(row=>Number.isFinite(row.timestamp)&&row.timestamp>=cutoff&&row.timestamp<Date.now()-3600000&&Number.isFinite(row.price)&&row.price>0)
+    .sort((a,b)=>a.timestamp-b.timestamp);
+  if(prices.length<16)throw Error("Kraken BTC/EUR history insufficient");
+  return prices;
+}
 async function fetchHistory(symbol, days) {
   const cacheKey=`${symbol}:${days}`;
   const cached=historyCache.get(cacheKey);
@@ -1036,6 +1051,14 @@ async function fetchHistory(symbol, days) {
     }
     if(!response?.ok) {
       console.warn("[MARKET] history unavailable",symbol,days,lastError?.message||"CoinGecko indisponible");
+      if(symbol==="BTC"){
+        try{
+          const fallback=await fetchKrakenBtcHistory(days);
+          historyCache.set(cacheKey,{updatedAt:Date.now(),prices:fallback});
+          console.info("[MARKET] BTC history source Kraken OHLC",days,fallback.length);
+          return fallback;
+        }catch(error){console.warn("[MARKET] Kraken BTC history unavailable",error.message)}
+      }
       return cached?.prices||[];
     }
     const data=await response.json();
