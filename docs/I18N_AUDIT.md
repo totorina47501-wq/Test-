@@ -46,3 +46,10 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 - Les onglets de l’espace connecté utilisent désormais les libellés du dictionnaire actif et des identifiants de test stables, afin que Playwright capture la bonne vue indépendamment de la langue.
 - Le workflow archive récursivement `server/public/showcase/<langue>/...` et publie récursivement ces captures synthétiques sur `main` après validation du workflow de push. Cela permet à la landing de charger de vraies captures localisées au lieu de retomber systématiquement sur les PNG racine.
 - Cette étape ferme le défaut de pipeline d’images. L’audit des chaînes françaises restantes dans les composants continue : ne pas annoncer 100 % de couverture tant que le contrôle statique final n’est pas vert.
+
+
+## Portée de lancement — 15 octobre 2026
+- Langues exposées : français, anglais et espagnol. Allemand et portugais brésilien ne sont plus proposés dans le sélecteur.
+- La passe de fermeture i18n doit traiter les chaînes visibles comme des données localisées, jamais comme des littéraux JSX.
+- Les formats de nombres, dates et devises suivent la locale active (fr-FR, en-GB, es-ES).
+- Toute nouvelle interface doit utiliser le dictionnaire ou une table de copie typée et conserver les tests TypeScript/TSX verts.
