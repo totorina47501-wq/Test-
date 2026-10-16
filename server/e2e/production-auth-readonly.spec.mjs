@@ -17,6 +17,7 @@ test("production authenticated account is readable without mutations", async ({ 
   const password = process.env.BITGOLD_E2E_PASSWORD;
   if (!email || !password) throw new Error("Missing BITGOLD_E2E_EMAIL or BITGOLD_E2E_PASSWORD GitHub Actions secrets");
 
+  await page.addInitScript(() => localStorage.setItem("bitgold-language", "fr"));
   const home = await page.goto("/", { waitUntil: "domcontentloaded" });
   expect(home?.status()).toBe(200);
   await page.getByRole("button", { name: /Se connecter|Log in|Sign in/i }).first().click();

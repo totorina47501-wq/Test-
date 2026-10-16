@@ -11,6 +11,7 @@ test("production authenticated profile, 2FA status and bot backtest are read-onl
   const password = process.env.BITGOLD_E2E_PASSWORD;
   if (!email || !password) throw new Error("Missing dedicated production E2E credentials");
 
+  await page.addInitScript(() => localStorage.setItem("bitgold-language", "fr"));
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /Se connecter|Log in|Sign in/i }).first().click();
   const dialog = page.getByRole("dialog", { name: /Authentification BitGold|BitGold authentication/i });

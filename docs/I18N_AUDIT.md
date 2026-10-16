@@ -58,3 +58,7 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 - Reprise de la PR #562 dans une branche unique, sans recréer les dictionnaires : langue active FR/EN/ES, textes du shell public et cockpit dans des tables typées, nombre/date/devise en fonction de la locale.
 - Les modules fonctionnels possèdent encore des libellés et messages serveur écrits en français : audit complet des écrans et tests de bascule linguistique nécessaires avant tout certificat de couverture à 100 %. Ne pas présenter cette passe comme une traduction exhaustive.
 - Vérifications obligatoires : CI React/TSX, tests backend et Playwright ; smoke invité et authentifié après merge sur main. Les stratégies Silver/Shield/Gold, l'authentification, les paiements et transactions simulées restent inchangés.
+
+## Régression production — 16 octobre 2026
+- La suite Playwright authentifiée fige explicitement la langue française via le stockage navigateur avant navigation. Les assertions françaises ne doivent pas dépendre d'une préférence linguistique persistée ou d'un défaut implicite.
+- Le smoke main du merge #567 a également échoué sur le backtest BTC (HTTP 502). Il s'agit d'une indisponibilité serveur/fournisseur distincte de l'i18n, à investiguer sans masquer le test ni inventer de résultats.
