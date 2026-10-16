@@ -1,3 +1,4 @@
+import {useLiveMarket,type LiveQuote} from "./useLiveMarket";
 import {useCallback,useEffect,useState} from "react";
 
 export type MarketRow={
@@ -27,6 +28,8 @@ async function readJson<T>(response:Response):Promise<T>{
 
 export function useInvestirMarket(){
   const [market,setMarket]=useState<AsyncState<MarketRow[]>>({status:"loading"});
+  const onQuotes=useCallback((rows:LiveQuote[])=>setMarket(previous=>previous.status==="ready"&&previous.data?{...previous,data:previous.data.map(row=>{const quote=rows.find(q=>q.symbol===row.symbol);return quote?{...row,price:quote.price,change24h:quote.change24h??row.change24h}:row})}:previous),[]);
+  useLiveMarket(onQuotes);
   const [retryKey,setRetryKey]=useState(0);
   const reload=useCallback(()=>setRetryKey(value=>value+1),[]);
   useEffect(()=>{

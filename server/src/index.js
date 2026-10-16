@@ -1,3 +1,5 @@
+import {createServer} from "node:http";
+import {attachMarketSocket} from "./market-browser-ws.js";
 import {createKrakenFeed} from "./kraken-market.js";
 import {resolveMarketQuote} from "./market-freshness.js";
 import {paperSnapshot,applyPersistentPaperSignal,resetPersistentPaper} from "./micro-alpha-store.js";
@@ -1636,4 +1638,6 @@ app.post("/api/micro-alpha/reset",auth,async(req,res)=>{
 });
 
 const port=Number(process.env.PORT||3000);
-app.listen(port,()=>console.log(`BitGold API ready on port ${port}`));
+const httpServer=createServer(app);
+attachMarketSocket(httpServer,()=>({type:"market",markets:krakenFeed.overlay(marketSnapshot).map(({symbol,price,change24h,priceUpdatedAt,priceFresh,priceSource})=>({symbol,price,change24h,priceUpdatedAt,priceFresh,priceSource}))}));
+httpServer.listen(port,()=>console.log(`BitGold API ready on port ${port}`));
