@@ -161,3 +161,7 @@
 ## Consolidated readiness audit — 2026-10-16
 - See `docs/CONSOLIDATED_READINESS_AUDIT.md`. Existing live Kraken market channel reused for indicative cockpit portfolio valuation; Investir gains stale-quote filtering and REST recovery. No bot/payment/provider changes.
 - Status: branch implementation, CI/production pending. Outstanding tasks and external approvals are explicitly listed in the audit; no claim of full A–D completion.
+
+## Internationalisation FR/EN/ES — consolidation du 16 octobre 2026
+- Récupération anti-doublon de la PR #562 ; la langue ES et les textes de la navigation/cockpit sont intégrés dans un seul commit avec docs. Validation CI et production à consigner après vérification.
+- Les traductions résiduelles d'autres modules ne doivent pas être déclarées closes sans inventaire automatisé et tests de bascule linguistique.
