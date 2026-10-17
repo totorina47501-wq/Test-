@@ -18,8 +18,9 @@ type Tab="portfolio"|"activity"|"bots";
 const eur=(value:number,locale:string="fr")=>new Intl.NumberFormat(locale,{style:"currency",currency:"EUR"}).format(value);
 const date=(value:string,locale:string="fr-FR")=>new Date(value).toLocaleString(locale);
 
-function Loading({label}:{label:string}){const {t}=useLanguage();return <Card aria-busy="true"><p role="status" className="text-slate-400">Chargement de {label}…</p></Card>}
-function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){const {t}=useLanguage();return <Card role="alert"><p className="text-rose-300">{message||"Données indisponibles."}</p><Button className="mt-4" onClick={onRetry}>{t("retry")}</Button></Card>}
+const accountStatusCopy={fr:{loading:"Chargement de",unavailable:"Données indisponibles."},en:{loading:"Loading",unavailable:"Data unavailable."},es:{loading:"Cargando",unavailable:"Datos no disponibles."}} as const;
+function Loading({label}:{label:string}){const {language}=useLanguage();const copy=accountStatusCopy[language==="de"||language==="pt-BR"?"fr":language];return <Card aria-busy="true"><p role="status" className="text-slate-400">{copy.loading} {label}…</p></Card>}
+function ErrorBox({message,onRetry}:{message?:string;onRetry:()=>void}){const {t,language}=useLanguage();return <Card role="alert"><p className="text-rose-300">{message||accountStatusCopy[language==="de"||language==="pt-BR"?"fr":language].unavailable}</p><Button className="mt-4" onClick={onRetry}>{t("retry")}</Button></Card>}
 
 function SimulatedFunding({token,onExpired,onSuccess}:{token:string;onExpired:()=>void;onSuccess:()=>void}){const {t}=useLanguage();
   const [method,setMethod]=useState<"card"|"paypal">("card");const [amount,setAmount]=useState("100");const [pending,setPending]=useState(false);const [message,setMessage]=useState("");const [error,setError]=useState("");
