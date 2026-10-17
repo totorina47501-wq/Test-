@@ -62,3 +62,7 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 ## Régression production — 16 octobre 2026
 - La suite Playwright authentifiée fige explicitement la langue française via le stockage navigateur avant navigation. Les assertions françaises ne doivent pas dépendre d'une préférence linguistique persistée ou d'un défaut implicite.
 - Le smoke main du merge #567 a également échoué sur le backtest BTC (HTTP 502). Il s'agit d'une indisponibilité serveur/fournisseur distincte de l'i18n, à investiguer sans masquer le test ni inventer de résultats.
+
+## Passe ciblée 17 octobre 2026
+- Localisation des états de chargement/erreur du portefeuille, libellés du backtest et des graphiques cockpit, y compris les formats monétaires et les dates.
+- Cette passe est partielle : financement simulé, landing et plusieurs composants gardent des littéraux français. Une couverture FR/EN/ES complète et des tests de bascule navigateur restent à livrer.
