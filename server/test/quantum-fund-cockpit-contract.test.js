@@ -15,7 +15,10 @@ test("Quantum Fund component is integrated and exposes accessible feedback",()=>
  assert.match(account,/<QuantumFundPanel botIds=/);
  assert.match(ui,/onExpired\(\)/);
  assert.match(ui,/role="alert"/);
- assert.match(ui,/aria-label="Période Quantum Fund"/);
+ assert.match(ui,/aria-label=\{copy\.period\}/);
+ assert.match(ui,/fr.*Période Quantum Fund/);
+ assert.match(ui,/en.*Quantum Fund period/);
+ assert.match(ui,/es.*Período de Quantum Fund/);
  assert.match(ui,/Sharpe/);
  assert.match(ui,/Sortino/);
  assert.match(ui,/simulation/i);
