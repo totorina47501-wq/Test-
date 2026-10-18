@@ -5,6 +5,7 @@ import {BotObservabilityPanel} from "./BotObservabilityPanel";
 import {MicroAlphaSummary} from "./MicroAlphaSummary";
 import {useCockpitExtras,type MarketPoint} from "../hooks/useCockpitExtras";
 
+const cockpitCopy={fr:{marketPeriod:"Période du marché",loading:"Chargement des transactions…",buy:"Achat",sell:"Vente",days:"jours",year:"an",years:"ans"},en:{marketPeriod:"Market period",loading:"Loading transactions…",buy:"Buy",sell:"Sell",days:"days",year:"year",years:"years"},es:{marketPeriod:"Período del mercado",loading:"Cargando transacciones…",buy:"Compra",sell:"Venta",days:"días",year:"año",years:"años"}} as const;
 const ranges=[
   {id:"5m",label:"5 min"},
   {id:"1h",label:"1 h"},
@@ -15,9 +16,9 @@ const ranges=[
   {id:"5y",label:"5 ans"}
 ];
 
-const eur=(value:number)=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(value);
+const eur=(value:number,locale:string)=>new Intl.NumberFormat(locale,{style:"currency",currency:"EUR"}).format(value);
 
-function CandlestickChart({points}:{points:MarketPoint[]}){const {t}=useLanguage();
+function CandlestickChart({points}:{points:MarketPoint[]}){const {t,language}=useLanguage();const locale=language==="en"?"en-GB":language==="es"?"es-ES":"fr-FR";
   const candles=useMemo(()=>{
     if(points.length<2)return [];
     const bucket=Math.max(1,Math.ceil(points.length/24));
@@ -57,7 +58,7 @@ function CandlestickChart({points}:{points:MarketPoint[]}){const {t}=useLanguage
       {[0,.25,.5,.75,1].map(ratio=>{
         const yy=top+plotHeight*ratio;
         const value=high-span*ratio;
-        return <g key={ratio}><line x1="0" x2={width} y1={yy} y2={yy} stroke="rgba(148,163,184,.14)"/><text x="6" y={yy-4} fill="#94a3b8" fontSize="10">{eur(value)}</text></g>;
+        return <g key={ratio}><line x1="0" x2={width} y1={yy} y2={yy} stroke="rgba(148,163,184,.14)"/><text x="6" y={yy-4} fill="#94a3b8" fontSize="10">{eur(value,locale)}</text></g>;
       })}
       {candles.map((candle,index)=>{
         const x=step*index+step/2;
@@ -75,7 +76,7 @@ function CandlestickChart({points}:{points:MarketPoint[]}){const {t}=useLanguage
   </div>;
 }
 
-export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>void}){const {t}=useLanguage();
+export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>void}){const {t,language}=useLanguage();const copy=cockpitCopy[language==="de"||language==="pt-BR"?"fr":language];const locale=language==="en"?"en-GB":language==="es"?"es-ES":"fr-FR";
   const [range,setRange]=useState("24h");
   const {activity,market}=useCockpitExtras(token,range,onExpired);
   const points=market.data?.history?.points??[];
@@ -88,8 +89,8 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
           <h3 className="mt-2 text-lg font-semibold">{t("marketBtc")}</h3>
           <p className="mt-1 text-xs text-slate-400">{t("cockpitOhlc")}</p>
         </div>
-        <div className="flex flex-wrap gap-2" aria-label="Période du marché">
-          {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${range===item.id?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400 hover:bg-white/5 hover:text-white"}`}>{item.label}</button>)}
+        <div className="flex flex-wrap gap-2" aria-label={copy.marketPeriod}>
+          {ranges.map(item=><button key={item.id} type="button" onClick={()=>setRange(item.id)} aria-pressed={range===item.id} className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${range===item.id?"border-lime-400/40 bg-lime-400/15 text-lime-300":"border-white/10 text-slate-400 hover:bg-white/5 hover:text-white"}`}>{item.id==="7d"?"7 "+copy.days:item.id==="30d"?"30 "+copy.days:item.id==="1y"?"1 "+copy.year:item.id==="5y"?"5 "+copy.years:item.label}</button>)}
         </div>
       </div>
       <div className="mt-5">
@@ -102,18 +103,18 @@ export function CockpitPremium({token,onExpired}:{token:string;onExpired:()=>voi
     <Card>
       <h3 className="text-lg font-semibold">{t("recentTrades")}</h3>
       <p className="mt-1 text-xs text-slate-400">{t("cockpitOrders")}</p>
-      {activity.status==="loading"&&<p role="status" className="py-10 text-sm text-slate-400">Chargement des transactions…</p>}
+      {activity.status==="loading"&&<p role="status" className="py-10 text-sm text-slate-400">{copy.loading}</p>}
       {activity.status==="error"&&<p role="alert" className="py-10 text-sm text-rose-300">{activity.error}</p>}
       {activity.status==="ready"&&activity.data?.trades?.length===0&&<p className="py-10 text-sm text-slate-400">{t("noTrades")}</p>}
       {activity.status==="ready"&&Boolean(activity.data?.trades?.length)&&<div className="mt-4 space-y-3">
         {activity.data!.trades.slice(0,6).map((trade,index)=><div key={`${trade.created_at}-${trade.asset}-${index}`} className="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
           <div>
-            <p className="font-medium">{trade.side==="buy"?"Achat":"Vente"} {trade.asset}</p>
-            <p className="text-xs text-slate-500">{new Date(trade.created_at).toLocaleString("fr-FR")}</p>
+            <p className="font-medium">{trade.side==="buy"?copy.buy:copy.sell} {trade.asset}</p>
+            <p className="text-xs text-slate-500">{new Date(trade.created_at).toLocaleString(locale)}</p>
           </div>
           <div className="text-right">
-            <p className={`font-semibold ${trade.side==="buy"?"text-lime-300":"text-rose-300"}`}>{eur(Number(trade.amount_eur||0))}</p>
-            <p className="text-xs text-slate-500">@ {eur(Number(trade.price_eur||0))}</p>
+            <p className={`font-semibold ${trade.side==="buy"?"text-lime-300":"text-rose-300"}`}>{eur(Number(trade.amount_eur||0),locale)}</p>
+            <p className="text-xs text-slate-500">@ {eur(Number(trade.price_eur||0),locale)}</p>
           </div>
         </div>)}
       </div>}
