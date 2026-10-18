@@ -66,3 +66,7 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 ## Passe ciblée 17 octobre 2026
 - Localisation des états de chargement/erreur du portefeuille, libellés du backtest et des graphiques cockpit, y compris les formats monétaires et les dates.
 - Cette passe est partielle : financement simulé, landing et plusieurs composants gardent des littéraux français. Une couverture FR/EN/ES complète et des tests de bascule navigateur restent à livrer.
+
+## Quantum Fund (18 octobre 2026)
+- Traduction FR/EN/ES des libellés, erreurs locales, tableaux, graphiques et formats numériques, sans modification des stratégies.
+- Audit des autres écrans et des messages API encore nécessaire : ne pas déclarer 100 % sans contrôle visuel et automatisé.
