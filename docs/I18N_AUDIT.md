@@ -70,3 +70,8 @@ Traduction de libellés statiques supplémentaires dans les écrans principaux e
 ## Quantum Fund (18 octobre 2026)
 - Traduction FR/EN/ES des libellés, erreurs locales, tableaux, graphiques et formats numériques, sans modification des stratégies.
 - Audit des autres écrans et des messages API encore nécessaire : ne pas déclarer 100 % sans contrôle visuel et automatisé.
+
+## Observatoire des bots (20 octobre 2026)
+- Localisation FR/EN/ES du journal des bots : résumé, filtres, périodes, erreurs, chronologie, accessibilité, dates et volumes monétaires.
+- La logique des bots et les API restent inchangées ; les valeurs d'action/statut et les raisons renvoyées par le serveur peuvent rester non localisées : prévoir des codes stables pour les traduire.
+- Audit global toujours ouvert ; cette livraison ne certifie pas 100 % de couverture.
