@@ -131,6 +131,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_since TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
 CREATE TABLE IF NOT EXISTS stripe_webhook_events(event_id TEXT PRIMARY KEY,event_type TEXT NOT NULL,processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_event_created BIGINT NOT NULL DEFAULT 0;
 `);
 
 const compliance = createCompliance(pool, {
@@ -237,15 +238,18 @@ app.post("/api/stripe/webhook",express.raw({type:"application/json"}),async(req,
     }
     if(event.type==="customer.subscription.updated"||event.type==="customer.subscription.deleted"){
       const subscription=event.data.object;
+      // Ignore stale subscription events delivered out of order.
+      const eventCreated=Number(event.created);
+      if(!Number.isSafeInteger(eventCreated)||eventCreated<=0)throw new Error('Invalid Stripe event timestamp');
       const userId=Number(subscription.metadata?.userId);
       const plan=subscription.metadata?.plan==="elite"?"elite":subscription.metadata?.plan==="pro"?"pro":null;
       const active=event.type==="customer.subscription.updated"&&["active","trialing"].includes(subscription.status);
       // Never grant rights from metadata alone: bind subscription to an existing Stripe customer.
       if(subscription.customer&&subscription.id){
         if(Number.isSafeInteger(userId)&&userId>0){
-          await client.query("UPDATE users SET plan=$1,stripe_subscription_id=$2,pro_since=CASE WHEN $1 IN ('pro','elite') THEN COALESCE(pro_since,NOW()) ELSE pro_since END WHERE id=$3 AND stripe_customer_id=$4 AND (stripe_subscription_id IS NULL OR stripe_subscription_id=$5)",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,userId,subscription.customer,subscription.id]);
+          await client.query("UPDATE users SET plan=$1,stripe_subscription_id=$2,stripe_subscription_event_created=$6,pro_since=CASE WHEN $1 IN ('pro','elite') THEN COALESCE(pro_since,NOW()) ELSE pro_since END WHERE id=$3 AND stripe_customer_id=$4 AND (stripe_subscription_id IS NULL OR stripe_subscription_id=$5) AND stripe_subscription_event_created <= $6",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,userId,subscription.customer,subscription.id,eventCreated]);
         }else{
-          await client.query("UPDATE users SET plan=$1,stripe_subscription_id=$2 WHERE stripe_customer_id=$3 AND stripe_subscription_id=$4",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,subscription.customer,subscription.id]);
+          await client.query("UPDATE users SET plan=$1,stripe_subscription_id=$2,stripe_subscription_event_created=$5 WHERE stripe_customer_id=$3 AND stripe_subscription_id=$4 AND stripe_subscription_event_created <= $5",[active&&plan?plan:"free",event.type==="customer.subscription.deleted"?null:subscription.id,subscription.customer,subscription.id,eventCreated]);
         }
       }
     }
