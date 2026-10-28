@@ -118,3 +118,11 @@ Ce relevé distingue les résultats historiques des vérifications à refaire. I
 - Aucun résultat opérateur, challenge 2FA, restauration, rollback ou contrôle mobile réel n'est déclaré réussi dans ce relevé.
 - Les accès opérateur Northflank, les bases source/jetable et le compte 2FA dédié restent à rendre accessibles par un canal sécurisé ; ne pas transmettre de secrets dans l'issue ou le dépôt.
 - #343 reste ouverte. Les dépendances commerciales externes ne sont pas des travaux à recréer pour cet audit ; aucun changement des algorithmes Silver/Shield/Gold.
+
+### Vérification d'exécution et contrôle public — 28 octobre 2026
+- [PR #577, premier run](https://github.com/totorina47501-wq/Test-/actions/runs/40681367482) : Chromium installé, scénarios API réussis, 81 tests navigateur réussis, 3 ignorés, 2 échecs desktop/mobile sur le sélecteur de capture à chemin ancien. Le job backend [40681367466](https://github.com/totorina47501-wq/Test-/actions/runs/40681367466) est réussi.
+- Cause identifiée : staging conservait le sélecteur exact /showcase/<fichier>, tandis que la production sert des chemins localisés. Le correctif existe déjà dans main via [e610441](https://github.com/totorina47501-wq/Test-/commit/e6104414167da95b1356e487f89bc15c75178450) ; reprise du même fichier de test, sans nouveau scénario ni assertion supprimée.
+- Attention : user-scenarios.yml exécute aussi certains tests live invités de production-smoke.spec.mjs ; son nom et son serveur local ne suffisent pas à classifier tous les résultats comme locaux.
+- Les nouveaux artefacts du premier run sont conservés jusqu'au 26 janvier 2027, ce qui confirme la rétention 90 jours sur ce run.
+- [Contrôle navigateur public du 28 octobre](https://agent.tinyfish.ai/runs/f3c7402a-066b-412e-98a1-0917f175639a) : accueil/Investir/Bots accessibles ; Activités verrouillé ; Escape ferme le modal. Le rapport signale un possible 404 invité sur /portefeuille, NON CONFIRMÉ indépendamment. Ne pas corriger le routeur sur cette seule observation.
+- Ce contrôle n'a pas effectué de vraie émulation mobile : il a seulement inspecté une image showcase mobile. Aucun PASS mobile réel, contraste AA, reduced-motion ou retour de focus ne doit en être déduit. Les onglets demandés n'ont pas été trouvés ; cette divergence de version reste à rapprocher du SHA déployé.
