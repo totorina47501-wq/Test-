@@ -17,7 +17,8 @@ concurrency:
 jobs:
   production-smoke:
     name: Live Northflank guest E2E
-    runs-on: ubuntu-latest
+    # Playwright 1.58.2 is validated on Ubuntu 24.04; ubuntu-latest moved to 26.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     defaults:
       run:
@@ -85,4 +86,4 @@ jobs:
             server/test-results/
             server/production-evidence.json
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 90

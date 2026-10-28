@@ -165,3 +165,11 @@
 ## Internationalisation FR/EN/ES — consolidation du 16 octobre 2026
 - Récupération anti-doublon de la PR #562 ; la langue ES et les textes de la navigation/cockpit sont intégrés dans un seul commit avec docs. Validation CI et production à consigner après vérification.
 - Les traductions résiduelles d'autres modules ne doivent pas être déclarées closes sans inventaire automatisé et tests de bascule linguistique.
+
+## Audit #343 — reprise du 28 octobre 2026
+- État de référence et critères restants : docs/PRODUCTION_PLAYWRIGHT_REFERENCE.md, section « Audit #343 — état vérifié le 28 octobre 2026 ».
+- Historique vérifié : suites isolées (85 passed, 3 skipped) et live (12 invités + 4 connectés) réussies le 25 octobre ; SHA Northflank non vérifié.
+- Les runs du 28 octobre échouent avant tests sur l'installation Chromium sous Ubuntu 26.04. Correctif proposé : runner ubuntu-24.04 et conservation des rapports 90 jours dans les workflows existants.
+- Correctif staging fusionné via #577 (194b1588), checks PR backend/parcours verts. Portage main : #578 ; contrôler le dernier head et les pushes de branches avant toute annonce de main vert.
+- Restants : provenance image/SHA, isolation staging/prod, challenge/récupération 2FA, simulation déployée contrôlée, restauration/intégrité, rollback réel et matrice UX/mobile/clavier/WCAG.
+- Audit NON CLOS ; Silver/Shield/Gold inchangés. Compléter les liens de runs et résultats opérateur après exécution réelle.
