@@ -98,3 +98,11 @@
 - Provenance : `production-evidence.mjs` peut désormais valider le SHA attendu s'il est exposé par un en-tête de révision **ou présent exactement dans le bundle frontend servi**. Sinon état `UNVERIFIED`.
 - Preuves visuelles : captures live invitées et connectées conservées dans l'artefact du workflow production.
 - Algorithmes Shield/Silver/Gold et Quantum Fund : inchangés.
+
+## Audit #343 — reprise du 28 octobre 2026
+- État de référence et critères restants : docs/PRODUCTION_PLAYWRIGHT_REFERENCE.md, section « Audit #343 — état vérifié le 28 octobre 2026 ».
+- Historique vérifié : suites isolées (85 passed, 3 skipped) et live (12 invités + 4 connectés) réussies le 25 octobre ; SHA Northflank non vérifié.
+- Les runs du 28 octobre échouent avant tests sur l'installation Chromium sous Ubuntu 26.04. Correctif proposé : runner ubuntu-24.04 et conservation des rapports 90 jours dans les workflows existants.
+- Statut du correctif : PR/CI à vérifier ; aucun nouveau succès revendiqué par cette entrée.
+- Restants : provenance image/SHA, isolation staging/prod, challenge/récupération 2FA, simulation déployée contrôlée, restauration/intégrité, rollback réel et matrice UX/mobile/clavier/WCAG.
+- Audit NON CLOS ; Silver/Shield/Gold inchangés. Compléter les liens de runs et résultats opérateur après exécution réelle.

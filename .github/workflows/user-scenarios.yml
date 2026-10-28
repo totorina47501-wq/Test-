@@ -20,7 +20,8 @@ concurrency:
 jobs:
   user-scenarios:
     name: Signup, login, simulated trades and responsive UI
-    runs-on: ubuntu-latest
+    # Playwright 1.58.2 is validated on Ubuntu 24.04; ubuntu-latest moved to 26.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
       postgres:
@@ -91,7 +92,7 @@ jobs:
           name: bitgold-showcase-captures
           path: server/public/showcase/*.png
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 90
       - name: Browser E2E (desktop and mobile)
         run: npx playwright test --config=playwright.config.mjs --grep-invert='production authenticated|guest homepage and login modal|guest Investir page loads|expired JWT is rejected on live production'
       # Publish the same screenshots already captured above, not a second capture pipeline.
@@ -115,7 +116,7 @@ jobs:
             server/playwright-report/
             server/test-results/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 90
       - name: Print server diagnostics on failure
         if: failure()
         run: tail -n 120 /tmp/bitgold-scenarios-server.log || true
